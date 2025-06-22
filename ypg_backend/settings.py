@@ -27,7 +27,11 @@ SECRET_KEY = 'django-insecure-+x_*&n1s9shvk-c)*vj)vto-g%m*2o_8#we5zko@3h&s9hpj@6
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['your-backend-domain.com', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = [
+    'ypg-attendance-backend-1.onrender.com', 
+    'localhost', 
+    '127.0.0.1'
+    ]
 
 # If deploying behind a proxy (like on Render, Railway, etc.)
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
