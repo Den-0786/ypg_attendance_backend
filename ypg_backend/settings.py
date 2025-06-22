@@ -146,11 +146,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOWED_ORIGINS = [
     "https://your-frontend-domain.com",
     "http://localhost:3000",  
+    "https://ypg-attendance-backend-1.onrender.com",
 ]
 
 DEBUG = True
 
-CSRF_TRUSTED_ORIGINS = ['https://yourfrontend.com']
+CSRF_TRUSTED_ORIGINS = "https://ypg-attendance-backend-1.onrender.com",
 CORS_ALLOW_CREDENTIALS = True
 
 REST_FRAMEWORK = {
