@@ -31,7 +31,7 @@ export default function LoginForm({ onLogin }) {
             id="username"
             type="text"
             placeholder="Enter username"
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full p-2 border border-gray-300 text-gray-800 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
@@ -48,7 +48,7 @@ export default function LoginForm({ onLogin }) {
               id="password"
               type={showPassword ? 'text' : 'password'}
               placeholder="Enter password"
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10"
+              className="w-full p-2 border border-gray-300 text-gray-800 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required

@@ -35,9 +35,9 @@ ALLOWED_HOSTS = [
 
 # If deploying behind a proxy (like on Render, Railway, etc.)
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SECURE_SSL_REDIRECT = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+SECURE_SSL_REDIRECT = False
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
@@ -148,14 +148,15 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOWED_ORIGINS = [
-    "https://your-frontend-domain.com",
+    # "https://your-frontend-domain.com",
     "http://localhost:3000",  
     "https://ypg-attendance-backend-1.onrender.com",
 ]
 
-DEBUG = True
-
-CSRF_TRUSTED_ORIGINS = "https://ypg-attendance-backend-1.onrender.com",
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+    "https://ypg-attendance-backend-1.onrender.com",
+    ]
 CORS_ALLOW_CREDENTIALS = True
 
 REST_FRAMEWORK = {
