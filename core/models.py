@@ -10,6 +10,7 @@ from django.contrib.auth.hashers import make_password, check_password
 class Credential(models.Model):
     username = models.CharField(max_length=150, unique=True)
     password = models.CharField(max_length=128)  # stores hashed password
+    role = models.CharField(max_length=20, default='user')
 
     def set_password(self, raw_password):
         self.password = make_password(raw_password)
@@ -57,3 +58,19 @@ class PasswordResetToken(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.token}"
+
+class Meeting(models.Model):
+    title = models.CharField(max_length=200)
+    date = models.DateField()
+    is_active = models.BooleanField(default=True)
+    login_username = models.CharField(max_length=150)
+    login_password = models.CharField(max_length=128)  # stores hashed password
+
+    def set_password(self, raw_password):
+        self.login_password = make_password(raw_password)
+
+    def check_password(self, raw_password):
+        return check_password(raw_password, self.login_password)
+
+    def __str__(self):
+        return f"{self.title} ({self.date})"

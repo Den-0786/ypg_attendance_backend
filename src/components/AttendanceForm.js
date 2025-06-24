@@ -27,8 +27,11 @@ const toTitleCase = (str) =>
     word.charAt(0).toUpperCase() + word.slice(1)
   ).join(' ');
 
-export default function AttendanceForm() {
-  const { meetingDate, meetingTitle } = useMeetingDate();
+export default function AttendanceForm({ meetingInfo }) {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const context = useMeetingDate ? useMeetingDate() : {};
+  const meetingDate = meetingInfo ? meetingInfo.date : context.meetingDate;
+  const meetingTitle = meetingInfo ? meetingInfo.title : context.meetingTitle;
   const [type, setType] = useState('local');
   const [form, setForm] = useState({
     name: '', phone: '', email: '', congregation: '', position: ''
@@ -371,7 +374,7 @@ export default function AttendanceForm() {
                           <MdMoreVert />
                         </button>
                         {menuOpenIndex === index && (
-                          <div className="absolute right-0 top-6 bg-white shadow-md rounded w-40 z-10">
+                          <div className="absolute right-0 top-6 bg-white shadow-md rounded w-40 z-50">
                             <button 
                               onClick={() => handleEdit(index)} 
                               className="flex items-center gap-2 w-full text-left px-3 py-1 hover:bg-gray-200"

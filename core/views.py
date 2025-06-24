@@ -8,12 +8,21 @@ from django.conf import settings
 from django.utils.crypto import get_random_string
 from django.contrib.auth import logout
 from .models import (
-    AttendanceEntry, ApologyEntry, Credential, PasswordResetToken
+    AttendanceEntry,
+    ApologyEntry,
+    Credential,
+    PasswordResetToken,
+    Meeting
 )
-from .serializers import AttendanceEntrySerializer, ApologyEntrySerializer
+from .serializers import AttendanceEntrySerializer, ApologyEntrySerializer, MeetingSerializer
 import re
 
 # ------------------ Attendance Views ------------------
+from django.utils.deprecation import MiddlewareMixin
+
+class DebugPrintMiddleware(MiddlewareMixin):
+    def process_request(self, request):
+        print(f"[DEBUG] {request.method} {request.path}")
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -280,26 +289,51 @@ def reset_password_confirm(request):
     reset_entry.delete()
     return Response({'message': 'Password reset successful'})
 
+#
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login_view(request):
-    username = request.data.get('username')
-    password = request.data.get('password')
-
     try:
-        user = Credential.objects.get(username=username)
-        if not user.check_password(password):
-            return Response({'error': 'Invalid credentials'}, status=400)
-        
-        request.session.flush()
-        request.session['user_id'] = user.id
-        request.session['username'] = user.username
-        request.session['role'] = user.role
-        request.session.set_expiry(86400)
+        print('Raw body:', request.body)  # ⬅️ NEW
+        print('Parsed data:', request.data)  # ⬅️ NEW
 
-        return Response({'message': 'Login successful', 'role': user.role})
-    except Credential.DoesNotExist:
+        username = request.data.get('username')
+        password = request.data.get('password')
+        
+        print('LOGIN ATTEMPT:', username, password)
+        
+        if not username or not password:
+            return Response({'error': 'Username and password are required'}, status=400)
+
+        # 1. Try executive login (Credential model)
+        try:
+            user = Credential.objects.get(username=username)
+            if user.check_password(password):
+                request.session.flush()
+                request.session['user_id'] = user.id
+                request.session['username'] = user.username
+                request.session['role'] = user.role
+                request.session.set_expiry(86400)
+                return Response({'message': 'Login successful', 'role': user.role})
+        except Credential.DoesNotExist:
+            pass
+
+        # 2. Try meeting login (Meeting model, only active meeting)
+        meeting = Meeting.objects.filter(is_active=True, login_username=username).order_by('-date').first()
+        if meeting and meeting.check_password(password):
+            request.session.flush()
+            request.session['meeting_id'] = meeting.id
+            request.session['username'] = username
+            request.session['role'] = 'meeting_user'
+            request.session.set_expiry(86400)
+            return Response({'message': 'Login successful', 'role': 'meeting_user'})
+
         return Response({'error': 'Invalid credentials'}, status=400)
+    
+    except Exception as e:
+        print("Login error:", e)
+        return Response({'error': 'Login failed. Please try again.'}, status=500)
+
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -316,3 +350,46 @@ def session_status(request):
             'role': request.session.get('role', 'user')
         })
     return Response({'loggedIn': False})
+
+# --- Meeting Endpoints ---
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def set_meeting(request):
+    user_id = request.session.get('user_id')
+    user = Credential.objects.get(id=user_id)
+    # Only allow executive roles
+    executive_roles = [
+        'admin', 'President', "President's Rep", 'Secretary', 'Assistant Secretary',
+        'Financial Secretary', 'Treasurer', 'Bible Studies Coordinator', 'Organizer'
+    ]
+    if user.role not in executive_roles:
+        return Response({'error': 'Not authorized'}, status=403)
+
+    title = request.data.get('title')
+    date = request.data.get('date')
+    login_username = request.data.get('login_username')
+    login_password = request.data.get('login_password')
+    if not title or not date or not login_username or not login_password:
+        return Response({'error': 'Title, date, username, and password are required.'}, status=400)
+
+    # Deactivate previous meetings
+    Meeting.objects.filter(is_active=True).update(is_active=False)
+    meeting = Meeting(
+        title=title,
+        date=date,
+        is_active=True,
+        login_username=login_username
+    )
+    meeting.set_password(login_password)  # Hash and set the password
+    meeting.save()
+    serializer = MeetingSerializer(meeting)
+    return Response(serializer.data, status=201)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def current_meeting(request):
+    meeting = Meeting.objects.filter(is_active=True).order_by('-date').first()
+    if not meeting:
+        return Response({'error': 'No active meeting set.'}, status=404)
+    serializer = MeetingSerializer(meeting)
+    return Response(serializer.data)

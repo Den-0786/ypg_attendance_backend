@@ -38,8 +38,9 @@ const toTitleCase = (str) => {
     .join(' ');
 };
 
-export default function ApologyForm() {
-  const { meetingDate } = useMeetingDate();
+export default function ApologyForm({ meetingInfo }) {
+  const context = useMeetingDate ? useMeetingDate() : {};
+  const meetingDate = meetingInfo ? meetingInfo.date : context.meetingDate;
   const [type, setType] = useState('local');
   const [form, setForm] = useState({ name: '', congregation: '', position: '', reason: '' });
   const [apologies, setApologies] = useState([]);

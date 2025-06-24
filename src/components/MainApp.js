@@ -2,7 +2,7 @@
 import AttendanceForm from '@components/AttendanceForm';
 import ApologyForm from '@components/ApologyForm';
 
-export default function MainApp({ activeTab, setActiveTab, handleLogout }) {
+export default function MainApp({ activeTab, setActiveTab, handleLogout, meetingInfo }) {
     return (
         <div className="min-h-screen bg-gray-100 pt-20"> 
             <header className="fixed top-0 left-0 right-0 bg-gray-200 z-10 shadow">
@@ -36,7 +36,7 @@ export default function MainApp({ activeTab, setActiveTab, handleLogout }) {
                 </div>
             </header>
 
-            {activeTab === 'attendance' ? <AttendanceForm /> : <ApologyForm />}
+            {activeTab === 'attendance' ? <AttendanceForm meetingInfo={meetingInfo} /> : <ApologyForm meetingInfo={meetingInfo} />}
         </div>
     );
 }

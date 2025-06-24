@@ -3,7 +3,8 @@ from .views import (
     login_view, logout_view, session_status, submit_attendance, submit_apologies,
     get_attendance_summary, get_apology_summary, local_attendance, district_attendance,
     delete_attendance, edit_attendance, attendance_by_meeting_title,
-    change_password, request_password_reset, reset_password_confirm
+    change_password, request_password_reset, reset_password_confirm,
+    set_meeting, current_meeting
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -33,4 +34,8 @@ urlpatterns = [
     # JWT tokens (optional if you want to switch to token auth later)
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
+    # Meeting management
+    path('set-meeting/', set_meeting, name='set_meeting'),
+    path('current-meeting/', current_meeting, name='current_meeting'),
 ]

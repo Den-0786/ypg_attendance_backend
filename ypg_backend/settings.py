@@ -57,6 +57,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'core.views.DebugPrintMiddleware',  
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -150,12 +151,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOWED_ORIGINS = [
     # "https://your-frontend-domain.com",
     "http://localhost:3000",  
-    "https://ypg-attendance-backend-1.onrender.com",
+    # "https://ypg-attendance-backend-1.onrender.com",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
-    "https://ypg-attendance-backend-1.onrender.com",
+    # "https://ypg-attendance-backend-1.onrender.com",
     ]
 CORS_ALLOW_CREDENTIALS = True
 

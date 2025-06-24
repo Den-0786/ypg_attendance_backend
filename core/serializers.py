@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import AttendanceEntry, ApologyEntry
+from .models import AttendanceEntry, ApologyEntry, Meeting
 import re
 
 class AttendanceEntrySerializer(serializers.ModelSerializer):
@@ -30,3 +30,8 @@ class ApologyEntrySerializer(serializers.ModelSerializer):
         if not re.match(r"^[A-Za-z\s\-']+$", value):
             raise serializers.ValidationError("Name must contain only letters, spaces, hyphens or apostrophes.")
         return value
+
+class MeetingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Meeting
+        fields = '__all__'
