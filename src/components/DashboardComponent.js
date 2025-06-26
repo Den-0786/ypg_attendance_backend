@@ -2,40 +2,21 @@
 
 import { useState, useEffect } from "react";
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-  Legend,
-} from "recharts";
-import {
   FaCheckCircle,
   FaTimesCircle,
   FaMoon,
   FaSun,
   FaSignOutAlt,
   FaBars,
-  FaDatabase,
-  FaCog,
-  FaCalendarAlt,
-  FaChartPie,
-  FaList,
-  FaUsers,
-  FaTrash,
-  FaEdit,
-  FaEye,
-  FaEyeSlash,
-} from "react-icons/fa";
+  FaDatabase,} from "react-icons/fa";
+
 import { useRouter } from "next/navigation";
 import { cn } from "../lib/utils";
 import toast from "react-hot-toast";
 import ChangePasswordForm from "./ChangePasswordForm";
-import MeetingDateForm from "./MeetingDateForm";
+import MonthlyAttendanceTrendChart from './dashboard/MonthlyAttendanceTrendChart';
 import RecordsManager from "./RecordsManager";
-import MeetingTypePieChart from "./dashboard/MeetingTypePieChart";
+
 import DistrictExecutiveChart from './dashboard/DistrictExecutiveChart';
 import YearEndChart from './dashboard/YearEndChart';
 import MonthlyAttendanceGrid from './dashboard/MonthlyAttendanceGrid';
@@ -150,11 +131,73 @@ const monthNames = [
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
 ];
 
+// DEMO DATA: Remove this block when you want to use real database data!
+const demoAttendanceData = [
+  // January
+  { name: "Alice", meeting_date: "2024-01-10" },
+  { name: "Bob", meeting_date: "2024-01-10" },
+  { name: "Alice", meeting_date: "2024-01-24" },
+  // February
+  { name: "Alice", meeting_date: "2024-02-14" },
+  { name: "Bob", meeting_date: "2024-02-14" },
+  { name: "Charlie", meeting_date: "2024-02-14" },
+  // March
+  { name: "Alice", meeting_date: "2024-03-05" },
+  { name: "Charlie", meeting_date: "2024-03-05" },
+  // April
+  { name: "Bob", meeting_date: "2024-04-12" },
+  { name: "Charlie", meeting_date: "2024-04-12" },
+  // May
+  { name: "Alice", meeting_date: "2024-05-03" },
+  { name: "Bob", meeting_date: "2024-05-03" },
+  { name: "Charlie", meeting_date: "2024-05-03" },
+];
+
+function getTopAttendee(attendanceData, year) {
+  const counts = {};
+  attendanceData.forEach(entry => {
+    const date = new Date(entry.meeting_date);
+    if (date.getFullYear() === year) {
+      const key = entry.name || entry.congregation;
+      counts[key] = (counts[key] || 0) + 1;
+    }
+  });
+  let topPerson = null, max = 0;
+  for (const [person, count] of Object.entries(counts)) {
+    if (count > max) {
+      max = count;
+      topPerson = person;
+    }
+  }
+  return { topPerson, max, counts };
+}
+
+// Add function to get top 3 congregations
+function getTopCongregations(attendanceData, year) {
+  const counts = {};
+  attendanceData.forEach(entry => {
+    const date = new Date(entry.meeting_date);
+    if (date.getFullYear() === year && entry.congregation) {
+      counts[entry.congregation] = (counts[entry.congregation] || 0) + 1;
+    }
+  });
+  return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3);
+}
+
 export default function Dashboard({ onLogout }) {
   const [view, setView] = useState("local");
-  const [darkMode, setDarkMode] = useState(
-    () => localStorage.getItem("theme") === "dark"
-  );
+  // const [darkMode, setDarkMode] = useState(
+  //   () => localStorage.getItem("theme") === "dark"
+  // );
+  const [darkMode, setDarkMode] = useState(false); 
+
+useEffect(() => {
+  const savedTheme = localStorage.getItem("theme");
+  if (savedTheme === "dark") {
+    setDarkMode(true);
+  }
+}, []);
+  // Use demo data for now. Remove this line to use real data.
   const [attendanceData, setAttendanceData] = useState([]);
   const [search, setSearch] = useState("");
   const [showSidebar, setShowSidebar] = useState(false);
@@ -196,7 +239,6 @@ export default function Dashboard({ onLogout }) {
       const data = await response.json();
       setAttendanceData(data);
     } catch (error) {
-      console.error('Error fetching attendance data:', error);
       toast.error('Failed to fetch attendance data');
     }
   };
@@ -365,9 +407,6 @@ export default function Dashboard({ onLogout }) {
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
     
-    console.log('Creating year-end summary for year:', currentYear);
-    console.log('Total attendance data:', attendanceData.length);
-    
     // Group attendance by congregation and month
     const monthlyData = {};
     attendanceData.forEach(entry => {
@@ -383,7 +422,6 @@ export default function Dashboard({ onLogout }) {
       }
     });
 
-    console.log('Monthly data by congregation:', monthlyData);
 
     // Convert to chart data format - count all 12 months
     const result = Object.keys(monthlyData).map(congregation => ({
@@ -393,8 +431,6 @@ export default function Dashboard({ onLogout }) {
       // Add percentage of months with attendance
       attendanceRate: (monthlyData[congregation].filter(count => count > 0).length / 12) * 100
     }));
-
-    console.log('Year-end summary result:', result);
     return result;
   };
 
@@ -430,6 +466,16 @@ export default function Dashboard({ onLogout }) {
       </div>
     );
   };
+
+  const currentYear = new Date().getFullYear();
+  const previousYear = currentYear - 1;
+  const previousYearAttendanceData = attendanceData.filter(entry => {
+    const date = new Date(entry.meeting_date);
+    return date.getFullYear() === previousYear;
+  });
+  const { topPerson, max, counts } = getTopAttendee(attendanceData, currentYear);
+  const uniquePeople = Object.keys(counts);
+  const leaderboard = Object.entries(counts).sort((a, b) => b[1] - a[1]);
 
   return (
     <div
@@ -500,7 +546,6 @@ export default function Dashboard({ onLogout }) {
           <div className="space-y-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
             <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Actions</h3>
             <button
-              onClick={() => router.push('/forms')}
               onClick={() => setShowChangePasswordModal(true)}
               className="w-full text-left px-4 py-2 rounded hover:bg-blue-300 dark:hover:bg-gray-800"
             >
@@ -534,53 +579,9 @@ export default function Dashboard({ onLogout }) {
         </div>
       </div>
 
-      {/* Main Content with proper spacing */}
+      {/* Main scrollable content area */}
       <div className="flex-1 p-3 md:p-6 overflow-y-auto md:ml-64">
-        {view === "records" ? (
-          <div
-            className={cn(
-              "max-w-6xl mx-auto p-3 md:p-6 rounded-xl shadow-md",
-              darkMode ? "bg-gray-800" : "bg-white"
-            )}
-          >
-            <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 md:mb-6">
-              <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-4 md:mb-0">Records Management</h1>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 mb-4 md:mb-6">
-              <button
-                onClick={() => setRecordType("attendance")}
-                className={cn(
-                  "px-3 md:px-4 py-2 rounded-md font-medium transition-colors text-sm md:text-base",
-                  recordType === "attendance"
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-                )}
-              >
-                Attendance Records
-              </button>
-              <button
-                onClick={() => setRecordType("apology")}
-                className={cn(
-                  "px-3 md:px-4 py-2 rounded-md font-medium transition-colors text-sm md:text-base",
-                  recordType === "apology"
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-                )}
-              >
-                Apology Records
-              </button>
-            </div>
-            
-            <RecordsManager recordType={recordType} />
-          </div>
-        ) : (
-        <div
-          className={cn(
-            "max-w-6xl mx-auto p-3 md:p-6 rounded-xl shadow-md",
-            darkMode ? "bg-gray-800" : "bg-white"
-          )}
-        >
+        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-md p-4 mb-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
             <div className="p-3 md:p-4 bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-800 rounded-lg shadow-sm">
               <h3 className="text-xs md:text-sm font-semibold text-blue-700 dark:text-blue-300">Total Records</h3>
@@ -599,10 +600,7 @@ export default function Dashboard({ onLogout }) {
               <p className="text-lg md:text-xl font-bold text-amber-900 dark:text-orange-100">{getGrandTotalProgress()}%</p>
             </div>
           </div>
-
-          {/* Dynamic Progress Indicators */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
-            {/* Local Congregations Progress */}
             <div className="p-4 md:p-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900 dark:to-blue-800 border border-blue-200 dark:border-blue-700 rounded-xl shadow-sm">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
@@ -646,7 +644,6 @@ export default function Dashboard({ onLogout }) {
               </div>
             </div>
 
-            {/* District Executives Progress */}
             <div className="p-4 md:p-6 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900 dark:to-green-800 border border-green-200 dark:border-green-700 rounded-xl shadow-sm">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
@@ -690,34 +687,39 @@ export default function Dashboard({ onLogout }) {
               </div>
             </div>
           </div>
+        </div>
 
-          <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 md:mb-6 space-y-3 md:space-y-0">
-            <h1 className="text-lg md:text-xl font-bold">Attendance Dashboard</h1>
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search congregation..."
-              className="w-full md:max-w-xs border px-3 py-2 rounded-md dark:bg-gray-700 dark:text-white text-sm md:text-base"
-            />
-          </div>
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 md:mb-6 space-y-3 md:space-y-0">
+          <h1 className="text-lg md:text-xl font-bold">Attendance Dashboard</h1>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search congregation..."
+            className="w-full md:max-w-xs border px-3 py-2 rounded-md dark:bg-gray-700 dark:text-white text-sm md:text-base"
+          />
+        </div>
 
-          <div className="overflow-x-auto custom-scrollbar mb-6 md:mb-10">
-            <table className="min-w-full border border-gray-300">
-              <thead className={darkMode ? "bg-gray-700" : "bg-gray-200"}>
-                <tr>
-                  <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Meeting</th>
-                  <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Congregation</th>
-                  <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">
-                    Submitted Time(s)
-                  </th>
-                  <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">
-                    Presence Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {yearEndData.map(({ name }) => (
+        <div className="overflow-x-auto custom-scrollbar mb-6 md:mb-10">
+          <table className="min-w-full border border-gray-300">
+            <thead className={darkMode ? "bg-gray-700" : "bg-gray-200"}>
+              <tr>
+                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Meeting</th>
+                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Congregation</th>
+                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">
+                  Submitted Time(s)
+                </th>
+                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">
+                  Presence Status
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* Local Congregations */}
+              {Object.keys(summary)
+                .filter(name => summary[name][0]?.type !== 'district')
+                .filter(name => name.toLowerCase().includes(search.toLowerCase()))
+                .map(name => (
                   <tr key={name}>
                     <td className="border px-2 md:px-4 py-2">
                       {summary[name].map((entry, i) => (
@@ -735,30 +737,160 @@ export default function Dashboard({ onLogout }) {
                       ))}
                     </td>
                     <td className="border px-2 md:px-4 py-2">
-                      {renderCircles(summary[name], name)}
+                      {/* Show two circles for local */}
+                      <div className="flex gap-2 items-center">
+                        {[0, 1].map((i) => (
+                          <span key={i} className="text-lg">
+                            {i < summary[name].length ? (
+                              <FaCheckCircle className="text-green-500" />
+                            ) : (
+                              <FaTimesCircle className="text-red-500" />
+                            )}
+                          </span>
+                        ))}
+                        <button
+                          onClick={() => handleEdit(summary[name][0]?.id, name)}
+                          className="text-blue-500 hover:underline text-sm ml-2"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => confirmDelete(summary[name][0]?.id, name)}
+                          className="text-red-500 hover:underline text-sm"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
+                  </tr>
+                ))}
+
+              {/* District Executives Section */}
+              {Object.keys(summary)
+                .filter(name => summary[name][0]?.type === 'district')
+                .filter(name => name.toLowerCase().includes(search.toLowerCase()))
+                .length > 0 && (
+                  <tr>
+                    <td colSpan={4} className="bg-gray-100 dark:bg-gray-700 text-center font-bold py-2">
+                      District Executives
+                    </td>
+                  </tr>
+                )}
+
+              {/* District Executives */}
+              {Object.keys(summary)
+                .filter(name => summary[name][0]?.type === 'district')
+                .filter(name => name.toLowerCase().includes(search.toLowerCase()))
+                .map(name => (
+                  <tr key={name}>
+                    <td className="border px-2 md:px-4 py-2">
+                      {summary[name].map((entry, i) => (
+                        <div key={i} className="text-xs md:text-sm font-medium text-green-600">
+                          {entry.meeting_title || "Unknown Meeting"}
+                        </div>
+                      ))}
+                    </td>
+                    <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">{name}</td>
+                    <td className="border px-2 md:px-4 py-2 space-y-1">
+                      {summary[name].map((entry, i) => (
+                        <div key={i} className="text-xs md:text-sm">
+                          {entry.timestamp}
+                        </div>
+                      ))}
+                    </td>
+                    <td className="border px-2 md:px-4 py-2">
+                      {/* Show only one circle for district */}
+                      <div className="flex gap-2 items-center">
+                        {[0].map((i) => (
+                          <span key={i} className="text-lg">
+                            {i < summary[name].length ? (
+                              <FaCheckCircle className="text-green-500" />
+                            ) : (
+                              <FaTimesCircle className="text-red-500" />
+                            )}
+                          </span>
+                        ))}
+                        <button
+                          onClick={() => handleEdit(summary[name][0]?.id, name)}
+                          className="text-blue-500 hover:underline text-sm ml-2"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => confirmDelete(summary[name][0]?.id, name)}
+                          className="text-red-500 hover:underline text-sm"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Monthly Attendance Grid */}
+        <div className="my-8 md:my-12">
+          <MonthlyAttendanceGrid attendanceData={attendanceData} darkMode={darkMode} />
+        </div>
+
+        {/* District Executive Attendance Chart */}
+        <div className="my-8 md:my-12">
+          <DistrictExecutiveChart attendanceData={attendanceData} darkMode={darkMode} />
+        </div>
+
+        {/* Year-End Attendance Chart */}
+        <div className="my-8 md:my-12">
+          <YearEndChart attendanceData={attendanceData} darkMode={darkMode} />
+        </div>
+        
+        <div className="mb-6">
+          <div className="font-bold text-purple-700 mb-1">
+            Top 3 Congregations: {getTopCongregations(attendanceData, currentYear).length === 0 ? 'No data' : (
+              getTopCongregations(attendanceData, currentYear).map(([cong, count], idx) => (
+                <span key={cong} className="inline-block mr-3">
+                  {idx + 1}. {cong} ({count} times)
+                </span>
+              ))
+            )}
+          </div>
+          <div className="font-bold text-green-700 mb-1">
+            Top 3 Attendees: {leaderboard.length === 0 ? 'No data' : (
+              leaderboard.slice(0, 3).map(([person, count], idx) => (
+                <span key={person} className="inline-block mr-3">
+                  {idx + 1}. {person} ({count} times)
+                </span>
+              ))
+            )}
+          </div>
+          <p className="mb-2 text-blue-700 font-semibold">
+            Unique People Attended This Year: {uniquePeople.length}
+          </p>
+          <div className="overflow-x-auto">
+            <table className="min-w-[300px] border border-gray-300 rounded-lg">
+              <thead className="bg-gray-200 dark:bg-gray-700">
+                <tr>
+                  <th className="px-3 py-2 text-left">Name</th>
+                  <th className="px-3 py-2 text-left">Attendance Count</th>
+                </tr>
+              </thead>
+              <tbody>
+                {leaderboard.map(([person, count]) => (
+                  <tr key={person}>
+                    <td className="border px-3 py-1">{person}</td>
+                    <td className="border px-3 py-1">{count}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-
-          {/* Monthly Attendance Grid */}
-          <div className="my-8 md:my-12">
-            <MonthlyAttendanceGrid attendanceData={attendanceData} darkMode={darkMode} />
-          </div>
-
-          {/* District Executive Attendance Chart */}
-          <div className="my-8 md:my-12">
-            <DistrictExecutiveChart attendanceData={attendanceData} darkMode={darkMode} />
-          </div>
-
-          {/* Year-End Attendance Chart */}
-          <div className="my-8 md:my-12">
-            <YearEndChart attendanceData={attendanceData} darkMode={darkMode} />
-          </div>
         </div>
-        )}
+        <MonthlyAttendanceTrendChart
+          attendanceData={attendanceData}
+          previousYearData={previousYearAttendanceData}
+          darkMode={darkMode}
+        />
       </div>
 
       {/* Delete Confirmation Modal */}

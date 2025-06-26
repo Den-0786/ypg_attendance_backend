@@ -16,6 +16,7 @@ export default function YearEndChart({ attendanceData, darkMode }) {
     // Always process data to show all congregations, even if no attendance data
     extractAvailableYears();
     processData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [attendanceData, selectedYear]);
 
   const extractAvailableYears = () => {
@@ -82,15 +83,6 @@ export default function YearEndChart({ attendanceData, darkMode }) {
       }
     });
 
-    // Debug: Log Emmanuel's data specifically
-    const emmanuelData = congregationMap.get("Emmanuel Congregation Ahinsan");
-    console.log('YearEndChart - Emmanuel monthly data:', emmanuelData);
-    console.log('YearEndChart - Emmanuel June data:', emmanuelData ? emmanuelData[5] : 'N/A');
-    console.log('YearEndChart - Selected year:', selectedYear);
-    console.log('YearEndChart - Current year:', currentYear);
-    console.log('YearEndChart - Attendance data length:', attendanceData?.length || 0);
-    console.log('YearEndChart - First attendance entry:', attendanceData?.[0]);
-
     const congregationsList = Array.from(congregationMap.keys()).sort();
 
     // Create chart data with congregations as bars and months as segments
@@ -127,13 +119,6 @@ export default function YearEndChart({ attendanceData, darkMode }) {
     // Sort by attendance rate (descending) but keep all congregations
     data.sort((a, b) => parseFloat(b.attendanceRate) - parseFloat(a.attendanceRate));
     
-    console.log('YearEndChart - All congregations being displayed:', congregationsList);
-    console.log('YearEndChart - Chart data:', data);
-    console.log('YearEndChart - Emmanuel chart data:', data.find(d => d.congregation === 'Emmanuel Congregation Ahinsan'));
-    console.log('YearEndChart - Current year:', selectedYear, 'Current month:', currentMonth);
-    console.log('YearEndChart - Attendance data received:', attendanceData?.length || 0, 'entries');
-    console.log('YearEndChart - Available years:', availableYears);
-    
     // Only set chart data if we have attendance data or if this is the initial load
     if (attendanceData?.length > 0 || chartData.length === 0) {
     setChartData(data);
@@ -143,8 +128,6 @@ export default function YearEndChart({ attendanceData, darkMode }) {
   const getBarColor = (monthIndex, data) => {
     // Check if this month has attendance data
     const hasAttendance = data.monthlyAttendance && data.monthlyAttendance[monthIndex] > 0;
-    
-    console.log(`getBarColor - Month ${monthIndex}, Congregation: ${data.congregation}, HasAttendance: ${hasAttendance}, AttendanceCount: ${data.monthlyAttendance ? data.monthlyAttendance[monthIndex] : 'N/A'}`);
     
     if (hasAttendance) {
       // Colors for months with attendance
@@ -163,12 +146,10 @@ export default function YearEndChart({ attendanceData, darkMode }) {
         '#F43F5E', // Rose - December
       ];
       const color = attendanceColors[monthIndex];
-      console.log(`getBarColor - Using attendance color: ${color}`);
       return color;
     } else {
       // Ash/Gray for months with no attendance (instead of black)
       const color = '#D1D5DB'; // Light gray/ash color
-      console.log(`getBarColor - Using absent color: ${color}`);
       return color;
     }
   };
@@ -183,52 +164,49 @@ export default function YearEndChart({ attendanceData, darkMode }) {
       const currentMonth = currentDate.getMonth();
       
       return (
-        <div className={`p-4 rounded-xl shadow-xl border backdrop-blur-sm ${
-          darkMode ? 'bg-gray-800/95 border-gray-600 text-white' : 'bg-white/95 border-gray-200 text-gray-900'
-        }`}>
+        <div className={
+          'p-2 rounded-xl shadow-2xl border backdrop-blur-sm bg-gray-900 border-gray-700 text-white'
+        }>
           <p className="font-bold text-lg mb-3 text-center">{label}</p>
           <div className="space-y-2 text-sm">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-gray-500 dark:text-gray-400">Total Meetings</p>
+                <p className="text-gray-400">Total Meetings</p>
                 <p className="font-semibold text-lg">{data.totalMeetings}</p>
               </div>
               <div>
-                <p className="text-gray-500 dark:text-gray-400">Full Year Rate</p>
+                <p className="text-gray-400">Full Year Rate</p>
                 <p className="font-semibold text-lg">{data.attendanceRate}%</p>
               </div>
             </div>
-            
-            {selectedYear === currentYear && data.currentYearProgress && (
-              <div className="mt-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                <p className="text-blue-700 dark:text-blue-300 font-medium">Current Year Progress</p>
-                <p className="text-blue-800 dark:text-blue-200 font-bold text-lg">
-                  {data.currentYearProgress}% ({months.slice(0, currentMonth + 1).join(', ')})
+          {/* {selectedYear === currentYear && data.currentYearProgress && (
+              <div className="mt-3 p-2 bg-blue-900/20 rounded-lg">
+                <p className="text-blue-300 ">Current Year Progress</p>
+                <p className="text-blue-200  text-sm">
+                  {data.currentYearProgress}% 
                 </p>
-              </div>
-            )}
-            
-            <div className="mt-3 pt-3 border-t border-gray-300 dark:border-gray-600">
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Monthly Breakdown:</p>
+              </div> 
+            )} */}
+            <div className="mt-3 pt-3 border-t border-gray-700">
+              <p className="text-xs text-gray-400 mb-2">Monthly Breakdown:</p>
               <div className="grid grid-cols-4 gap-1">
                 {months.map((month, index) => {
                   const hasAttendance = data.monthlyAttendance && data.monthlyAttendance[index] > 0;
                   const isCurrentMonth = selectedYear === currentYear && index === currentMonth;
                   const isFutureMonth = selectedYear === currentYear && index > currentMonth;
-                  
                   return (
                     <div key={month} className="flex items-center gap-1">
                       <div 
                         className={`w-2 h-2 rounded-full ${
                           hasAttendance ? 'bg-green-500' : 
-                          isFutureMonth ? 'bg-gray-300 dark:bg-gray-600' :
-                          'bg-gray-300'
+                          isFutureMonth ? 'bg-gray-600' :
+                          'bg-gray-600'
                         }`}
                       />
                       <span className={`text-xs ${
-                        isCurrentMonth ? 'font-bold text-blue-600 dark:text-blue-400' :
-                        isFutureMonth ? 'text-gray-400 dark:text-gray-500' :
-                        'text-gray-600 dark:text-gray-300'
+                        isCurrentMonth ? 'font-bold text-blue-400' :
+                        isFutureMonth ? 'text-gray-500' :
+                        'text-gray-300'
                       }`}>
                         {month.slice(0, 3)}
                       </span>
@@ -243,7 +221,6 @@ export default function YearEndChart({ attendanceData, darkMode }) {
     }
     return null;
   };
-
   const exportData = () => {
     const csvContent = [
       ['Congregation', 'Total Meetings', 'Attendance Rate (%)', 'Present Months', 'Absent Months', ...months],
@@ -327,75 +304,86 @@ export default function YearEndChart({ attendanceData, darkMode }) {
         </div>
       </div>
       
-      <ResponsiveContainer width="100%" height={400}>
-        <BarChart
-          data={chartData}
-          layout="horizontal"
-          margin={{ top: 20, right: 30, left: 100, bottom: 80 }}
-          barGap={4}
-          barCategoryGap={16}
-        >
-          <XAxis 
-            type="category" 
-            dataKey="congregation" 
-            stroke={darkMode ? "white" : "black"}
-            fontSize={8}
-            angle={-45}
-            textAnchor="end"
-            height={120}
-            interval={0}
-            tick={{ fontSize: 8 }}
-            axisLine={true}
-            tickLine={true}
-          />
-          <YAxis 
-            type="number" 
-            stroke={darkMode ? "white" : "black"}
-            fontSize={12}
-            allowDecimals={false}
-            domain={[0, 12]}
-            ticks={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}
-            label={{ 
-              value: 'Months with Attendance', 
-              angle: -90, 
-              position: 'insideLeft',
-              style: { textAnchor: 'middle' }
-            }}
-            axisLine={true}
-            tickLine={true}
-          />
-          <Tooltip content={<CustomTooltip />} />
-          
-          {/* Create bars for each month */}
-          {months.map((month, monthIndex) => {
-            const monthKey = month.toLowerCase();
-            console.log(`Rendering bar for ${month} (index ${monthIndex})`);
-            return (
-              <Bar
-                key={month}
-                dataKey={monthKey}
-                barSize={8}
-                radius={[2, 2, 2, 2]}
-                stackId="a"
-              >
-                {chartData.map((entry, index) => {
-                  const hasAttendance = entry.monthlyAttendance && entry.monthlyAttendance[monthIndex] > 0;
-                  const color = hasAttendance ? 
-                    ['#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EF4444', '#06B6D4', '#84CC16', '#F97316', '#EC4899', '#6366F1', '#14B8A6', '#F43F5E'][monthIndex] : 
-                    '#D1D5DB';
-                  console.log(`Cell color for ${month} (${entry.congregation}): ${color}, HasAttendance: ${hasAttendance}`);
-                  return (
-                    <Cell key={`cell-${index}`} fill={color} />
-                  );
-                })}
-              </Bar>
-            );
-          })}
-        </BarChart>
-      </ResponsiveContainer>
+      <div className="w-full overflow-x-auto flex items-center justify-center">
+        <div className="min-w-[700px]"> 
+          <ResponsiveContainer width="100%" height={400}>
+            <BarChart
+              data={chartData}
+              layout="horizontal"
+              margin={{ 
+                top: 20, 
+                right: 20, 
+                left: 100, 
+                bottom: chartData.length > 5 ? 120 : 80 // Dynamic bottom margin
+              }}
+              barGap={4}
+              barCategoryGap={16}
+            >
+              <XAxis 
+                type="category" 
+                dataKey="congregation" 
+                stroke={darkMode ? "white" : "black"}
+                fontSize={10} 
+                angle={-45}
+                textAnchor="end"
+                height={chartData.length > 5 ? 140 : 100} 
+                interval={0} 
+                tick={{ fontSize: window.innerWidth < 768 ? 10 : 8 }}
+                axisLine={true}
+                tickLine={true}
+              />
+              <YAxis 
+                type="number" 
+                stroke={darkMode ? "white" : "black"}
+                fontSize={window.innerWidth < 768 ? 14 : 12} 
+                allowDecimals={false}
+                domain={[0, 12]}
+                ticks={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}
+                label={{ 
+                  value: 'Months with Attendance', 
+                  angle: -90, 
+                  position: 'insideLeft',
+                  style: { 
+                    textAnchor: 'middle',
+                    fontSize: window.innerWidth < 768 ? 12 : 10 // Responsive label size
+                  }
+                }}
+                axisLine={true}
+                tickLine={true}
+              />
+              <Tooltip content={<CustomTooltip />} />
+              
+              {/* Create bars for each month */}
+              {months.map((month, monthIndex) => {
+                const monthKey = month.toLowerCase();
+                return (
+                  <Bar
+                    key={month}
+                    dataKey={monthKey}
+                    barSize={window.innerWidth < 768 ? 14 : 10} 
+                    radius={[2, 2, 2, 2]}
+                    stackId="a"
+                  >
+                    {chartData.map((entry, index) => {
+                      const hasAttendance = entry.monthlyAttendance && entry.monthlyAttendance[monthIndex] > 0;
+                      const color = hasAttendance ? 
+                        ['#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EF4444', '#06B6D4', 
+                        '#84CC16', '#F97316', '#EC4899', '#6366F1', '#14B8A6', '#F43F5E'][monthIndex] : 
+                        '#D1D5DB';
+                      return (
+                        <Cell key={`cell-${index}`} fill={color} />
+                      );
+                    })}
+                  </Bar>
+                );
+              })}
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
 
       {/* Enhanced Legend */}
-      <div className="mt-4 md:mt-6 space-y-3">
+      <div className="mt-4 md:-mt-16 space-y-3">
         <div className="flex flex-wrap items-center justify-center gap-3 md:gap-6 text-xs md:text-sm">
           <div className="flex items-center gap-1 md:gap-2">
             <div className="w-3 h-3 bg-green-500 border border-green-600 rounded-sm"></div>
@@ -420,7 +408,7 @@ export default function YearEndChart({ attendanceData, darkMode }) {
         </div>
         
         <div className="text-center text-xs text-gray-500 dark:text-gray-400 space-y-1">
-          <p>• Each bar represents a congregation's attendance throughout {selectedYear}</p>
+          <p>• Each bar represents a congregation&apos;s attendance throughout {selectedYear}</p>
           <p>• All 9 system congregations are displayed with monthly attendance segments</p>
           <p>• Bars fill up to current month ({months[new Date().getMonth()]}) with modern rounded design</p>
           {selectedYear === new Date().getFullYear() && (

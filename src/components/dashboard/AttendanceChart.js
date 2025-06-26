@@ -15,6 +15,7 @@ export default function AttendanceChart({ attendanceData, darkMode }) {
     if (attendanceData && attendanceData.length > 0) {
       processAttendanceData();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [attendanceData]);
 
   const processAttendanceData = () => {

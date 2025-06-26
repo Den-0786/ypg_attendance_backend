@@ -10,8 +10,6 @@ export default function AdminPage() {
   const [checkingSession, setCheckingSession] = useState(true);
   const hasCheckedSession = useRef(false);
 
-  console.log('Dashboard page rendered - loggedIn:', loggedIn, 'userRole:', userRole, 'checkingSession:', checkingSession);
-
   // List of executive roles that can access dashboard
   const executiveRoles = [
     'admin', 'President', "President's Rep", 'Secretary', 'Assistant Secretary',

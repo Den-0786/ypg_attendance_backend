@@ -39,6 +39,7 @@ const toTitleCase = (str) => {
 };
 
 export default function ApologyForm({ meetingInfo }) {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const context = useMeetingDate ? useMeetingDate() : {};
   const meetingDate = meetingInfo ? meetingInfo.date : context.meetingDate;
   const [type, setType] = useState('local');
@@ -48,6 +49,9 @@ export default function ApologyForm({ meetingInfo }) {
   const [menuOpenIndex, setMenuOpenIndex] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [confirmIndex, setConfirmIndex] = useState(null);
+  const [adminUsername, setAdminUsername] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [authError, setAuthError] = useState('');
 
   const handleChange = (e) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -97,13 +101,21 @@ export default function ApologyForm({ meetingInfo }) {
   };
 
   const handleFinalSubmit = async () => {
+    setAuthError('');
+    if (!adminUsername || !adminPassword) {
+      setAuthError('Admin username and password are required.');
+      return;
+    }
     try {
-      const payload = apologies.map(({ meetingDate, ...rest }) => ({
-        ...rest,
-        meeting_date: meetingDate,
-        timestamp: new Date().toTimeString().slice(0, 8),
-      }));
-
+      const payload = {
+        apologies: apologies.map(({ meetingDate, ...rest }) => ({
+          ...rest,
+          meeting_date: meetingDate,
+          timestamp: new Date().toTimeString().slice(0, 8),
+        })),
+        admin_username: adminUsername,
+        admin_password: adminPassword,
+      };
       const response = await fetch(`/api/submit-apologies`, {
         method: 'POST',
         headers: {
@@ -112,18 +124,20 @@ export default function ApologyForm({ meetingInfo }) {
         credentials: 'include',
         body: JSON.stringify(payload),
       });
-
       const data = await response.json();
-
       if (response.ok) {
         toast.success('Apologies submitted successfully!');
         setApologies([]);
         setShowModal(false);
+        setAdminUsername('');
+        setAdminPassword('');
+        setAuthError('');
       } else {
+        setAuthError(data.error || 'Failed to submit apologies');
         toast.error(data.error || 'Failed to submit apologies');
       }
     } catch (error) {
-      console.error('Error submitting apologies:', error);
+      setAuthError('Network error occurred');
       toast.error('Network error occurred');
     }
   };
@@ -274,6 +288,30 @@ export default function ApologyForm({ meetingInfo }) {
                     </li>
                   ))}
                 </ul>
+                {/* Admin credentials fields */}
+                <div className="mt-4 space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Admin Username <span className="text-red-500">*</span>
+                    <input
+                      type="text"
+                      value={adminUsername}
+                      onChange={e => setAdminUsername(e.target.value)}
+                      className="w-full mt-1 p-1 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                      required
+                    />
+                  </label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Admin Password <span className="text-red-500">*</span>
+                    <input
+                      type="password"
+                      value={adminPassword}
+                      onChange={e => setAdminPassword(e.target.value)}
+                      className="w-full mt-1 p-1 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                      required
+                    />
+                  </label>
+                  {authError && <p className="text-red-500 text-sm mt-1">{authError}</p>}
+                </div>
                 <div className="text-right mt-4">
                   <button onClick={handleFinalSubmit} className="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700">
                     Submit All

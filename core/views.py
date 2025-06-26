@@ -107,16 +107,50 @@ def submit_attendance(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def submit_apologies(request):
-    user_id = request.session.get('user_id')
-    if not user_id:
-        return Response({'error': 'Authentication required'}, status=401)
+    print(f"[DEBUG] submit_apologies called - Method: {request.method}")
+    print(f"[DEBUG] Request data: {request.data}")
     
-    try:
-        user = Credential.objects.get(id=user_id)
-    except Credential.DoesNotExist:
-        return Response({'error': 'User not found'}, status=401)
+    # First try to authenticate with provided admin credentials
+    admin_username = request.data.get('admin_username')
+    admin_password = request.data.get('admin_password')
     
-    serializer = ApologyEntrySerializer(data=request.data, many=True)
+    if admin_username and admin_password:
+        try:
+            user = Credential.objects.get(username=admin_username)
+            if user.check_password(admin_password):
+                # Set session for this user
+                request.session.flush()
+                request.session['user_id'] = user.id
+                request.session['username'] = user.username
+                request.session['role'] = user.role
+                request.session.set_expiry(86400)
+                request.session.save()
+                print(f"[DEBUG] Admin authentication successful - User: {user.username}, Role: {user.role}")
+            else:
+                return Response({'error': 'Invalid admin credentials'}, status=401)
+        except Credential.DoesNotExist:
+            return Response({'error': 'Admin user not found'}, status=401)
+    else:
+        # Fall back to session authentication
+        user_id = request.session.get('user_id')
+        print(f"[DEBUG] User authenticated: {bool(user_id)}")
+        print(f"[DEBUG] Session user_id: {user_id}")
+        print(f"[DEBUG] Session data: {dict(request.session)}")
+        
+        if not user_id:
+            return Response({'error': 'Authentication required'}, status=401)
+        
+        try:
+            user = Credential.objects.get(id=user_id)
+        except Credential.DoesNotExist:
+            return Response({'error': 'User not found'}, status=401)
+    
+    # Get the apologies data (remove admin credentials from the data)
+    apologies_data = request.data.get('apologies', [])
+    if not apologies_data:
+        return Response({'error': 'No apologies data provided'}, status=400)
+    
+    serializer = ApologyEntrySerializer(data=apologies_data, many=True)
 
     if serializer.is_valid():
         names_seen = set()
@@ -134,14 +168,14 @@ def submit_apologies(request):
                 name=item['name'],
                 meeting_date=item['meeting_date'],
                 type=item['type'],
-                submitted_by_id=user_id
+                submitted_by_id=user.id
             ).exists()
 
             if existing:
                 return Response({'error': f"{item['name']} has already submitted an apology for this meeting."}, status=400)
 
             item.pop('timestamp', None)  # Optional cleanup
-            ApologyEntry.objects.create(**item, submitted_by_id=user_id)
+            ApologyEntry.objects.create(**item, submitted_by_id=user.id)
 
         return Response({'message': 'Apologies submitted successfully!'}, status=201)
 

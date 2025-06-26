@@ -17,7 +17,6 @@ export function useAuth() {
 
   const checkSession = async () => {
     try {
-      console.log('Checking session...');
       const res = await fetch(`/api/session-status`, {
         credentials: 'include',
         headers: {
@@ -26,9 +25,6 @@ export function useAuth() {
           'Expires': '0'
         },
       });
-
-      console.log('Session check response status:', res.status);
-      console.log('Session check response URL:', res.url);
 
       if (!res.ok) {
         // Don't show error for 401/403 as it's normal for non-logged in users
@@ -42,7 +38,6 @@ export function useAuth() {
       }
 
       const data = await res.json();
-      console.log('SESSION STATUS:', data);
       if (data.loggedIn) {
         setLoggedIn(true);
         setUserRole(data.role);
@@ -65,16 +60,12 @@ export function useAuth() {
 
 const handleLogin = async (username, password) => {
   try {
-    console.log('Attempting login...');
     const res = await fetch(`/api/login-django`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify({ username, password }),
     });
-
-    console.log('Login response status:', res.status);
-    console.log('Login response URL:', res.url);
 
     if (!res.ok) {
       let errorData = {};
@@ -86,7 +77,6 @@ const handleLogin = async (username, password) => {
     }
 
     const data = await res.json();
-    console.log('Login response data:', data);
     
     // Set auth state immediately
     setLoggedIn(true);
@@ -94,11 +84,8 @@ const handleLogin = async (username, password) => {
     // Always set meetingSet to true for admin
     setMeetingSet(data.role === 'admin' ? true : false);
     
-    console.log('Auth state set, waiting before session check...');
-    
     // Wait a moment for session to be set, then verify
     setTimeout(() => {
-      console.log('Performing session check after login...');
       checkSession();
     }, 500); // Increased delay to 500ms
     
@@ -107,7 +94,6 @@ const handleLogin = async (username, password) => {
     // Return the role for immediate redirection
     return data.role;
   } catch (err) {
-    console.error('Login error:', err);
     toast.error('Login network error');
     return false;
   }

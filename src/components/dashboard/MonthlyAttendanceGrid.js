@@ -13,6 +13,7 @@ export default function MonthlyAttendanceGrid({ attendanceData, darkMode }) {
   useEffect(() => {
     // Always process data to show the grid, even if no attendance data
     processAttendanceData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [attendanceData]);
 
   const processAttendanceData = () => {
@@ -120,7 +121,7 @@ export default function MonthlyAttendanceGrid({ attendanceData, darkMode }) {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 md:p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-4 md:p-6">
       <h2 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white mb-4 md:mb-6">
         Monthly Attendance Grid
       </h2>

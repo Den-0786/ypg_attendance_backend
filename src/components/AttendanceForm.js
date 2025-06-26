@@ -28,10 +28,31 @@ const toTitleCase = (str) =>
   ).join(' ');
 
 export default function AttendanceForm({ meetingInfo }) {
+
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const context = useMeetingDate ? useMeetingDate() : {};
-  const meetingDate = meetingInfo ? meetingInfo.date : context.meetingDate;
-  const meetingTitle = meetingInfo ? meetingInfo.title : context.meetingTitle;
+  
+  const [meetingDate, setMeetingDate] = useState('');
+  const [meetingTitle, setMeetingTitle] = useState('');
+
+  useEffect(() => {
+    // Set meeting info after component mounts (Chrome-safe)
+    const storedDate = 
+      (meetingInfo && meetingInfo.date) ||
+      context.meetingDate ||
+      localStorage.getItem('meetingDate') ||
+      '';
+    const storedTitle = 
+      (meetingInfo && meetingInfo.title) ||
+      context.meetingTitle ||
+      localStorage.getItem('meetingTitle') ||
+      '';
+    
+    setMeetingDate(storedDate);
+    setMeetingTitle(storedTitle);
+  
+  }, [meetingInfo, context.meetingDate, context.meetingTitle]);
+
   const [type, setType] = useState('local');
   const [form, setForm] = useState({
     name: '', phone: '', email: '', congregation: '', position: ''
@@ -201,7 +222,6 @@ export default function AttendanceForm({ meetingInfo }) {
       toast.error('No entries to submit');
       return;
     }
-
     setIsSubmitting(true);
     try {
       const payload = attendees.map(({ meetingDate, meetingTitle, ...rest }) => ({
@@ -209,11 +229,6 @@ export default function AttendanceForm({ meetingInfo }) {
         meeting_date: meetingDate,
         timestamp: new Date().toTimeString().slice(0, 8),
       }));
-
-      console.log('Meeting date:', meetingDate);
-      console.log('Meeting date type:', typeof meetingDate);
-      console.log('Submitting attendance payload:', payload);
-
       const res = await fetch(`/api/submit-attendance`, {
         method: 'POST',
         headers: {
@@ -222,11 +237,7 @@ export default function AttendanceForm({ meetingInfo }) {
         credentials: 'include',
         body: JSON.stringify(payload),
       });
-
       const data = await res.json();
-      console.log('Submit response status:', res.status);
-      console.log('Submit response data:', data);
-
       if (res.ok) {
         toast.success('Attendance submitted successfully!');
         setAttendees([]);
@@ -235,7 +246,6 @@ export default function AttendanceForm({ meetingInfo }) {
         toast.error(data.error || 'Failed to submit attendance');
       }
     } catch (error) {
-      console.error('Error submitting attendance:', error);
       toast.error('Network error occurred');
     } finally {
       setIsSubmitting(false);

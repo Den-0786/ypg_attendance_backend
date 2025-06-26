@@ -15,23 +15,22 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [deactivating, setDeactivating] = useState(false);
+  const [adminUsername, setAdminUsername] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [authError, setAuthError] = useState('');
 
   const handleBackToForms = () => {
-    console.log('Back to Forms button clicked');
-    console.log('Closing form using onClose prop');
     onClose();
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!dateInput || !usernameInput || !passwordInput) {
-      toast.error('Please fill in all fields');
-      return;
-    }
-
+    setAuthError('');
+    // if (!dateInput || !usernameInput || !passwordInput || !adminUsername || !adminPassword) {
+    //   toast.error('Please fill in all fields');
+    //   return;
+    // }
     setLoading(true);
-
     try {
       const res = await fetch(`/api/set-meeting`, {
         method: 'POST',
@@ -44,30 +43,32 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
           date: dateInput,
           login_username: usernameInput,
           login_password: passwordInput,
+          admin_username: adminUsername,
+          admin_password: adminPassword,
         }),
       });
-
       const data = await res.json();
-
       if (res.ok) {
         toast.success('Meeting set successfully');
-        // Save to context and localStorage
         setMeetingDate(dateInput);
         setMeetingTitle(titleInput);
         localStorage.setItem('meetingDate', dateInput);
         localStorage.setItem('meetingTitle', titleInput);
-        
         setDateInput('');
         setTitleInput('');
         setUsernameInput('');
         setPasswordInput('');
+        setAdminUsername('');
+        setAdminPassword('');
+        setAuthError('');
         onClose();
         onMeetingSet();
       } else {
+        setAuthError(data.error || 'Failed to set meeting');
         toast.error(data.error || 'Failed to set meeting');
       }
     } catch (error) {
-      console.error('Error setting meeting:', error);
+      setAuthError('Network error occurred');
       toast.error('Network error occurred');
     } finally {
       setLoading(false);
@@ -95,7 +96,6 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
         toast.error(data.error || 'Failed to deactivate meeting');
       }
     } catch (error) {
-      console.error('Error deactivating meeting:', error);
       toast.error('Network error occurred');
     } finally {
       setDeactivating(false);
@@ -158,7 +158,7 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
           />
         </div>
 
-        <div className="space-y-1">
+        {/* <div className="space-y-1">
           <label className="block text-sm font-medium text-gray-700">Login Username</label>
           <input
             type="text"
@@ -190,7 +190,41 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
               {showPassword ? <HiEye size={20} /> : <HiEyeOff size={20} />}
             </button>
           </div>
+        </div> */}
+
+        <div className="space-y-1">
+          <label className="block text-sm font-medium text-gray-700">Admin Username</label>
+          <input
+            type="text"
+            value={adminUsername}
+            onChange={(e) => setAdminUsername(e.target.value)}
+            placeholder="Admin username"
+            className="w-full p-1 border border-yellow-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition"
+            required
+          />
         </div>
+        <div className="space-y-1">
+          <label className="block text-sm font-medium text-gray-700">Admin Password</label>
+          <div className="relative">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              value={adminPassword}
+              onChange={(e) => setAdminPassword(e.target.value)}
+              placeholder="Admin password"
+              className="w-full p-1 border border-yellow-300 rounded-xl text-gray-900 pr-10 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition"
+              required
+            />
+            <button
+              type="button"
+              className="absolute right-3 top-2 text-gray-500 hover:text-yellow-600"
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+            >
+              {showPassword ? <HiEye size={20} /> : <HiEyeOff size={20} />}
+            </button>
+          </div>
+        </div>
+        {authError && <p className="text-red-500 text-sm mt-1">{authError}</p>}
 
         <button
           type="submit"

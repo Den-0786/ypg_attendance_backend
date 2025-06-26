@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 import { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
@@ -76,14 +77,6 @@ export default function DistrictExecutiveChart({ attendanceData, darkMode }) {
       }
     });
 
-    // Debug: Log President's data specifically
-    const presidentData = positionMap.get("President");
-    console.log('DistrictChart - President monthly data:', presidentData);
-    console.log('DistrictChart - President June data:', presidentData ? presidentData[5] : 'N/A');
-    console.log('DistrictChart - Selected year:', selectedYear);
-    console.log('DistrictChart - Current year:', currentYear);
-    console.log('DistrictChart - District attendance data length:', attendanceData?.filter(e => e.type === 'district').length || 0);
-
     const positionsList = Array.from(positionMap.keys()).sort();
 
     // Create chart data with positions as bars and months as segments
@@ -120,19 +113,11 @@ export default function DistrictExecutiveChart({ attendanceData, darkMode }) {
     // Sort by attendance rate (descending) but keep all positions
     data.sort((a, b) => parseFloat(b.attendanceRate) - parseFloat(a.attendanceRate));
     
-    console.log('DistrictChart - All positions being displayed:', positionsList);
-    console.log('DistrictChart - Chart data:', data);
-    console.log('DistrictChart - President chart data:', data.find(d => d.position === 'President'));
-    console.log('DistrictChart - Current year:', selectedYear, 'Current month:', currentMonth);
-    console.log('DistrictChart - District attendance data received:', attendanceData?.filter(e => e.type === 'district').length || 0, 'entries');
-    console.log('DistrictChart - Available years:', availableYears);
-    
     // Only set chart data if we have attendance data or if this is the initial load
     if (attendanceData?.filter(e => e.type === 'district').length > 0 || chartData.length === 0) {
       setChartData(data);
     }
   };
-
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
@@ -143,52 +128,49 @@ export default function DistrictExecutiveChart({ attendanceData, darkMode }) {
       const currentMonth = currentDate.getMonth();
       
       return (
-        <div className={`p-4 rounded-xl shadow-xl border backdrop-blur-sm ${
-          darkMode ? 'bg-gray-800/95 border-gray-600 text-white' : 'bg-white/95 border-gray-200 text-gray-900'
-        }`}>
+        <div className={
+          'p-4 rounded-xl  shadow-2xl border backdrop-blur-sm bg-gray-900 border-gray-700 text-white'
+        }>
           <p className="font-bold text-lg mb-3 text-center">{label}</p>
           <div className="space-y-2 text-sm">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-gray-500 dark:text-gray-400">Total Meetings</p>
+                <p className="text-gray-400">Total Meetings</p>
                 <p className="font-semibold text-lg">{data.totalMeetings}</p>
               </div>
               <div>
-                <p className="text-gray-500 dark:text-gray-400">Full Year Rate</p>
+                <p className="text-gray-400">Full Year Rate</p>
                 <p className="font-semibold text-lg">{data.attendanceRate}%</p>
               </div>
             </div>
-            
-            {selectedYear === currentYear && data.currentYearProgress && (
-              <div className="mt-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                <p className="text-blue-700 dark:text-blue-300 font-medium">Current Year Progress</p>
-                <p className="text-blue-800 dark:text-blue-200 font-bold text-lg">
+            {/* {selectedYear === currentYear && data.currentYearProgress && (
+              <div className="mt-3 p-2 bg-blue-900/20 rounded-lg">
+                <p className="text-blue-300 font-medium">Current Year Progress</p>
+                <p className="text-blue-200 font-bold text-lg">
                   {data.currentYearProgress}% ({months.slice(0, currentMonth + 1).join(', ')})
                 </p>
               </div>
-            )}
-            
-            <div className="mt-3 pt-3 border-t border-gray-300 dark:border-gray-600">
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Monthly Breakdown:</p>
+            )} */}
+            <div className="mt-3 pt-3 border-t border-gray-700">
+              <p className="text-xs text-gray-400 mb-2">Monthly Breakdown:</p>
               <div className="grid grid-cols-4 gap-1">
                 {months.map((month, index) => {
                   const hasAttendance = data.monthlyAttendance && data.monthlyAttendance[index] > 0;
                   const isCurrentMonth = selectedYear === currentYear && index === currentMonth;
                   const isFutureMonth = selectedYear === currentYear && index > currentMonth;
-                  
                   return (
                     <div key={month} className="flex items-center gap-1">
                       <div 
                         className={`w-2 h-2 rounded-full ${
                           hasAttendance ? 'bg-green-500' : 
-                          isFutureMonth ? 'bg-gray-300 dark:bg-gray-600' :
-                          'bg-gray-300'
+                          isFutureMonth ? 'bg-gray-600' :
+                          'bg-gray-600'
                         }`}
                       />
                       <span className={`text-xs ${
-                        isCurrentMonth ? 'font-bold text-blue-600 dark:text-blue-400' :
-                        isFutureMonth ? 'text-gray-400 dark:text-gray-500' :
-                        'text-gray-600 dark:text-gray-300'
+                        isCurrentMonth ? 'font-bold text-blue-400' :
+                        isFutureMonth ? 'text-gray-500' :
+                        'text-gray-300'
                       }`}>
                         {month.slice(0, 3)}
                       </span>
@@ -200,52 +182,52 @@ export default function DistrictExecutiveChart({ attendanceData, darkMode }) {
           </div>
         </div>
       );
-    }
-    return null;
-  };
+      }
+      return null;
+    };
 
-  const exportData = () => {
-    const csvContent = [
-      ['Position', 'Total Meetings', 'Attendance Rate (%)', 'Present Months', 'Absent Months', ...months],
-      ...chartData.map(data => {
-        const presentMonths = months.filter(month => data[month.toLowerCase()] === 1).length;
-        const absentMonths = 12 - presentMonths;
-        return [
-          data.position,
-          data.totalMeetings,
-          data.attendanceRate,
-          presentMonths,
-          absentMonths,
-          ...months.map(month => data[month.toLowerCase()] === 1 ? 'Present' : 'Absent')
-        ];
-      })
-    ].map(row => row.join(',')).join('\n');
+    const exportData = () => {
+      const csvContent = [
+        ['Position', 'Total Meetings', 'Attendance Rate (%)', 'Present Months', 'Absent Months', ...months],
+        ...chartData.map(data => {
+          const presentMonths = months.filter(month => data[month.toLowerCase()] === 1).length;
+          const absentMonths = 12 - presentMonths;
+          return [
+            data.position,
+            data.totalMeetings,
+            data.attendanceRate,
+            presentMonths,
+            absentMonths,
+            ...months.map(month => data[month.toLowerCase()] === 1 ? 'Present' : 'Absent')
+          ];
+        })
+      ].map(row => row.join(',')).join('\n');
 
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `district_executives_attendance_${selectedYear}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-  };
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `district_executives_attendance_${selectedYear}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    };
 
-  if (!chartData.length) {
-    return (
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 md:p-6">
-        <div className="flex justify-center items-center h-64">
-          <div className="text-gray-500 dark:text-gray-400 text-center">
-            <p>Loading district executives...</p>
+    if (!chartData.length) {
+      return (
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 md:p-6">
+          <div className="flex justify-center items-center h-64">
+            <div className="text-gray-500 dark:text-gray-400 text-center">
+              <p>Loading district executives...</p>
+            </div>
           </div>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 md:p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-4 md:p-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 md:mb-6">
         <h2 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
           <FaUsers className="text-blue-500" />
@@ -288,75 +270,86 @@ export default function DistrictExecutiveChart({ attendanceData, darkMode }) {
         </div>
       </div>
       
-      <ResponsiveContainer width="100%" height={400}>
-        <BarChart
-          data={chartData}
-          layout="horizontal"
-          margin={{ top: 20, right: 30, left: 100, bottom: 80 }}
-          barGap={4}
-          barCategoryGap={16}
-        >
-          <XAxis 
-            type="category" 
-            dataKey="position" 
-            stroke={darkMode ? "white" : "black"}
-            fontSize={8}
-            angle={-45}
-            textAnchor="end"
-            height={120}
-            interval={0}
-            tick={{ fontSize: 8 }}
-            axisLine={true}
-            tickLine={true}
-          />
-          <YAxis 
-            type="number" 
-            stroke={darkMode ? "white" : "black"}
-            fontSize={12}
-            allowDecimals={false}
-            domain={[0, 12]}
-            ticks={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}
-            label={{ 
-              value: 'Months with Attendance', 
-              angle: -90, 
-              position: 'insideLeft',
-              style: { textAnchor: 'middle' }
-            }}
-            axisLine={true}
-            tickLine={true}
-          />
-          <Tooltip content={<CustomTooltip />} />
-          
-          {/* Create bars for each month */}
-          {months.map((month, monthIndex) => {
-            const monthKey = month.toLowerCase();
-            console.log(`Rendering district bar for ${month} (index ${monthIndex})`);
-            return (
-              <Bar
-                key={month}
-                dataKey={monthKey}
-                barSize={8}
-                radius={[2, 2, 2, 2]}
-                stackId="a"
-              >
-                {chartData.map((entry, index) => {
-                  const hasAttendance = entry.monthlyAttendance && entry.monthlyAttendance[monthIndex] > 0;
-                  const color = hasAttendance ? 
-                    ['#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EF4444', '#06B6D4', '#84CC16', '#F97316', '#EC4899', '#6366F1', '#14B8A6', '#F43F5E'][monthIndex] : 
-                    '#D1D5DB';
-                  console.log(`District cell color for ${month} (${entry.position}): ${color}, HasAttendance: ${hasAttendance}`);
-                  return (
-                    <Cell key={`cell-${index}`} fill={color} />
-                  );
-                })}
-              </Bar>
-            );
-          })}
-        </BarChart>
-      </ResponsiveContainer>
-
+      <div className="w-full overflow-x-auto flex items-center justify-center">
+        <div className="min-w-[700px]"> 
+          <ResponsiveContainer width="100%" height={400}>
+            <BarChart
+              data={chartData}
+              layout="horizontal"
+              margin={{ 
+                top: 20, 
+                right: 20,
+                left: 100, 
+                bottom: 80 
+              }}
+              barGap={4}
+              barCategoryGap={16}
+            >
+              <XAxis 
+                type="category" 
+                dataKey="position" 
+                stroke={darkMode ? "white" : "black"}
+                fontSize={window.innerWidth < 768 ? 10 : 8} 
+                angle={-45}
+                textAnchor="end"
+                height={120}
+                interval={0}
+                tick={{ fontSize: window.innerWidth < 768 ? 10 : 8 }}
+                axisLine={true}
+                tickLine={true}
+              />
+              <YAxis 
+                type="number" 
+                stroke={darkMode ? "white" : "black"}
+                fontSize={window.innerWidth < 768 ? 14 : 12} 
+                allowDecimals={false}
+                domain={[0, 12]}
+                ticks={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}
+                label={{ 
+                  value: 'Months with Attendance', 
+                  angle: -90, 
+                  position: 'insideLeft',
+                  style: { 
+                    textAnchor: 'middle',
+                    fontSize: window.innerWidth < 768 ? 12 : 10 
+                  }
+                }}
+                axisLine={true}
+                tickLine={true}
+              />
+              <Tooltip content={<CustomTooltip />} />
+              
+              {/* Create bars for each month */}
+              {months.map((month, monthIndex) => {
+                const monthKey = month.toLowerCase();
+                return (
+                  <Bar
+                    key={month}
+                    dataKey={monthKey}
+                    barSize={window.innerWidth < 768 ? 12 : 8} 
+                    radius={[2, 2, 2, 2]}
+                    stackId="a"
+                  >
+                    {chartData.map((entry, index) => {
+                      const hasAttendance = entry.monthlyAttendance && entry.monthlyAttendance[monthIndex] > 0;
+                      const color = hasAttendance ? 
+                        ['#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EF4444', '#06B6D4', 
+                        '#84CC16', '#F97316', '#EC4899', '#6366F1', '#14B8A6', '#F43F5E'][monthIndex] : 
+                        '#D1D5DB';
+                      return (
+                        <Cell key={`cell-${index}`} fill={color} />
+                      );
+                    })}
+                  </Bar>
+                );
+              })}
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+            
       {/* Enhanced Legend */}
-      <div className="mt-4 md:mt-6 space-y-3">
+      <div className="mt-6 md:-mt-16 space-y-3">
         <div className="flex flex-wrap items-center justify-center gap-3 md:gap-6 text-xs md:text-sm">
           <div className="flex items-center gap-1 md:gap-2">
             <div className="w-3 h-3 bg-green-500 border border-green-600 rounded-sm"></div>
@@ -381,7 +374,7 @@ export default function DistrictExecutiveChart({ attendanceData, darkMode }) {
         </div>
         
         <div className="text-center text-xs text-gray-500 dark:text-gray-400 space-y-1">
-          <p>• Each bar represents a district executive position's attendance throughout {selectedYear}</p>
+          <p>• Each bar represents a district executive position&apos;s attendance throughout {selectedYear}</p>
           <p>• All 8 district positions are displayed with monthly attendance segments</p>
           <p>• Bars fill up to current month ({months[new Date().getMonth()]}) with modern rounded design</p>
           {selectedYear === new Date().getFullYear() && (
