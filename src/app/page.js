@@ -6,7 +6,7 @@
 // */
 
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@components/hooks/useAuth';
 import LoginForm from '@components/LoginForm';
@@ -15,6 +15,7 @@ export default function Page() {
   const { checkSession, handleLogin, loggedIn, userRole } = useAuth();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
+  const hasCheckedSession = useRef(false);
 
   // List of executive roles
   const executiveRoles = [
@@ -22,9 +23,16 @@ export default function Page() {
     'Financial Secretary', 'Treasurer', 'Bible Studies Coordinator', 'Organizer'
   ];
 
-  // Run session check once on mount
+  // Run session check once on mount only if not already logged in and we haven't checked yet
   useEffect(() => {
-    checkSession().finally(() => setIsLoading(false));
+    if (!hasCheckedSession.current) {
+      hasCheckedSession.current = true;
+      if (!loggedIn) {
+        checkSession().finally(() => setIsLoading(false));
+      } else {
+        setIsLoading(false);
+      }
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -33,7 +41,7 @@ export default function Page() {
     if (!isLoading && loggedIn) {
       if (executiveRoles.includes(userRole)) {
         router.replace('/dashboard');
-      } else if (userRole === 'meeting_user') {
+      } else if (userRole === 'meeting_user' || userRole === 'user') {
         router.replace('/forms');
       }
     }
@@ -44,7 +52,7 @@ export default function Page() {
     const role = await handleLogin(username, password);
     if (executiveRoles.includes(role)) {
       router.replace('/dashboard');
-    } else if (role === 'meeting_user') {
+    } else if (role === 'meeting_user' || role === 'user') {
       router.replace('/forms');
     }
   };

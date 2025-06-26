@@ -104,25 +104,27 @@ export default function ApologyForm({ meetingInfo }) {
         timestamp: new Date().toTimeString().slice(0, 8),
       }));
 
-      const response = await fetch('http://127.0.0.1:8000/api/submit-apologies/', {
+      const response = await fetch(`/api/submit-apologies`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) {
-        
-        throw new Error('Submission failed');
-      }
+      const data = await response.json();
 
-      toast.success('Apologies submitted successfully!');
-      setApologies([]);
-      setShowModal(false);
+      if (response.ok) {
+        toast.success('Apologies submitted successfully!');
+        setApologies([]);
+        setShowModal(false);
+      } else {
+        toast.error(data.error || 'Failed to submit apologies');
+      }
     } catch (error) {
-      
-      toast.error('Something went wrong. Please try again.');
+      console.error('Error submitting apologies:', error);
+      toast.error('Network error occurred');
     }
   };
 

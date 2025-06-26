@@ -1,12 +1,13 @@
 'use client';
 import { useState } from 'react';
-import toast from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 
 export default function ChangePasswordForm() {
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleChange = async (e) => {
         e.preventDefault();
@@ -22,11 +23,12 @@ export default function ChangePasswordForm() {
         }
 
         try {
-        const res = await fetch('http://127.0.0.1:8000/api/change-password/', {
+        const res = await fetch(`/api/change-password`, {
             method: 'POST',
             headers: {
             'Content-Type': 'application/json'
             },
+            credentials: 'include',
             body: JSON.stringify({
             current_password: currentPassword,
             new_password: newPassword
@@ -42,8 +44,11 @@ export default function ChangePasswordForm() {
         } else {
             toast.error(data.error || "Failed to change password");
         }
-        } catch (err) {
-        toast.error("Network error");
+        } catch (error) {
+        console.error('Error changing password:', error);
+        toast.error('Network error occurred');
+        } finally {
+        setIsLoading(false);
         }
     };
 

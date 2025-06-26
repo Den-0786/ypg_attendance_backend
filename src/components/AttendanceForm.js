@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useMeetingDate } from '../components/MeetingDateContext';
 import { MdMoreVert, MdEdit, MdDelete } from 'react-icons/md';
 import toast from 'react-hot-toast';
@@ -44,6 +44,20 @@ export default function AttendanceForm({ meetingInfo }) {
   const [confirmIndex, setConfirmIndex] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingEntry, setPendingEntry] = useState(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuOpenIndex !== null) {
+        setMenuOpenIndex(null);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [menuOpenIndex]);
 
   const positions = type === 'local' ? localPositions : districtPositions;
 
@@ -155,6 +169,33 @@ export default function AttendanceForm({ meetingInfo }) {
     setShowModal(false);
   };
 
+  const handleEdit = (index) => {
+    const entry = attendees[index];
+    setForm({
+      name: entry.name,
+      phone: entry.phone,
+      email: entry.email || '',
+      congregation: entry.congregation,
+      position: entry.position
+    });
+    setType(entry.type);
+    setEditingIndex(index);
+    setShowModal(false);
+    setMenuOpenIndex(null);
+  };
+
+  const handleDelete = (index) => {
+    setConfirmIndex(index);
+    setMenuOpenIndex(null);
+  };
+
+  const confirmDelete = () => {
+    const updated = attendees.filter((_, index) => index !== confirmIndex);
+    setAttendees(updated);
+    setConfirmIndex(null);
+    toast.success('Entry deleted successfully');
+  };
+
   const handleFinalSubmit = async () => {
     if (attendees.length === 0) {
       toast.error('No entries to submit');
@@ -166,27 +207,41 @@ export default function AttendanceForm({ meetingInfo }) {
       const payload = attendees.map(({ meetingDate, meetingTitle, ...rest }) => ({
         ...rest,
         meeting_date: meetingDate,
-        meeting_title: meetingTitle,
         timestamp: new Date().toTimeString().slice(0, 8),
       }));
 
-      const res = await fetch('http://127.0.0.1:8000/api/submit-attendance/', {
+      console.log('Meeting date:', meetingDate);
+      console.log('Meeting date type:', typeof meetingDate);
+      console.log('Submitting attendance payload:', payload);
+
+      const res = await fetch(`/api/submit-attendance`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error('Submission failed');
+      const data = await res.json();
+      console.log('Submit response status:', res.status);
+      console.log('Submit response data:', data);
 
-      toast.success('Attendance submitted successfully!');
-      setAttendees([]);
-      setShowModal(false);
+      if (res.ok) {
+        toast.success('Attendance submitted successfully!');
+        setAttendees([]);
+        setShowModal(false);
+      } else {
+        toast.error(data.error || 'Failed to submit attendance');
+      }
     } catch (error) {
-      toast.error(error.message || 'Submission failed. Please try again.');
+      console.error('Error submitting attendance:', error);
+      toast.error('Network error occurred');
     } finally {
       setIsSubmitting(false);
     }
-};
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-md p-6  max-w-xl mx-auto border border-yellow-200">
       <div className="bg-white rounded-xl p-6 shadow border border-blue-200 mb-6">
@@ -305,13 +360,26 @@ export default function AttendanceForm({ meetingInfo }) {
           </button>
         </form>
       </div>
+
+      {/* Show entries button when there are entries */}
+      {attendees.length > 0 && (
+        <div className="w-2/3 sm:max-w-md md:max-w-lg lg:max-w-xl mx-auto mt-4">
+          <button
+            onClick={() => setShowModal(true)}
+            className="w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700 transition font-medium"
+          >
+            View/Edit Entries ({attendees.length})
+          </button>
+        </div>
+      )}
+
       {/* ✅ Confirm Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg w-full max-w-lg shadow-xl">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-bold text-blue-600">
-                {pendingEntry ? 'Confirm New Entry' : 'Confirm Entries'}
+                {pendingEntry ? 'Confirm New Entry' : 'Manage Entries'}
               </h3>
               <button
                 onClick={() => {
@@ -325,9 +393,11 @@ export default function AttendanceForm({ meetingInfo }) {
               </button>
             </div>
 
-            {pendingEntry ? (
+            {/* Show pending entry confirmation if exists */}
+            {pendingEntry && (
               <>
-                <div className="text-sm text-gray-800 space-y-1 mb-4">
+                <div className="text-sm text-gray-800 space-y-1 mb-4 p-3 bg-blue-50 rounded">
+                  <p><strong>New Entry:</strong></p>
                   <p><strong>Name:</strong> {pendingEntry.name}</p>
                   <p><strong>Congregation:</strong> {pendingEntry.congregation}</p>
                   <p><strong>Representing:</strong> {pendingEntry.type}</p>
@@ -335,7 +405,7 @@ export default function AttendanceForm({ meetingInfo }) {
                   <p className="text-xs text-gray-500"><strong>Meeting Date:</strong> {pendingEntry.meetingDate}</p>
                   <p className="text-xs text-gray-500"><strong>Reported @:</strong> {pendingEntry.timestamp}</p>
                 </div>
-                <div className="flex justify-end gap-4">
+                <div className="flex justify-end gap-4 mb-4">
                   <button
                     onClick={() => {
                       setShowModal(false);
@@ -353,8 +423,14 @@ export default function AttendanceForm({ meetingInfo }) {
                   </button>
                 </div>
               </>
-            ) : (
+            )}
+            
+            {/* Always show entries list if there are entries */}
+            {attendees.length > 0 && (
               <>
+                <div className="mb-4">
+                  <h4 className="text-md font-semibold text-gray-700 mb-2">Current Entries ({attendees.length})</h4>
+                </div>
                 <ul className="space-y-3 max-h-72 overflow-y-auto">
                   {attendees.map((entry, index) => (
                     <li key={entry.id} className="p-3 bg-gray-50 rounded shadow flex justify-between items-start relative">
@@ -368,22 +444,25 @@ export default function AttendanceForm({ meetingInfo }) {
                       </div>
                       <div className="relative">
                         <button 
-                          onClick={() => setMenuOpenIndex(index === menuOpenIndex ? null : index)} 
-                          className="text-gray-800 text-xl"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setMenuOpenIndex(index === menuOpenIndex ? null : index);
+                          }} 
+                          className="text-gray-800 text-xl hover:text-gray-600"
                         >
                           <MdMoreVert />
                         </button>
                         {menuOpenIndex === index && (
-                          <div className="absolute right-0 top-6 bg-white shadow-md rounded w-40 z-50">
+                          <div className="absolute right-0 top-6 bg-white shadow-lg rounded-md w-40 z-[9999] border border-gray-200" onClick={(e) => e.stopPropagation()}>
                             <button 
                               onClick={() => handleEdit(index)} 
-                              className="flex items-center gap-2 w-full text-left px-3 py-1 hover:bg-gray-200"
+                              className="flex items-center gap-2 w-full text-left px-3 py-2 hover:bg-gray-100 rounded-t-md"
                             >
                               <MdEdit className="text-sm" /> Edit
                             </button>
                             <button 
                               onClick={() => handleDelete(index)} 
-                              className="flex items-center gap-2 w-full text-left px-3 py-1 hover:bg-gray-200 text-red-600"
+                              className="flex items-center gap-2 w-full text-left px-3 py-2 hover:bg-gray-100 text-red-600 rounded-b-md"
                             >
                               <MdDelete className="text-sm" /> Delete
                             </button>

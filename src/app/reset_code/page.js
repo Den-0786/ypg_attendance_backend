@@ -1,19 +1,20 @@
 'use client';
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import toast from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 import { FaCheckCircle, FaTimesCircle, FaEye, FaEyeSlash } from 'react-icons/fa';
 
 export default function ResetCode() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const username = searchParams.get('email');
+    const username = searchParams.get('identifier');
 
     const [code, setCode] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showNew, setShowNew] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     if (!username) {
         toast.error('Missing email. Start over.');
@@ -47,22 +48,33 @@ export default function ResetCode() {
         }
 
         try {
-        const res = await fetch('http://127.0.0.1:8000/api/reset-password-confirm/', {
+        setIsLoading(true);
+        const res = await fetch(`/api/reset-password-confirm`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, code, new_password: newPassword }),
+            headers: {
+            'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+            username,
+            code,
+            new_password: newPassword,
+            }),
         });
 
         const data = await res.json();
 
         if (res.ok) {
-            toast.success(data.message);
-            router.push('/');
+            toast.success('Password reset successfully!');
+            router.push('/login');
         } else {
-            toast.error(data.error || 'Reset failed');
+            toast.error(data.error || 'Failed to reset password');
         }
-        } catch (err) {
-        toast.error('Network error');
+        } catch (error) {
+        console.error('Error resetting password:', error);
+        toast.error('Network error occurred');
+        } finally {
+        setIsLoading(false);
         }
     };
 
@@ -145,8 +157,9 @@ export default function ResetCode() {
             <button
                 type="submit"
                 className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
+                disabled={isLoading}
             >
-                Reset Password
+                {isLoading ? 'Resetting...' : 'Reset Password'}
             </button>
             </form>
         </div>

@@ -6,7 +6,7 @@ from django.db.models import Count
 from django.core.mail import send_mail
 from django.conf import settings
 from django.utils.crypto import get_random_string
-from django.contrib.auth import logout
+from django.contrib.auth import logout, login as django_login, authenticate
 from .models import (
     AttendanceEntry,
     ApologyEntry,
@@ -25,24 +25,38 @@ class DebugPrintMiddleware(MiddlewareMixin):
         print(f"[DEBUG] {request.method} {request.path}")
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def submit_attendance(request):
     user_id = request.session.get('user_id')
-    user = Credential.objects.get(id=user_id)
+    if not user_id:
+        return Response({'error': 'Authentication required'}, status=401)
+    
+    try:
+        user = Credential.objects.get(id=user_id)
+    except Credential.DoesNotExist:
+        return Response({'error': 'User not found'}, status=401)
+    
     serializer = AttendanceEntrySerializer(data=request.data, many=True)
 
     if serializer.is_valid():
         names_seen = set()
+        phones_seen = set()
 
         for item in serializer.validated_data:
             name_key = item['name'].strip().lower()
+            phone = item['phone'].strip()
 
             # 🔒 Check for duplicates within the submission
             if name_key in names_seen:
                 return Response({'error': f"Duplicate name in submission: {item['name']}"}, status=400)
             names_seen.add(name_key)
 
-            # 🔒 Check for existing record in the DB
+            # 🔒 Check for duplicate phone numbers within the submission
+            if phone in phones_seen:
+                return Response({'error': f"Duplicate phone number in submission: {phone}"}, status=400)
+            phones_seen.add(phone)
+
+            # 🔒 Check for existing record in the DB (same name, meeting, type, user)
             existing = AttendanceEntry.objects.filter(
                 name=item['name'],
                 meeting_date=item['meeting_date'],
@@ -52,6 +66,31 @@ def submit_attendance(request):
 
             if existing:
                 return Response({'error': f"{item['name']} already submitted for this meeting."}, status=400)
+
+            # 🔒 Check for phone number already used in a different congregation
+            existing_phone = AttendanceEntry.objects.filter(
+                phone=phone,
+                meeting_date=item['meeting_date'],
+                type=item['type']
+            ).exclude(congregation=item['congregation']).first()
+
+            if existing_phone:
+                return Response({
+                    'error': f"Phone number {phone} has already been used for {existing_phone.congregation} in this meeting."
+                }, status=400)
+
+            # 🔒 Role-based restrictions: Check if user has already submitted for the opposite type
+            opposite_type = 'district' if item['type'] == 'local' else 'local'
+            existing_opposite = AttendanceEntry.objects.filter(
+                submitted_by_id=user_id,
+                meeting_date=item['meeting_date'],
+                type=opposite_type
+            ).exists()
+
+            if existing_opposite:
+                return Response({
+                    'error': f"You have already submitted attendance for {opposite_type} meeting. You cannot submit for both local and district meetings."
+                }, status=400)
 
             # Optional: Remove timestamp from item if you're auto-generating it
             item.pop('timestamp', None)
@@ -66,10 +105,17 @@ def submit_attendance(request):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def submit_apologies(request):
     user_id = request.session.get('user_id')
-    user = Credential.objects.get(id=user_id)
+    if not user_id:
+        return Response({'error': 'Authentication required'}, status=401)
+    
+    try:
+        user = Credential.objects.get(id=user_id)
+    except Credential.DoesNotExist:
+        return Response({'error': 'User not found'}, status=401)
+    
     serializer = ApologyEntrySerializer(data=request.data, many=True)
 
     if serializer.is_valid():
@@ -103,13 +149,31 @@ def submit_apologies(request):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def get_attendance_summary(request):
     year = request.GET.get('year')
     congregation = request.GET.get('congregation')
     user_id = request.session.get('user_id')
+    
+    if not user_id:
+        return Response({'error': 'Authentication required'}, status=401)
 
-    entries = AttendanceEntry.objects.filter(submitted_by_id=user_id)
+    # List of executive roles that can see all data
+    executive_roles = [
+        'admin', 'President', "President's Rep", 'Secretary', 'Assistant Secretary',
+        'Financial Secretary', 'Treasurer', 'Bible Studies Coordinator', 'Organizer'
+    ]
+
+    # Filter by user's role - executives can see all, others see only their own
+    try:
+        user = Credential.objects.get(id=user_id)
+    except Credential.DoesNotExist:
+        return Response({'error': 'User not found'}, status=401)
+        
+    if user.role in executive_roles:
+        entries = AttendanceEntry.objects.all()
+    else:
+        entries = AttendanceEntry.objects.filter(submitted_by_id=user_id)
 
     if year:
         entries = entries.filter(meeting_date__year=year)
@@ -121,13 +185,31 @@ def get_attendance_summary(request):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def get_apology_summary(request):
     year = request.GET.get('year')
     congregation = request.GET.get('congregation')
     user_id = request.session.get('user_id')
+    
+    if not user_id:
+        return Response({'error': 'Authentication required'}, status=401)
 
-    entries = ApologyEntry.objects.filter(submitted_by_id=user_id)
+    # List of executive roles that can see all data
+    executive_roles = [
+        'admin', 'President', "President's Rep", 'Secretary', 'Assistant Secretary',
+        'Financial Secretary', 'Treasurer', 'Bible Studies Coordinator', 'Organizer'
+    ]
+
+    # Filter by user's role - executives can see all, others see only their own
+    try:
+        user = Credential.objects.get(id=user_id)
+    except Credential.DoesNotExist:
+        return Response({'error': 'User not found'}, status=401)
+        
+    if user.role in executive_roles:
+        entries = ApologyEntry.objects.all()
+    else:
+        entries = ApologyEntry.objects.filter(submitted_by_id=user_id)
 
     if year:
         entries = entries.filter(meeting_date__year=year)
@@ -139,106 +221,233 @@ def get_apology_summary(request):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def local_attendance(request):
-    entries = AttendanceEntry.objects.filter(type='local')
-    data = [
-        {"id": entry.id, "congregation": entry.congregation, "timestamp": entry.timestamp}
-        for entry in entries
+    user_id = request.session.get('user_id')
+    
+    if not user_id:
+        return Response({'error': 'Authentication required'}, status=401)
+
+    # Filter by user's role - admins can see all, others see only their own
+    try:
+        user = Credential.objects.get(id=user_id)
+    except Credential.DoesNotExist:
+        return Response({'error': 'User not found'}, status=401)
+        
+    executive_roles = [
+        'admin', 'President', "President's Rep", 'Secretary', 'Assistant Secretary',
+        'Financial Secretary', 'Treasurer', 'Bible Studies Coordinator', 'Organizer'
     ]
+    if user.role in executive_roles:
+        entries = AttendanceEntry.objects.filter(type='local')
+    else:
+        entries = AttendanceEntry.objects.filter(type='local', submitted_by_id=user_id)
+    
+    data = []
+    for entry in entries:
+        # Get meeting title for this entry
+        try:
+            meeting = Meeting.objects.get(date=entry.meeting_date, is_active=True)
+            meeting_title = meeting.title
+        except Meeting.DoesNotExist:
+            meeting_title = "Unknown Meeting"
+        
+        data.append({
+            "id": entry.id, 
+            "congregation": entry.congregation, 
+            "timestamp": entry.timestamp,
+            "meeting_title": meeting_title,
+            "meeting_date": entry.meeting_date
+        })
+    
     return Response(data)
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def district_attendance(request):
-    entries = AttendanceEntry.objects.filter(type='district')
-    data = [
-        {"id": entry.id, "congregation": entry.congregation, "timestamp": entry.timestamp}
-        for entry in entries
+    user_id = request.session.get('user_id')
+    
+    if not user_id:
+        return Response({'error': 'Authentication required'}, status=401)
+
+    # Filter by user's role - admins can see all, others see only their own
+    try:
+        user = Credential.objects.get(id=user_id)
+    except Credential.DoesNotExist:
+        return Response({'error': 'User not found'}, status=401)
+        
+    executive_roles = [
+        'admin', 'President', "President's Rep", 'Secretary', 'Assistant Secretary',
+        'Financial Secretary', 'Treasurer', 'Bible Studies Coordinator', 'Organizer'
     ]
+    if user.role in executive_roles:
+        entries = AttendanceEntry.objects.filter(type='district')
+    else:
+        entries = AttendanceEntry.objects.filter(type='district', submitted_by_id=user_id)
+    
+    data = []
+    for entry in entries:
+        # Get meeting title for this entry
+        try:
+            meeting = Meeting.objects.get(date=entry.meeting_date, is_active=True)
+            meeting_title = meeting.title
+        except Meeting.DoesNotExist:
+            meeting_title = "Unknown Meeting"
+        
+        data.append({
+            "id": entry.id, 
+            "congregation": entry.congregation, 
+            "timestamp": entry.timestamp,
+            "meeting_title": meeting_title,
+            "meeting_date": entry.meeting_date
+        })
+    
     return Response(data)
 
 @api_view(['DELETE'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def delete_attendance(request, pk):
+    print(f"[DEBUG] delete_attendance called with pk: {pk}")
     user_id = request.session.get('user_id')
+    print(f"[DEBUG] user_id from session: {user_id}")
+    
+    if not user_id:
+        print("[DEBUG] No user_id in session")
+        return Response({'error': 'Authentication required'}, status=401)
+    
     try:
-        entry = AttendanceEntry.objects.get(pk=pk, submitted_by_id=user_id)
+        user = Credential.objects.get(id=user_id)
+        print(f"[DEBUG] User found: {user.username}, role: {user.role}")
+        executive_roles = [
+            'admin', 'President', "President's Rep", 'Secretary', 'Assistant Secretary',
+            'Financial Secretary', 'Treasurer', 'Bible Studies Coordinator', 'Organizer'
+        ]
+        if user.role in executive_roles:
+            print(f"[DEBUG] User is executive, looking for any attendance entry with pk: {pk}")
+            entry = AttendanceEntry.objects.get(pk=pk)
+        else:
+            print(f"[DEBUG] User is not executive, looking for attendance entry with pk: {pk} and submitted_by: {user_id}")
+            entry = AttendanceEntry.objects.get(pk=pk, submitted_by_id=user_id)
+        
+        print(f"[DEBUG] Found entry: {entry.name} - {entry.congregation}")
         entry.delete()
-        return Response({'message': 'Record deleted successfully.'})
+        print("[DEBUG] Entry deleted successfully")
+        return Response({'message': 'Attendance record deleted successfully.'})
+    except Credential.DoesNotExist:
+        print("[DEBUG] Credential.DoesNotExist")
+        return Response({'error': 'User not found'}, status=401)
     except AttendanceEntry.DoesNotExist:
+        print(f"[DEBUG] AttendanceEntry.DoesNotExist for pk: {pk}")
         return Response({'error': 'Record not found or not authorized'}, status=404)
-
 
 @api_view(['PATCH'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def edit_attendance(request, pk):
     user_id = request.session.get('user_id')
-    new_name = request.data.get('new_congregation')
-
-    if not new_name:
-        return Response({'error': 'New congregation name is required.'}, status=400)
-
+    
+    if not user_id:
+        return Response({'error': 'Authentication required'}, status=401)
+    
     try:
-        entry = AttendanceEntry.objects.get(pk=pk, submitted_by_id=user_id)
-        entry.congregation = new_name
+        user = Credential.objects.get(id=user_id)
+        executive_roles = [
+            'admin', 'President', "President's Rep", 'Secretary', 'Assistant Secretary',
+            'Financial Secretary', 'Treasurer', 'Bible Studies Coordinator', 'Organizer'
+        ]
+        if user.role in executive_roles:
+            entry = AttendanceEntry.objects.get(pk=pk)
+        else:
+            entry = AttendanceEntry.objects.get(pk=pk, submitted_by_id=user_id)
+        
+        # Update fields if provided
+        if 'name' in request.data:
+            entry.name = request.data['name']
+        if 'phone' in request.data:
+            entry.phone = request.data['phone']
+        if 'email' in request.data:
+            entry.email = request.data['email']
+        if 'congregation' in request.data:
+            entry.congregation = request.data['congregation']
+        if 'position' in request.data:
+            entry.position = request.data['position']
+        if 'type' in request.data:
+            entry.type = request.data['type']
+        if 'meeting_date' in request.data:
+            entry.meeting_date = request.data['meeting_date']
+            
         entry.save()
-        return Response({'message': 'Updated successfully'})
+        return Response({'message': 'Attendance updated successfully', 'data': AttendanceEntrySerializer(entry).data})
+    except Credential.DoesNotExist:
+        return Response({'error': 'User not found'}, status=401)
     except AttendanceEntry.DoesNotExist:
         return Response({'error': 'Record not found or not authorized'}, status=404)
 
-
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def attendance_by_meeting_title(request):
+    user_id = request.session.get('user_id')
+    
+    if not user_id:
+        return Response({'error': 'Authentication required'}, status=401)
+    
+    try:
+        user = Credential.objects.get(id=user_id)
+    except Credential.DoesNotExist:
+        return Response({'error': 'User not found'}, status=401)
+    
     year = request.GET.get('year')
     congregation = request.GET.get('congregation')
+    
+    # Filter by user's role - executives can see all, others see only their own
+    executive_roles = [
+        'admin', 'President', "President's Rep", 'Secretary', 'Assistant Secretary',
+        'Financial Secretary', 'Treasurer', 'Bible Studies Coordinator', 'Organizer'
+    ]
+    if user.role in executive_roles:
+        entries = AttendanceEntry.objects.all()
+    else:
+        entries = AttendanceEntry.objects.filter(submitted_by_id=user_id)
 
-    queryset = AttendanceEntry.objects.all()
     if year:
-        queryset = queryset.filter(meeting_date__year=year)
+        entries = entries.filter(meeting_date__year=year)
     if congregation:
-        queryset = queryset.filter(congregation__icontains=congregation)
+        entries = entries.filter(congregation__icontains=congregation)
 
-    results = queryset.values('meeting_title').annotate(count=Count('id')).order_by('-count')
-    return Response(results)
+    # Group by meeting title and count
+    meeting_counts = entries.values('meeting_date').annotate(count=Count('id'))
+    return Response(meeting_counts)
 
 # ------------------ Auth & Password Views ------------------
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def change_password(request):
     user_id = request.session.get('user_id')
-    old_password = request.data.get('old_password')
-    new_password = request.data.get('new_password')
-
-    if not all([old_password, new_password]):
-        return Response({'error': 'All fields are required'}, status=400)
-
+    
+    if not user_id:
+        return Response({'error': 'Authentication required'}, status=401)
+    
     try:
         user = Credential.objects.get(id=user_id)
-
-        if not user.check_password(old_password):
-            return Response({'error': 'Old password is incorrect'}, status=400)
-
-        if user.check_password(new_password):
-            return Response({'error': 'You cannot reuse your old password'}, status=400)
-
-        if len(new_password) < 8 \
-            or not re.search(r'[A-Z]', new_password) \
-            or not re.search(r'[a-z]', new_password) \
-            or not re.search(r'\d', new_password) \
-            or not re.search(r'[@$!%*?&#^+=]', new_password):
-            return Response({
-                'error': 'Password must include uppercase, lowercase, number, symbol, and be at least 8 characters.'
-            }, status=400)
-
-        user.set_password(new_password)
-        user.save()
-        return Response({'message': 'Password changed successfully'})
-
     except Credential.DoesNotExist:
-        return Response({'error': 'User not found'}, status=404)
+        return Response({'error': 'User not found'}, status=401)
+    
+    current_password = request.data.get('current_password')
+    new_password = request.data.get('new_password')
+    
+    if not current_password or not new_password:
+        return Response({'error': 'Current password and new password are required'}, status=400)
+    
+    if not user.check_password(current_password):
+        return Response({'error': 'Current password is incorrect'}, status=400)
+    
+    if len(new_password) < 8:
+        return Response({'error': 'New password must be at least 8 characters long'}, status=400)
+    
+    user.set_password(new_password)
+    user.save()
+    
+    return Response({'message': 'Password changed successfully'})
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -309,11 +518,18 @@ def login_view(request):
         try:
             user = Credential.objects.get(username=username)
             if user.check_password(password):
+                # login(request, user)  # REMOVE this line, not compatible with Credential model
                 request.session.flush()
                 request.session['user_id'] = user.id
                 request.session['username'] = user.username
                 request.session['role'] = user.role
                 request.session.set_expiry(86400)
+                request.session.save()
+                
+                print(f"[DEBUG] Login successful - User: {user.username}, Role: {user.role}")
+                print(f"[DEBUG] Session ID: {request.session.session_key}")
+                print(f"[DEBUG] Session data: {dict(request.session)}")
+                
                 return Response({'message': 'Login successful', 'role': user.role})
         except Credential.DoesNotExist:
             pass
@@ -326,6 +542,12 @@ def login_view(request):
             request.session['username'] = username
             request.session['role'] = 'meeting_user'
             request.session.set_expiry(86400)
+            request.session.save()
+            
+            print(f"[DEBUG] Meeting login successful - Username: {username}")
+            print(f"[DEBUG] Session ID: {request.session.session_key}")
+            print(f"[DEBUG] Session data: {dict(request.session)}")
+            
             return Response({'message': 'Login successful', 'role': 'meeting_user'})
 
         return Response({'error': 'Invalid credentials'}, status=400)
@@ -345,45 +567,73 @@ def logout_view(request):
 @permission_classes([AllowAny])
 def session_status(request):
     if request.session.get('user_id'):
+        role = request.session.get('role', 'user')
+        # Check if there's an active meeting for non-admin users
+        meetingSet = False
+        if role != 'admin':
+            meetingSet = Meeting.objects.filter(is_active=True).exists()
+        else:
+            meetingSet = True  # Admins always have meetingSet = True
+            
         return Response({
             'loggedIn': True,
-            'role': request.session.get('role', 'user')
+            'role': role,
+            'meetingSet': meetingSet
         })
     return Response({'loggedIn': False})
 
 # --- Meeting Endpoints ---
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def set_meeting(request):
+    print(f"[DEBUG] set_meeting called - Method: {request.method}")
+    print(f"[DEBUG] Request data: {request.data}")
+    
     user_id = request.session.get('user_id')
-    user = Credential.objects.get(id=user_id)
-    # Only allow executive roles
-    executive_roles = [
-        'admin', 'President', "President's Rep", 'Secretary', 'Assistant Secretary',
-        'Financial Secretary', 'Treasurer', 'Bible Studies Coordinator', 'Organizer'
-    ]
-    if user.role not in executive_roles:
-        return Response({'error': 'Not authorized'}, status=403)
+    print(f"[DEBUG] User authenticated: {bool(user_id)}")
+    print(f"[DEBUG] Session user_id: {user_id}")
+    print(f"[DEBUG] Session data: {dict(request.session)}")
+    
+    if not user_id:
+        return Response({'error': 'Authentication required'}, status=401)
+    
+    # Only admins and executives can set meetings
+    try:
+        user = Credential.objects.get(id=user_id)
+        if user.role not in ['admin', 'President', 'Vice President', 'Secretary', 'Treasurer']:
+            return Response({'error': 'Insufficient permissions'}, status=403)
+    except Credential.DoesNotExist:
+        return Response({'error': 'User not found'}, status=401)
 
-    title = request.data.get('title')
-    date = request.data.get('date')
-    login_username = request.data.get('login_username')
-    login_password = request.data.get('login_password')
-    if not title or not date or not login_username or not login_password:
-        return Response({'error': 'Title, date, username, and password are required.'}, status=400)
-
-    # Deactivate previous meetings
+    # Deactivate all existing meetings
     Meeting.objects.filter(is_active=True).update(is_active=False)
-    meeting = Meeting(
-        title=title,
-        date=date,
-        is_active=True,
-        login_username=login_username
-    )
-    meeting.set_password(login_password)  # Hash and set the password
-    meeting.save()
-    serializer = MeetingSerializer(meeting)
-    return Response(serializer.data, status=201)
+    
+    # Create new meeting
+    try:
+        meeting = Meeting.objects.create(
+            title=request.data.get('title'),
+            date=request.data.get('date'),
+            login_username=request.data.get('login_username'),
+            is_active=True
+        )
+        meeting.set_password(request.data.get('login_password'))
+        meeting.save()
+        
+        print(f"[DEBUG] Received data - Title: {meeting.title}, Date: {meeting.date}, Username: {meeting.login_username}")
+        print(f"[DEBUG] Meeting created successfully: {meeting.id}")
+        
+        return Response({
+            'message': 'Meeting set successfully',
+            'meeting': {
+                'id': meeting.id,
+                'title': meeting.title,
+                'date': meeting.date,
+                'login_username': meeting.login_username
+            }
+        }, status=201)
+    except Exception as e:
+        print(f"[DEBUG] Error creating meeting: {str(e)}")
+        return Response({'error': 'Failed to create meeting'}, status=400)
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
@@ -393,3 +643,152 @@ def current_meeting(request):
         return Response({'error': 'No active meeting set.'}, status=404)
     serializer = MeetingSerializer(meeting)
     return Response(serializer.data)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def deactivate_meeting(request):
+    print(f"[DEBUG] deactivate_meeting called - Method: {request.method}")
+    user_id = request.session.get('user_id')
+    print(f"[DEBUG] Session user_id: {user_id}")
+    
+    if not user_id:
+        return Response({'error': 'Authentication required'}, status=401)
+    
+    # Only admins and executives can deactivate meetings
+    try:
+        user = Credential.objects.get(id=user_id)
+        if user.role not in ['admin', 'President', 'Vice President', 'Secretary', 'Treasurer']:
+            return Response({'error': 'Insufficient permissions'}, status=403)
+    except Credential.DoesNotExist:
+        return Response({'error': 'User not found'}, status=401)
+
+    count = Meeting.objects.filter(is_active=True).update(is_active=False)
+    print(f"[DEBUG] Deactivated {count} meetings")
+    return Response({'message': f'Deactivated {count} meeting(s)'}, status=200)
+
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def delete_apology(request, pk):
+    print(f"[DEBUG] delete_apology called with pk: {pk}")
+    user_id = request.session.get('user_id')
+    print(f"[DEBUG] user_id from session: {user_id}")
+    
+    if not user_id:
+        print("[DEBUG] No user_id in session")
+        return Response({'error': 'Authentication required'}, status=401)
+    
+    try:
+        user = Credential.objects.get(id=user_id)
+        print(f"[DEBUG] User found: {user.username}, role: {user.role}")
+        executive_roles = [
+            'admin', 'President', "President's Rep", 'Secretary', 'Assistant Secretary',
+            'Financial Secretary', 'Treasurer', 'Bible Studies Coordinator', 'Organizer'
+        ]
+        if user.role in executive_roles:
+            print(f"[DEBUG] User is executive, looking for any apology entry with pk: {pk}")
+            entry = ApologyEntry.objects.get(pk=pk)
+        else:
+            print(f"[DEBUG] User is not executive, looking for apology entry with pk: {pk} and submitted_by: {user_id}")
+            entry = ApologyEntry.objects.get(pk=pk, submitted_by_id=user_id)
+        
+        print(f"[DEBUG] Found entry: {entry.name} - {entry.congregation}")
+        entry.delete()
+        print("[DEBUG] Entry deleted successfully")
+        return Response({'message': 'Apology record deleted successfully.'})
+    except Credential.DoesNotExist:
+        print("[DEBUG] Credential.DoesNotExist")
+        return Response({'error': 'User not found'}, status=401)
+    except ApologyEntry.DoesNotExist:
+        print(f"[DEBUG] ApologyEntry.DoesNotExist for pk: {pk}")
+        return Response({'error': 'Record not found or not authorized'}, status=404)
+
+@api_view(['PATCH'])
+@permission_classes([AllowAny])
+def edit_apology(request, pk):
+    user_id = request.session.get('user_id')
+    
+    if not user_id:
+        return Response({'error': 'Authentication required'}, status=401)
+    
+    try:
+        user = Credential.objects.get(id=user_id)
+        executive_roles = [
+            'admin', 'President', "President's Rep", 'Secretary', 'Assistant Secretary',
+            'Financial Secretary', 'Treasurer', 'Bible Studies Coordinator', 'Organizer'
+        ]
+        if user.role in executive_roles:
+            entry = ApologyEntry.objects.get(pk=pk)
+        else:
+            entry = ApologyEntry.objects.get(pk=pk, submitted_by_id=user_id)
+        
+        # Update fields if provided
+        if 'name' in request.data:
+            entry.name = request.data['name']
+        if 'congregation' in request.data:
+            entry.congregation = request.data['congregation']
+        if 'position' in request.data:
+            entry.position = request.data['position']
+        if 'reason' in request.data:
+            entry.reason = request.data['reason']
+        if 'type' in request.data:
+            entry.type = request.data['type']
+        if 'meeting_date' in request.data:
+            entry.meeting_date = request.data['meeting_date']
+            
+        entry.save()
+        return Response({'message': 'Apology updated successfully', 'data': ApologyEntrySerializer(entry).data})
+    except Credential.DoesNotExist:
+        return Response({'error': 'User not found'}, status=401)
+    except ApologyEntry.DoesNotExist:
+        return Response({'error': 'Record not found or not authorized'}, status=404)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def login_view_django(request):
+    try:
+        username = request.data.get('username')
+        password = request.data.get('password')
+        
+        if not username or not password:
+            return Response({'error': 'Username and password are required'}, status=400)
+
+        # Try to authenticate with custom Credential model
+        try:
+            user = Credential.objects.get(username=username)
+            if user.check_password(password):
+                request.session.flush()
+                request.session['user_id'] = user.id
+                request.session['username'] = user.username
+                request.session['role'] = user.role
+                request.session.set_expiry(86400)
+                request.session.save()
+                
+                print(f"[DEBUG] Login successful - User: {user.username}, Role: {user.role}")
+                print(f"[DEBUG] Session ID: {request.session.session_key}")
+                print(f"[DEBUG] Session data: {dict(request.session)}")
+                
+                return Response({'message': 'Login successful', 'role': user.role})
+        except Credential.DoesNotExist:
+            pass
+
+        # Try meeting login (Meeting model, only active meeting)
+        meeting = Meeting.objects.filter(is_active=True, login_username=username).order_by('-date').first()
+        if meeting and meeting.check_password(password):
+            request.session.flush()
+            request.session['meeting_id'] = meeting.id
+            request.session['username'] = username
+            request.session['role'] = 'meeting_user'
+            request.session.set_expiry(86400)
+            request.session.save()
+            
+            print(f"[DEBUG] Meeting login successful - Username: {username}")
+            print(f"[DEBUG] Session ID: {request.session.session_key}")
+            print(f"[DEBUG] Session data: {dict(request.session)}")
+            
+            return Response({'message': 'Login successful', 'role': 'meeting_user'})
+
+        return Response({'error': 'Invalid credentials'}, status=400)
+    
+    except Exception as e:
+        print("Login error:", e)
+        return Response({'error': 'Login failed. Please try again.'}, status=500)

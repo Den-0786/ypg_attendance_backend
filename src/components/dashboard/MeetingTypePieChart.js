@@ -11,20 +11,30 @@ export default function MeetingTypePieChart() {
     const [year, setYear] = useState(new Date().getFullYear());
     const [congregation, setCongregation] = useState('');
 
-    const fetchChartData = async () => {
+    const fetchData = async () => {
         try {
-        const params = new URLSearchParams({ year, ...(congregation && { congregation }) });
-        const res = await fetch(`http://127.0.0.1:8000/api/attendance-by-meeting-title/?${params}`);
-        if (!res.ok) throw new Error('Failed to load meeting data');
-        const json = await res.json();
-        setData(json);
-        } catch (err) {
-        toast.error(err.message);
+            const params = new URLSearchParams({
+                start_date: startDate,
+                end_date: endDate,
+                meeting_type: meetingType
+            });
+            
+            const res = await fetch(`/api/attendance-by-meeting-title?${params}`);
+            
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            
+            const data = await res.json();
+            setData(data);
+        } catch (error) {
+            console.error('Error fetching chart data:', error);
+            toast.error('Failed to fetch chart data');
         }
     };
 
     useEffect(() => {
-        fetchChartData();
+        fetchData();
     }, [year, congregation]);
 
     return (

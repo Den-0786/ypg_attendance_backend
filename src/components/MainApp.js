@@ -2,7 +2,7 @@
 import AttendanceForm from '@components/AttendanceForm';
 import ApologyForm from '@components/ApologyForm';
 
-export default function MainApp({ activeTab, setActiveTab, handleLogout, meetingInfo }) {
+export default function MainApp({ activeTab, setActiveTab, handleLogout, meetingInfo, showManageMeeting = false, onManageMeeting }) {
     return (
         <div className="min-h-screen bg-gray-100 pt-20"> 
             <header className="fixed top-0 left-0 right-0 bg-gray-200 z-10 shadow">
@@ -27,6 +27,14 @@ export default function MainApp({ activeTab, setActiveTab, handleLogout, meeting
                     >
                         Apology
                     </button>
+                    {showManageMeeting && (
+                        <button
+                            onClick={onManageMeeting}
+                            className="bg-yellow-500 text-white px-4 py-2 rounded font-medium hover:bg-yellow-600 transition"
+                        >
+                            Manage Meeting
+                        </button>
+                    )}
                     <button
                         onClick={handleLogout}
                         className="bg-red-500 text-white px-4 py-2 rounded font-medium hover:bg-red-600 transition"

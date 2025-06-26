@@ -21,6 +21,16 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
+      <head>
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            // Force HTTP in development
+            if (window.location.protocol === 'https:' && window.location.hostname === 'localhost') {
+              window.location.href = window.location.href.replace('https:', 'http:');
+            }
+          `
+        }} />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

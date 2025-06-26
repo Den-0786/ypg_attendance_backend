@@ -3,10 +3,6 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@components/store/authStore';
 import { toast } from 'react-hot-toast';
 
-const BASE_URL =
-  process.env.NODE_ENV === 'production'
-    ? 'https://ypg-attendance-backend-1.onrender.com'
-    : 'http://localhost:8000';
 
 export function useAuth() {
   const router = useRouter(); 
@@ -21,12 +17,24 @@ export function useAuth() {
 
   const checkSession = async () => {
     try {
-      const res = await fetch(`${BASE_URL}/api/session-status/`, {
+      console.log('Checking session...');
+      const res = await fetch(`/api/session-status`, {
         credentials: 'include',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        },
       });
 
+      console.log('Session check response status:', res.status);
+      console.log('Session check response URL:', res.url);
+
       if (!res.ok) {
-        toast.error(`Session check failed (${res.status})`);
+        // Don't show error for 401/403 as it's normal for non-logged in users
+        if (res.status !== 401 && res.status !== 403) {
+          toast.error(`Session check failed (${res.status})`);
+        }
         setLoggedIn(false);
         setUserRole(null);
         setMeetingSet(false);
@@ -34,7 +42,7 @@ export function useAuth() {
       }
 
       const data = await res.json();
-      console.log('LOGIN RESPONSE:', data);
+      console.log('SESSION STATUS:', data);
       if (data.loggedIn) {
         setLoggedIn(true);
         setUserRole(data.role);
@@ -45,18 +53,28 @@ export function useAuth() {
         setMeetingSet(false);
       }
     } catch (err) {
-      toast.error('Network error during session check');
+      // Only show error if it's not a network connectivity issue
+      if (err.name !== 'TypeError' || !err.message.includes('fetch')) {
+        toast.error('Network error during session check');
+      }
+      setLoggedIn(false);
+      setUserRole(null);
+      setMeetingSet(false);
     }
   };
 
 const handleLogin = async (username, password) => {
   try {
-    const res = await fetch(`${BASE_URL}/api/login/`, {
+    console.log('Attempting login...');
+    const res = await fetch(`/api/login-django`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify({ username, password }),
     });
+
+    console.log('Login response status:', res.status);
+    console.log('Login response URL:', res.url);
 
     if (!res.ok) {
       let errorData = {};
@@ -68,22 +86,35 @@ const handleLogin = async (username, password) => {
     }
 
     const data = await res.json();
+    console.log('Login response data:', data);
+    
+    // Set auth state immediately
     setLoggedIn(true);
     setUserRole(data.role);
     // Always set meetingSet to true for admin
     setMeetingSet(data.role === 'admin' ? true : false);
+    
+    console.log('Auth state set, waiting before session check...');
+    
+    // Wait a moment for session to be set, then verify
+    setTimeout(() => {
+      console.log('Performing session check after login...');
+      checkSession();
+    }, 500); // Increased delay to 500ms
+    
     toast.success('Login successful!');
     
     // Return the role for immediate redirection
     return data.role;
   } catch (err) {
+    console.error('Login error:', err);
     toast.error('Login network error');
     return false;
   }
 };
   const handleLogout = async () => {
     try {
-      await fetch(`${BASE_URL}/api/logout/`, {
+      await fetch(`/api/logout`, {
         method: 'POST',
         credentials: 'include',
       });
