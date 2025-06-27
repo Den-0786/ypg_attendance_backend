@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import AttendanceEntry, ApologyEntry, Meeting
+from .models import AttendanceEntry, ApologyEntry, Meeting, AuditLog
 import re
 
 class AttendanceEntrySerializer(serializers.ModelSerializer):
@@ -35,3 +35,17 @@ class MeetingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Meeting
         fields = '__all__'
+
+class AuditLogSerializer(serializers.ModelSerializer):
+    user = serializers.CharField(source='user.username', read_only=True)
+    class Meta:
+        model = AuditLog
+        fields = '__all__'
+
+# Bulk action serializers
+class BulkIdSerializer(serializers.Serializer):
+    ids = serializers.ListField(child=serializers.IntegerField())
+
+class NotesTagsUpdateSerializer(serializers.Serializer):
+    notes = serializers.CharField(allow_blank=True, required=False)
+    tags = serializers.CharField(allow_blank=True, required=False)

@@ -15,6 +15,7 @@ export default function Page() {
   const { checkSession, handleLogin, loggedIn, userRole } = useAuth();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
+  const [loginLoading, setLoginLoading] = useState(false);
   const hasCheckedSession = useRef(false);
 
   // List of executive roles
@@ -49,6 +50,7 @@ export default function Page() {
   }, [isLoading, loggedIn, userRole]);
 
   const onLogin = async (username, password) => {
+    setLoginLoading(true);
     const role = await handleLogin(username, password);
     if (executiveRoles.includes(role)) {
       router.replace('/dashboard');
@@ -57,8 +59,19 @@ export default function Page() {
     }
   };
 
-  // Prevent flashing anything until session is checked
-  if (isLoading || (loggedIn && userRole)) return null;
+  // Prevent flashing anything until session is checked or during login
+  if (isLoading || loginLoading || (loggedIn && userRole)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-600">
+        <div className="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-12 w-12 mb-4 animate-spin border-t-blue-600"></div>
+        <span className="ml-4">Loading...</span>
+      </div>
+    );
+  }
 
   return <LoginForm onLogin={onLogin} />;
 }
+
+// Add spinner CSS if not present
+// .loader { border-style: solid; border-radius: 50%; border-width: 8px; border-top-width: 8px; animation: spin 1s linear infinite; }
+// @keyframes spin { 100% { transform: rotate(360deg); } }

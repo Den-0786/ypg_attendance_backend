@@ -11,6 +11,11 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
+from .views import (
+    soft_delete_record, restore_record, bulk_soft_delete, bulk_restore,
+    update_notes_tags, export_record_pdf, advanced_records_list, audit_log_list
+)
+from core import views as core_views
 
 urlpatterns = [
     # Attendance & Apology
@@ -43,4 +48,21 @@ urlpatterns = [
     path('set-meeting', set_meeting, name='set_meeting'),
     path('current-meeting', current_meeting, name='current_meeting'),
     path('deactivate-meeting', deactivate_meeting, name='deactivate_meeting'),
+    
+    #Records management
+    path('records/<str:record_type>', core_views.records_list, name='records-list'),
+    path('records/<str:record_type>/<int:pk>', core_views.record_edit_delete, name='record-edit-delete'),
+    path('records/<str:record_type>/export', core_views.records_export, name='records-export'),
+    
+    
+    #Manipulations
+    path('records/<str:record_type>/<int:pk>/soft-delete/', soft_delete_record),
+    path('records/<str:record_type>/<int:pk>/restore/', restore_record),
+    path('records/<str:record_type>/bulk-soft-delete/', bulk_soft_delete),
+    path('records/<str:record_type>/bulk-restore/', bulk_restore),
+    path('records/<str:record_type>/<int:pk>/notes-tags/', update_notes_tags),
+    path('records/<str:record_type>/<int:pk>/export-pdf/', export_record_pdf),
+    path('records/<str:record_type>/advanced/', advanced_records_list),
+    path('audit-log/', audit_log_list),
 ]
+

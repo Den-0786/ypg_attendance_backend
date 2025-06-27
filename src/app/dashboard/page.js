@@ -41,10 +41,21 @@ export default function AdminPage() {
   }, [loggedIn, userRole, checkingSession, router]);
 
   // 3. Show loading while verifying session or redirecting
+  let loadingMessage = "Loading...";
+  if (checkingSession) {
+    loadingMessage = "Checking session...";
+  } else if (!loggedIn) {
+    loadingMessage = "Loading login page...";
+  } else if (userRole && !executiveRoles.includes(userRole)) {
+    loadingMessage = "Loading forms page...";
+  } else {
+    loadingMessage = "Loading dashboard...";
+  }
+
   if (checkingSession || !loggedIn || !executiveRoles.includes(userRole)) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-600">
-        Loading dashboard...
+        {loadingMessage}
       </div>
     );
   }

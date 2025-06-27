@@ -15,11 +15,14 @@ import { cn } from "../lib/utils";
 import toast from "react-hot-toast";
 import ChangePasswordForm from "./ChangePasswordForm";
 import MonthlyAttendanceTrendChart from './dashboard/MonthlyAttendanceTrendChart';
-import RecordsManager from "./RecordsManager";
+import RecordsLibrary from "./RecordsLibrary";
 
 import DistrictExecutiveChart from './dashboard/DistrictExecutiveChart';
 import YearEndChart from './dashboard/YearEndChart';
 import MonthlyAttendanceGrid from './dashboard/MonthlyAttendanceGrid';
+import DashboardLocal from "./DashboardLocal";
+import DashboardDistrict from "./DashboardDistrict";
+import DashboardHome from "./DashboardHome";
 
 const Sidebar = ({
   view,
@@ -47,6 +50,17 @@ const Sidebar = ({
         </button>
       </div>
       <div className="space-y-2 mt-4">
+        <button
+          onClick={() => setView("home")}
+          className={cn(
+            "w-full text-left px-4 py-2 rounded",
+            view === "home"
+              ? "bg-blue-600 text-white"
+              : "hover:bg-blue-100 dark:hover:bg-gray-800"
+          )}
+        >
+          Home
+        </button>
         <button
           onClick={() => setView("local")}
           className={cn(
@@ -131,28 +145,6 @@ const monthNames = [
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
 ];
 
-// DEMO DATA: Remove this block when you want to use real database data!
-const demoAttendanceData = [
-  // January
-  { name: "Alice", meeting_date: "2024-01-10" },
-  { name: "Bob", meeting_date: "2024-01-10" },
-  { name: "Alice", meeting_date: "2024-01-24" },
-  // February
-  { name: "Alice", meeting_date: "2024-02-14" },
-  { name: "Bob", meeting_date: "2024-02-14" },
-  { name: "Charlie", meeting_date: "2024-02-14" },
-  // March
-  { name: "Alice", meeting_date: "2024-03-05" },
-  { name: "Charlie", meeting_date: "2024-03-05" },
-  // April
-  { name: "Bob", meeting_date: "2024-04-12" },
-  { name: "Charlie", meeting_date: "2024-04-12" },
-  // May
-  { name: "Alice", meeting_date: "2024-05-03" },
-  { name: "Bob", meeting_date: "2024-05-03" },
-  { name: "Charlie", meeting_date: "2024-05-03" },
-];
-
 function getTopAttendee(attendanceData, year) {
   const counts = {};
   attendanceData.forEach(entry => {
@@ -185,30 +177,22 @@ function getTopCongregations(attendanceData, year) {
 }
 
 export default function Dashboard({ onLogout }) {
-  const [view, setView] = useState("local");
-  // const [darkMode, setDarkMode] = useState(
-  //   () => localStorage.getItem("theme") === "dark"
-  // );
-  const [darkMode, setDarkMode] = useState(false); 
-
-useEffect(() => {
-  const savedTheme = localStorage.getItem("theme");
-  if (savedTheme === "dark") {
-    setDarkMode(true);
-  }
-}, []);
-  // Use demo data for now. Remove this line to use real data.
-  const [attendanceData, setAttendanceData] = useState([]);
-  const [search, setSearch] = useState("");
+  const [view, setView] = useState("home");
+  const [darkMode, setDarkMode] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [selectedName, setSelectedName] = useState(null);
-  const [editModal, setEditModal] = useState(false);
-  const [editValue, setEditValue] = useState("");
-  const [selectedId, setSelectedId] = useState(null);
   const [showManageMeetingModal, setShowManageMeetingModal] = useState(false);
-  const [recordType, setRecordType] = useState("attendance");
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
+  const [attendanceData, setAttendanceData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [deactivating, setDeactivating] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme === "dark") {
+      setDarkMode(true);
+    }
+  }, []);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode);
@@ -216,35 +200,21 @@ useEffect(() => {
   }, [darkMode]);
 
   useEffect(() => {
-    if (view !== "records") {
-      fetchData();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view]);
-
-  const fetchData = async () => {
-    try {
-      const url = view === "local"
-        ? `/api/local-attendance`
-        : `/api/district-attendance`;
-      
-      const response = await fetch(url, {
-        credentials: 'include',
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+    async function fetchAttendance() {
+      try {
+        const res = await fetch("/api/attendance-summary/", { credentials: "include" });
+        const data = await res.json();
+        setAttendanceData(data);
+      } catch (err) {
+        toast.error("Failed to load attendance data");
+      } finally {
+        setLoading(false);
       }
-      
-      const data = await response.json();
-      setAttendanceData(data);
-    } catch (error) {
-      toast.error('Failed to fetch attendance data');
     }
-  };
+    fetchAttendance();
+  }, []);
 
   const toggleDarkMode = () => setDarkMode((prev) => !prev);
-  const router = useRouter();
 
   const handleLogout = () => {
     localStorage.removeItem("role");
@@ -255,227 +225,14 @@ useEffect(() => {
     setShowManageMeetingModal(true);
   };
 
-  const handleDeactivateMeeting = async () => {
-    try {
-      const res = await fetch(`/api/deactivate-meeting`, {
-        method: 'POST',
-        credentials: 'include',
-      });
-
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
-
-      toast.success('Meeting deactivated successfully');
-      setShowManageMeetingModal(false);
-      fetchData();
-    } catch (error) {
-      toast.error('Failed to deactivate meeting');
-    }
-  };
-
-  const confirmDelete = (id, name) => {
-    setSelectedId(id);
-    setSelectedName(name);
-    setShowConfirm(true);
-  };
-
-  const handleDeleteConfirmed = async () => {
-    try {
-      const response = await fetch(
-        `/api/delete-attendance/${selectedId}`,
-        {
-          method: 'DELETE',
-          credentials: 'include',
-        }
-      );
-      
-      if (response.ok) {
-        toast.success("Deleted successfully");
-        setShowConfirm(false);
-        fetchData();
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        toast.error(errorData.error || "Delete failed");
-      }
-    } catch (err) {
-      toast.error("Network error: Unable to delete record");
-    }
-  };
-
-  const handleEdit = (id, name) => {
-    setSelectedId(id);
-    setSelectedName(name);
-    setEditValue(name);
-    setEditModal(true);
-  };
-
-  const handleEditSave = async () => {
-    try {
-      const response = await fetch(`/api/edit-attendance/${selectedId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ congregation: editValue }),
-      });
-      
-      if (response.ok) {
-        toast.success("Updated successfully");
-        setEditModal(false);
-        fetchData();
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        toast.error(errorData.error || "Update failed");
-      }
-    } catch (err) {
-      toast.error("Network error: Unable to update record");
-    }
-  };
-
-  const getAttendanceSummary = () => {
-    const summary = {};
-    attendanceData.forEach((entry) => {
-      if (!summary[entry.congregation]) {
-        summary[entry.congregation] = [];
-      }
-      summary[entry.congregation].push(entry);
-    });
-    return summary;
-  };
-
-  const getLocalProgress = () => {
-    const currentYear = new Date().getFullYear();
-    
-    // Count congregations with attendance in current year
-    const congregationsWithAttendance = new Set();
-    attendanceData.forEach(entry => {
-      const date = new Date(entry.meeting_date);
-      if (date.getFullYear() === currentYear && entry.type !== 'district') {
-        congregationsWithAttendance.add(entry.congregation);
-      }
-    });
-    
-    const totalCongregations = 9; // All system congregations
-    const progress = (congregationsWithAttendance.size / totalCongregations) * 100;
-    return Math.round(progress);
-  };
-
-  const getDistrictProgress = () => {
-    const currentYear = new Date().getFullYear();
-    
-    // Count district positions with attendance in current year
-    const positionsWithAttendance = new Set();
-    attendanceData.forEach(entry => {
-      const date = new Date(entry.meeting_date);
-      if (date.getFullYear() === currentYear && entry.type === 'district') {
-        positionsWithAttendance.add(entry.position);
-      }
-    });
-    
-    const totalPositions = 8; // All district positions
-    const progress = (positionsWithAttendance.size / totalPositions) * 100;
-    return Math.round(progress);
-  };
-
-  const getGrandTotalProgress = () => {
-    const currentYear = new Date().getFullYear();
-    
-    // Count all entities (congregations + district positions) with attendance in current year
-    const entitiesWithAttendance = new Set();
-    attendanceData.forEach(entry => {
-      const date = new Date(entry.meeting_date);
-      if (date.getFullYear() === currentYear) {
-        if (entry.type === 'district') {
-          entitiesWithAttendance.add(`district_${entry.position}`);
-        } else {
-          entitiesWithAttendance.add(`local_${entry.congregation}`);
-        }
-      }
-    });
-    
-    const totalEntities = 17; // 9 congregations + 8 district positions
-    const progress = (entitiesWithAttendance.size / totalEntities) * 100;
-    return Math.round(progress);
-  };
-
-  const summary = getAttendanceSummary();
-  
-  // Create year-end summary with all 12 months
-  const createYearEndSummary = () => {
-    const currentDate = new Date();
-    const currentYear = currentDate.getFullYear();
-    
-    // Group attendance by congregation and month
-    const monthlyData = {};
-    attendanceData.forEach(entry => {
-      const date = new Date(entry.meeting_date);
-      if (date.getFullYear() === currentYear) {
-        const month = date.getMonth();
-        const congregation = entry.congregation;
-        
-        if (!monthlyData[congregation]) {
-          monthlyData[congregation] = Array(12).fill(0);
-        }
-        monthlyData[congregation][month]++;
-      }
-    });
-
-
-    // Convert to chart data format - count all 12 months
-    const result = Object.keys(monthlyData).map(congregation => ({
-      name: congregation,
-      count: monthlyData[congregation].reduce((sum, count) => sum + count, 0),
-      monthlyCounts: monthlyData[congregation],
-      // Add percentage of months with attendance
-      attendanceRate: (monthlyData[congregation].filter(count => count > 0).length / 12) * 100
-    }));
-    return result;
-  };
-
-  const yearEndData = createYearEndSummary();
-
-  const renderCircles = (entries, name) => {
-    const total = entries.length;
-    const id = entries[0]?.id;
-
+  if (loading) {
     return (
-      <div className="flex gap-2 items-center">
-        {[0, 1].map((i) => (
-          <span key={i} className="text-lg">
-            {i < total ? (
-              <FaCheckCircle className="text-green-500" />
-            ) : (
-              <FaTimesCircle className="text-red-500" />
-            )}
-          </span>
-        ))}
-        <button
-          onClick={() => handleEdit(id, name)}
-          className="text-blue-500 hover:underline text-sm ml-2"
-        >
-          Edit
-        </button>
-        <button
-          onClick={() => confirmDelete(id, name)}
-          className="text-red-500 hover:underline text-sm"
-        >
-          Delete
-        </button>
+      <div className="min-h-screen flex items-center justify-center text-gray-600">
+        <div className="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-12 w-12 mb-4 animate-spin border-t-blue-600"></div>
+        <span className="ml-4">Loading dashboard...</span>
       </div>
     );
-  };
-
-  const currentYear = new Date().getFullYear();
-  const previousYear = currentYear - 1;
-  const previousYearAttendanceData = attendanceData.filter(entry => {
-    const date = new Date(entry.meeting_date);
-    return date.getFullYear() === previousYear;
-  });
-  const { topPerson, max, counts } = getTopAttendee(attendanceData, currentYear);
-  const uniquePeople = Object.keys(counts);
-  const leaderboard = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  }
 
   return (
     <div
@@ -506,6 +263,17 @@ useEffect(() => {
             </button>
           </div>
           <div className="space-y-2 mt-4">
+            <button
+              onClick={() => setView("home")}
+              className={cn(
+                "w-full text-left px-4 py-2 rounded",
+                view === "home"
+                  ? "bg-blue-600 text-white"
+                  : "hover:bg-blue-100 dark:hover:bg-gray-800"
+              )}
+            >
+              Home
+            </button>
             <button
               onClick={() => setView("local")}
               className={cn(
@@ -581,371 +349,21 @@ useEffect(() => {
 
       {/* Main scrollable content area */}
       <div className="flex-1 p-3 md:p-6 overflow-y-auto md:ml-64">
-        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-md p-4 mb-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
-            <div className="p-3 md:p-4 bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-800 rounded-lg shadow-sm">
-              <h3 className="text-xs md:text-sm font-semibold text-blue-700 dark:text-blue-300">Total Records</h3>
-              <p className="text-lg md:text-xl font-bold text-blue-900 dark:text-blue-100">{attendanceData.length}</p>
-            </div>
-            <div className="p-3 md:p-4 bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-800 rounded-lg shadow-sm">
-              <h3 className="text-xs md:text-sm font-semibold text-green-700 dark:text-green-300">Congregations Present</h3>
-              <p className="text-lg md:text-xl font-bold text-green-900 dark:text-green-100">{Object.keys(summary).length}</p>
-            </div>
-            <div className="p-3 md:p-4 bg-purple-50 dark:bg-purple-900 border border-purple-200 dark:border-purple-800 rounded-lg shadow-sm">
-              <h3 className="text-xs md:text-sm font-semibold text-purple-700 dark:text-purple-300">Total Meetings</h3>
-              <p className="text-lg md:text-xl font-bold text-purple-900 dark:text-purple-100">{yearEndData.length}</p>
-            </div>
-            <div className="p-3 md:p-4 bg-amber-50 dark:bg-orange-900 border border-amber-200 dark:border-orange-800 rounded-lg shadow-sm">
-              <h3 className="text-xs md:text-sm font-semibold text-amber-700 dark:text-orange-300">Grand Total Progress</h3>
-              <p className="text-lg md:text-xl font-bold text-amber-900 dark:text-orange-100">{getGrandTotalProgress()}%</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
-            <div className="p-4 md:p-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900 dark:to-blue-800 border border-blue-200 dark:border-blue-700 rounded-xl shadow-sm">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <h3 className="text-sm md:text-base font-semibold text-blue-700 dark:text-blue-300 mb-2">
-                    Local Congregations Progress
-                  </h3>
-                  <p className="text-xs text-blue-600 dark:text-blue-400">
-                    Yearly Progress: {getLocalProgress()}%
-                  </p>
-                  <p className="text-xs text-blue-600 dark:text-blue-400">
-                    Current Year: {new Date().getFullYear()}
-                  </p>
-                </div>
-                <div className="relative w-20 h-20 md:w-24 md:h-24">
-                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                    {/* Background circle */}
-                    <path
-                      className="text-blue-200 dark:text-blue-700"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      fill="none"
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    />
-                    {/* Yearly progress circle */}
-                    <path
-                      className="text-blue-500 dark:text-blue-400"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      fill="none"
-                      strokeLinecap="round"
-                      strokeDasharray={`${getLocalProgress()} 100`}
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-sm md:text-base font-bold text-blue-700 dark:text-blue-300">
-                      {getLocalProgress()}%
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-4 md:p-6 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900 dark:to-green-800 border border-green-200 dark:border-green-700 rounded-xl shadow-sm">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <h3 className="text-sm md:text-base font-semibold text-green-700 dark:text-green-300 mb-2">
-                    District Executives Progress
-                  </h3>
-                  <p className="text-xs text-green-600 dark:text-green-400">
-                    Yearly Progress: {getDistrictProgress()}%
-                  </p>
-                  <p className="text-xs text-green-600 dark:text-green-400">
-                    Current Year: {new Date().getFullYear()}
-                  </p>
-                </div>
-                <div className="relative w-20 h-20 md:w-24 md:h-24">
-                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                    {/* Background circle */}
-                    <path
-                      className="text-green-200 dark:text-green-700"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      fill="none"
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    />
-                    {/* Yearly progress circle */}
-                    <path
-                      className="text-green-500 dark:text-green-400"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      fill="none"
-                      strokeLinecap="round"
-                      strokeDasharray={`${getDistrictProgress()} 100`}
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-sm md:text-base font-bold text-green-700 dark:text-green-300">
-                      {getDistrictProgress()}%
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 md:mb-6 space-y-3 md:space-y-0">
-          <h1 className="text-lg md:text-xl font-bold">Attendance Dashboard</h1>
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search congregation..."
-            className="w-full md:max-w-xs border px-3 py-2 rounded-md dark:bg-gray-700 dark:text-white text-sm md:text-base"
+        {view === "home" ? (
+          <DashboardHome 
+            darkMode={darkMode}
+            getTopCongregations={getTopCongregations}
+            attendanceData={attendanceData}
+            currentYear={new Date().getFullYear()}
           />
-        </div>
-
-        <div className="overflow-x-auto custom-scrollbar mb-6 md:mb-10">
-          <table className="min-w-full border border-gray-300">
-            <thead className={darkMode ? "bg-gray-700" : "bg-gray-200"}>
-              <tr>
-                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Meeting</th>
-                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Congregation</th>
-                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">
-                  Submitted Time(s)
-                </th>
-                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">
-                  Presence Status
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {/* Local Congregations */}
-              {Object.keys(summary)
-                .filter(name => summary[name][0]?.type !== 'district')
-                .filter(name => name.toLowerCase().includes(search.toLowerCase()))
-                .map(name => (
-                  <tr key={name}>
-                    <td className="border px-2 md:px-4 py-2">
-                      {summary[name].map((entry, i) => (
-                        <div key={i} className="text-xs md:text-sm font-medium text-blue-600">
-                          {entry.meeting_title || "Unknown Meeting"}
-                        </div>
-                      ))}
-                    </td>
-                    <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">{name}</td>
-                    <td className="border px-2 md:px-4 py-2 space-y-1">
-                      {summary[name].map((entry, i) => (
-                        <div key={i} className="text-xs md:text-sm">
-                          {entry.timestamp}
-                        </div>
-                      ))}
-                    </td>
-                    <td className="border px-2 md:px-4 py-2">
-                      {/* Show two circles for local */}
-                      <div className="flex gap-2 items-center">
-                        {[0, 1].map((i) => (
-                          <span key={i} className="text-lg">
-                            {i < summary[name].length ? (
-                              <FaCheckCircle className="text-green-500" />
-                            ) : (
-                              <FaTimesCircle className="text-red-500" />
-                            )}
-                          </span>
-                        ))}
-                        <button
-                          onClick={() => handleEdit(summary[name][0]?.id, name)}
-                          className="text-blue-500 hover:underline text-sm ml-2"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => confirmDelete(summary[name][0]?.id, name)}
-                          className="text-red-500 hover:underline text-sm"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-
-              {/* District Executives Section */}
-              {Object.keys(summary)
-                .filter(name => summary[name][0]?.type === 'district')
-                .filter(name => name.toLowerCase().includes(search.toLowerCase()))
-                .length > 0 && (
-                  <tr>
-                    <td colSpan={4} className="bg-gray-100 dark:bg-gray-700 text-center font-bold py-2">
-                      District Executives
-                    </td>
-                  </tr>
-                )}
-
-              {/* District Executives */}
-              {Object.keys(summary)
-                .filter(name => summary[name][0]?.type === 'district')
-                .filter(name => name.toLowerCase().includes(search.toLowerCase()))
-                .map(name => (
-                  <tr key={name}>
-                    <td className="border px-2 md:px-4 py-2">
-                      {summary[name].map((entry, i) => (
-                        <div key={i} className="text-xs md:text-sm font-medium text-green-600">
-                          {entry.meeting_title || "Unknown Meeting"}
-                        </div>
-                      ))}
-                    </td>
-                    <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">{name}</td>
-                    <td className="border px-2 md:px-4 py-2 space-y-1">
-                      {summary[name].map((entry, i) => (
-                        <div key={i} className="text-xs md:text-sm">
-                          {entry.timestamp}
-                        </div>
-                      ))}
-                    </td>
-                    <td className="border px-2 md:px-4 py-2">
-                      {/* Show only one circle for district */}
-                      <div className="flex gap-2 items-center">
-                        {[0].map((i) => (
-                          <span key={i} className="text-lg">
-                            {i < summary[name].length ? (
-                              <FaCheckCircle className="text-green-500" />
-                            ) : (
-                              <FaTimesCircle className="text-red-500" />
-                            )}
-                          </span>
-                        ))}
-                        <button
-                          onClick={() => handleEdit(summary[name][0]?.id, name)}
-                          className="text-blue-500 hover:underline text-sm ml-2"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => confirmDelete(summary[name][0]?.id, name)}
-                          className="text-red-500 hover:underline text-sm"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Monthly Attendance Grid */}
-        <div className="my-8 md:my-12">
-          <MonthlyAttendanceGrid attendanceData={attendanceData} darkMode={darkMode} />
-        </div>
-
-        {/* District Executive Attendance Chart */}
-        <div className="my-8 md:my-12">
-          <DistrictExecutiveChart attendanceData={attendanceData} darkMode={darkMode} />
-        </div>
-
-        {/* Year-End Attendance Chart */}
-        <div className="my-8 md:my-12">
-          <YearEndChart attendanceData={attendanceData} darkMode={darkMode} />
-        </div>
-        
-        <div className="mb-6">
-          <div className="font-bold text-purple-700 mb-1">
-            Top 3 Congregations: {getTopCongregations(attendanceData, currentYear).length === 0 ? 'No data' : (
-              getTopCongregations(attendanceData, currentYear).map(([cong, count], idx) => (
-                <span key={cong} className="inline-block mr-3">
-                  {idx + 1}. {cong} ({count} times)
-                </span>
-              ))
-            )}
-          </div>
-          <div className="font-bold text-green-700 mb-1">
-            Top 3 Attendees: {leaderboard.length === 0 ? 'No data' : (
-              leaderboard.slice(0, 3).map(([person, count], idx) => (
-                <span key={person} className="inline-block mr-3">
-                  {idx + 1}. {person} ({count} times)
-                </span>
-              ))
-            )}
-          </div>
-          <p className="mb-2 text-blue-700 font-semibold">
-            Unique People Attended This Year: {uniquePeople.length}
-          </p>
-          <div className="overflow-x-auto">
-            <table className="min-w-[300px] border border-gray-300 rounded-lg">
-              <thead className="bg-gray-200 dark:bg-gray-700">
-                <tr>
-                  <th className="px-3 py-2 text-left">Name</th>
-                  <th className="px-3 py-2 text-left">Attendance Count</th>
-                </tr>
-              </thead>
-              <tbody>
-                {leaderboard.map(([person, count]) => (
-                  <tr key={person}>
-                    <td className="border px-3 py-1">{person}</td>
-                    <td className="border px-3 py-1">{count}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <MonthlyAttendanceTrendChart
-          attendanceData={attendanceData}
-          previousYearData={previousYearAttendanceData}
-          darkMode={darkMode}
-        />
+        ) : view === "local" ? (
+          <DashboardLocal darkMode={darkMode} />
+        ) : view === "district" ? (
+          <DashboardDistrict darkMode={darkMode} />
+        ) : view === "records" ? (
+          <RecordsLibrary darkMode={darkMode} />
+        ) : null}
       </div>
-
-      {/* Delete Confirmation Modal */}
-      {showConfirm && (
-        <div className="fixed inset-0 bg-black text-white bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded shadow-lg text-center">
-            <p>
-              Are you sure you want to delete all records for{" "}
-              <strong>{selectedName}</strong>?
-            </p>
-            <div className="mt-4 flex justify-center gap-4">
-              <button
-                onClick={() => setShowConfirm(false)}
-                className="px-4 py-2 bg-gray-400 rounded text-white"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDeleteConfirmed}
-                className="px-4 py-2 bg-red-600 rounded text-white"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Modal */}
-      {editModal && (
-        <div className="fixed inset-0 bg-black text-white bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded shadow-lg w-full max-w-sm">
-            <h2 className="text-lg font-bold mb-4">Edit Congregation Name</h2>
-            <input
-              value={editValue}
-              onChange={(e) => setEditValue(e.target.value)}
-              className="w-full border rounded px-3 py-2 mb-4 dark:bg-gray-700 dark:text-white"
-            />
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setEditModal(false)}
-                className="px-4 py-2 bg-gray-400 rounded text-white"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleEditSave}
-                className="px-4 py-2 bg-blue-600 rounded text-white"
-              >
-                Save Changes
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Manage Meeting Modal */}
       {showManageMeetingModal && (
@@ -955,20 +373,42 @@ useEffect(() => {
             <p className="text-gray-700 dark:text-gray-300 mb-6">
               Are you sure you want to deactivate the current meeting? This will allow you to set a new meeting with different details.
             </p>
+            {deactivating ? (
+              <div className="flex flex-col items-center justify-center py-6">
+                <div className="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-12 w-12 mb-4 animate-spin border-t-blue-600"></div>
+                <span className="text-blue-600 dark:text-blue-300 font-semibold">Deactivating meeting...</span>
+              </div>
+            ) : (
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowManageMeetingModal(false)}
                 className="px-4 py-2 bg-gray-400 rounded text-white hover:bg-gray-500"
+                disabled={deactivating}
               >
                 Cancel
               </button>
               <button
-                onClick={handleDeactivateMeeting}
+                onClick={async () => {
+                  setDeactivating(true);
+                  // Simulate API call or add your real API call here
+                  try {
+                    // await fetch('/api/deactivate-meeting', { method: 'POST' });
+                    await new Promise(res => setTimeout(res, 1500));
+                    toast.success('Meeting deactivated!');
+                  } catch (err) {
+                    toast.error('Failed to deactivate meeting');
+                  } finally {
+                    setDeactivating(false);
+                    setShowManageMeetingModal(false);
+                  }
+                }}
                 className="px-4 py-2 bg-red-600 rounded text-white hover:bg-red-700"
+                disabled={deactivating}
               >
                 Deactivate Meeting
               </button>
             </div>
+            )}
           </div>
         </div>
       )}

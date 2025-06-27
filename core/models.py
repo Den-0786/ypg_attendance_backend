@@ -31,6 +31,21 @@ class AttendanceEntry(models.Model):
     meeting_date = models.DateField()
     timestamp = models.TimeField(default=now)
     submitted_by = models.ForeignKey(Credential, null=True, blank=True, on_delete=models.SET_NULL)
+    # Advanced features
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    notes = models.TextField(blank=True, default='')
+    tags = models.CharField(max_length=255, blank=True, default='')  # Comma-separated tags
+
+    def soft_delete(self):
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.save()
+
+    def restore(self):
+        self.is_deleted = False
+        self.deleted_at = None
+        self.save()
 
     def __str__(self):
         return f"{self.name} - {self.congregation} ({self.type})"
@@ -44,6 +59,21 @@ class ApologyEntry(models.Model):
     meeting_date = models.DateField()
     timestamp = models.TimeField(default=now)
     submitted_by = models.ForeignKey(Credential, null=True, blank=True, on_delete=models.SET_NULL)
+    # Advanced features
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    notes = models.TextField(blank=True, default='')
+    tags = models.CharField(max_length=255, blank=True, default='')
+
+    def soft_delete(self):
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.save()
+
+    def restore(self):
+        self.is_deleted = False
+        self.deleted_at = None
+        self.save()
 
     def __str__(self):
         return f"{self.name} - {self.congregation} (Apology)"
@@ -74,3 +104,23 @@ class Meeting(models.Model):
 
     def __str__(self):
         return f"{self.title} ({self.date})"
+
+# --- Audit Log Model ---
+class AuditLog(models.Model):
+    ACTION_CHOICES = [
+        ("create", "Create"),
+        ("edit", "Edit"),
+        ("delete", "Delete"),
+        ("restore", "Restore"),
+        ("export", "Export"),
+        ("view", "View"),
+    ]
+    user = models.ForeignKey(Credential, null=True, blank=True, on_delete=models.SET_NULL)
+    action = models.CharField(max_length=20, choices=ACTION_CHOICES)
+    model = models.CharField(max_length=50)
+    object_id = models.IntegerField(null=True, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    details = models.TextField(blank=True, default='')
+
+    def __str__(self):
+        return f"{self.user} {self.action} {self.model} {self.object_id} at {self.timestamp}"

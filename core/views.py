@@ -1,8 +1,8 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from django.db.models import Count
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
+from django.db.models import Count, Q
 from django.core.mail import send_mail
 from django.conf import settings
 from django.utils.crypto import get_random_string
@@ -12,12 +12,20 @@ from .models import (
     ApologyEntry,
     Credential,
     PasswordResetToken,
-    Meeting
+    Meeting,
+    AuditLog
 )
-from .serializers import AttendanceEntrySerializer, ApologyEntrySerializer, MeetingSerializer
-import re
-
-# ------------------ Attendance Views ------------------
+from django.http import HttpResponse, FileResponse
+from .serializers import AttendanceEntrySerializer, ApologyEntrySerializer, MeetingSerializer, AuditLogSerializer, BulkIdSerializer, NotesTagsUpdateSerializer
+import csv
+from datetime import datetime, timezone
+from rest_framework.pagination import PageNumberPagination
+import io
+try:
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import letter
+except ImportError:
+    canvas = None  
 from django.utils.deprecation import MiddlewareMixin
 
 class DebugPrintMiddleware(MiddlewareMixin):
@@ -537,8 +545,8 @@ def reset_password_confirm(request):
 @permission_classes([AllowAny])
 def login_view(request):
     try:
-        print('Raw body:', request.body)  # ⬅️ NEW
-        print('Parsed data:', request.data)  # ⬅️ NEW
+        print('Raw body:', request.body)  
+        print('Parsed data:', request.data)  
 
         username = request.data.get('username')
         password = request.data.get('password')
@@ -552,7 +560,7 @@ def login_view(request):
         try:
             user = Credential.objects.get(username=username)
             if user.check_password(password):
-                # login(request, user)  # REMOVE this line, not compatible with Credential model
+                
                 request.session.flush()
                 request.session['user_id'] = user.id
                 request.session['username'] = user.username
@@ -826,3 +834,240 @@ def login_view_django(request):
     except Exception as e:
         print("Login error:", e)
         return Response({'error': 'Login failed. Please try again.'}, status=500)
+
+
+# Helper to combine and serialize records
+def get_combined_records(record_type):
+    if record_type == 'local':
+        attendance = AttendanceEntry.objects.filter(type='local')
+        apology = ApologyEntry.objects.filter(type='local')
+    else:
+        attendance = AttendanceEntry.objects.filter(type='district')
+        apology = ApologyEntry.objects.filter(type='district')
+    att_data = AttendanceEntrySerializer(attendance, many=True).data
+    apo_data = ApologyEntrySerializer(apology, many=True).data
+    for r in att_data:
+        r['record_kind'] = 'attendance'
+    for r in apo_data:
+        r['record_kind'] = 'apology'
+    return att_data + apo_data
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def records_list(request, record_type):
+    # Optional: filter by date range
+    start = request.GET.get('start')
+    end = request.GET.get('end')
+    records = get_combined_records(record_type)
+    if start:
+        records = [r for r in records if r['meeting_date'] >= start]
+    if end:
+        records = [r for r in records if r['meeting_date'] <= end]
+    return Response(records)
+
+@api_view(['PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def record_edit_delete(request, record_type, pk):
+    if request.method == 'PUT':
+        # Try attendance first, then apology
+        try:
+            if record_type == 'local':
+                obj = AttendanceEntry.objects.get(pk=pk, type='local')
+                serializer = AttendanceEntrySerializer(obj, data=request.data, partial=True)
+            else:
+                obj = AttendanceEntry.objects.get(pk=pk, type='district')
+                serializer = AttendanceEntrySerializer(obj, data=request.data, partial=True)
+        except AttendanceEntry.DoesNotExist:
+            try:
+                if record_type == 'local':
+                    obj = ApologyEntry.objects.get(pk=pk, type='local')
+                    serializer = ApologyEntrySerializer(obj, data=request.data, partial=True)
+                else:
+                    obj = ApologyEntry.objects.get(pk=pk, type='district')
+                    serializer = ApologyEntrySerializer(obj, data=request.data, partial=True)
+            except ApologyEntry.DoesNotExist:
+                return Response({'error': 'Record not found'}, status=404)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
+
+    elif request.method == 'DELETE':
+        try:
+            if record_type == 'local':
+                obj = AttendanceEntry.objects.get(pk=pk, type='local')
+            else:
+                obj = AttendanceEntry.objects.get(pk=pk, type='district')
+            obj.delete()
+            return Response({'message': 'Deleted'}, status=204)
+        except AttendanceEntry.DoesNotExist:
+            try:
+                if record_type == 'local':
+                    obj = ApologyEntry.objects.get(pk=pk, type='local')
+                else:
+                    obj = ApologyEntry.objects.get(pk=pk, type='district')
+                obj.delete()
+                return Response({'message': 'Deleted'}, status=204)
+            except ApologyEntry.DoesNotExist:
+                return Response({'error': 'Record not found'}, status=404)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def records_export(request, record_type):
+    records = get_combined_records(record_type)
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename=\"{record_type}_records_{datetime.now().date()}.csv\"'
+    writer = csv.writer(response)
+    # Write header
+    if records:
+        writer.writerow(records[0].keys())
+        for r in records:
+            writer.writerow([r[k] for k in r])
+    return response
+
+# --- Utility: Audit Log ---
+def log_action(user, action, model, object_id=None, details=''):
+    AuditLog.objects.create(user=user, action=action, model=model, object_id=object_id, details=details)
+
+# --- Soft Delete & Restore ---
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def soft_delete_record(request, record_type, pk):
+    user = request.user if hasattr(request, 'user') else None
+    try:
+        if record_type == 'attendance':
+            obj = AttendanceEntry.objects.get(pk=pk)
+        else:
+            obj = ApologyEntry.objects.get(pk=pk)
+        obj.soft_delete()
+        log_action(user, 'delete', record_type, pk)
+        return Response({'message': 'Record soft-deleted'})
+    except (AttendanceEntry.DoesNotExist, ApologyEntry.DoesNotExist):
+        return Response({'error': 'Record not found'}, status=404)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def restore_record(request, record_type, pk):
+    user = request.user if hasattr(request, 'user') else None
+    try:
+        if record_type == 'attendance':
+            obj = AttendanceEntry.objects.get(pk=pk)
+        else:
+            obj = ApologyEntry.objects.get(pk=pk)
+        obj.restore()
+        log_action(user, 'restore', record_type, pk)
+        return Response({'message': 'Record restored'})
+    except (AttendanceEntry.DoesNotExist, ApologyEntry.DoesNotExist):
+        return Response({'error': 'Record not found'}, status=404)
+
+# --- Bulk Actions ---
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def bulk_soft_delete(request, record_type):
+    serializer = BulkIdSerializer(data=request.data)
+    if serializer.is_valid():
+        ids = serializer.validated_data['ids']
+        Model = AttendanceEntry if record_type == 'attendance' else ApologyEntry
+        Model.objects.filter(id__in=ids).update(is_deleted=True, deleted_at=timezone.now())
+        for pk in ids:
+            log_action(request.user, 'delete', record_type, pk)
+        return Response({'message': 'Bulk soft-delete complete'})
+    return Response(serializer.errors, status=400)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def bulk_restore(request, record_type):
+    serializer = BulkIdSerializer(data=request.data)
+    if serializer.is_valid():
+        ids = serializer.validated_data['ids']
+        Model = AttendanceEntry if record_type == 'attendance' else ApologyEntry
+        Model.objects.filter(id__in=ids).update(is_deleted=False, deleted_at=None)
+        for pk in ids:
+            log_action(request.user, 'restore', record_type, pk)
+        return Response({'message': 'Bulk restore complete'})
+    return Response(serializer.errors, status=400)
+
+# --- Notes/Tags Update ---
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def update_notes_tags(request, record_type, pk):
+    serializer = NotesTagsUpdateSerializer(data=request.data)
+    if serializer.is_valid():
+        Model = AttendanceEntry if record_type == 'attendance' else ApologyEntry
+        try:
+            obj = Model.objects.get(pk=pk)
+            if 'notes' in serializer.validated_data:
+                obj.notes = serializer.validated_data['notes']
+            if 'tags' in serializer.validated_data:
+                obj.tags = serializer.validated_data['tags']
+            obj.save()
+            log_action(request.user, 'edit', record_type, pk, details='Notes/Tags updated')
+            return Response({'message': 'Notes/Tags updated'})
+        except Model.DoesNotExist:
+            return Response({'error': 'Record not found'}, status=404)
+    return Response(serializer.errors, status=400)
+
+# --- PDF Export (Single Record) ---
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def export_record_pdf(request, record_type, pk):
+    if not canvas:
+        return Response({'error': 'PDF export not available. Install reportlab.'}, status=500)
+    Model = AttendanceEntry if record_type == 'attendance' else ApologyEntry
+    try:
+        obj = Model.objects.get(pk=pk)
+        buffer = io.BytesIO()
+        p = canvas.Canvas(buffer, pagesize=letter)
+        y = 750
+        for field in obj._meta.fields:
+            value = getattr(obj, field.name)
+            p.drawString(50, y, f"{field.name}: {value}")
+            y -= 20
+        p.save()
+        buffer.seek(0)
+        log_action(request.user, 'export', record_type, pk, details='PDF export')
+        return FileResponse(buffer, as_attachment=True, filename=f'{record_type}_{pk}.pdf')
+    except Model.DoesNotExist:
+        return Response({'error': 'Record not found'}, status=404)
+
+# --- Advanced Filtering, Sorting, Pagination ---
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def advanced_records_list(request, record_type):
+    Model = AttendanceEntry if record_type == 'attendance' else ApologyEntry
+    queryset = Model.objects.all()
+    # Filtering
+    if 'is_deleted' in request.GET:
+        queryset = queryset.filter(is_deleted=request.GET['is_deleted'] == 'true')
+    if 'start' in request.GET:
+        queryset = queryset.filter(meeting_date__gte=request.GET['start'])
+    if 'end' in request.GET:
+        queryset = queryset.filter(meeting_date__lte=request.GET['end'])
+    if 'search' in request.GET:
+        search = request.GET['search']
+        queryset = queryset.filter(
+            Q(name__icontains=search) | Q(congregation__icontains=search) | Q(position__icontains=search)
+        )
+    # Sorting
+    ordering = request.GET.get('ordering', '-meeting_date')
+    queryset = queryset.order_by(ordering)
+    # Pagination
+    paginator = StandardResultsSetPagination()
+    page = paginator.paginate_queryset(queryset, request)
+    serializer = AttendanceEntrySerializer(page, many=True) if record_type == 'attendance' else ApologyEntrySerializer(page, many=True)
+    return paginator.get_paginated_response(serializer.data)
+
+# --- Audit Log Viewing (Admin only) ---
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def audit_log_list(request):
+    logs = AuditLog.objects.all().order_by('-timestamp')
+    paginator = StandardResultsSetPagination()
+    page = paginator.paginate_queryset(logs, request)
+    serializer = AuditLogSerializer(page, many=True)
+    return paginator.get_paginated_response(serializer.data)
