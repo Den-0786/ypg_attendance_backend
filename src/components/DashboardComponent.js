@@ -23,6 +23,7 @@ import MonthlyAttendanceGrid from './dashboard/MonthlyAttendanceGrid';
 import DashboardLocal from "./DashboardLocal";
 import DashboardDistrict from "./DashboardDistrict";
 import DashboardHome from "./DashboardHome";
+import PINModal from "./PINModal";
 
 const Sidebar = ({
   view,
@@ -35,6 +36,8 @@ const Sidebar = ({
   onManageMeeting,
   onShowChangePassword,
   router,
+  selectedYear,
+  setSelectedYear,
 }) => (
   <div
     className={cn(
@@ -51,7 +54,10 @@ const Sidebar = ({
       </div>
       <div className="space-y-2 mt-4">
         <button
-          onClick={() => setView("home")}
+          onClick={() => {
+            setView("home");
+            if (isMobile) setShowSidebar(false);
+          }}
           className={cn(
             "w-full text-left px-4 py-2 rounded",
             view === "home"
@@ -62,7 +68,10 @@ const Sidebar = ({
           Home
         </button>
         <button
-          onClick={() => setView("local")}
+          onClick={() => {
+            setView("local");
+            if (isMobile) setShowSidebar(false);
+          }}
           className={cn(
             "w-full text-left px-4 py-2 rounded",
             view === "local"
@@ -73,7 +82,10 @@ const Sidebar = ({
           Local
         </button>
         <button
-          onClick={() => setView("district")}
+          onClick={() => {
+            setView("district");
+            if (isMobile) setShowSidebar(false);
+          }}
           className={cn(
             "w-full text-left px-4 py-2 rounded",
             view === "district"
@@ -84,7 +96,10 @@ const Sidebar = ({
           District
         </button>
         <button
-          onClick={() => setView("records")}
+          onClick={() => {
+            setView("records");
+            if (isMobile) setShowSidebar(false);
+          }}
           className={cn(
             "w-full text-left px-4 py-2 rounded flex items-center gap-2",
             view === "records"
@@ -97,12 +112,37 @@ const Sidebar = ({
       </div>
     </div>
     <div className="space-y-3">
+      {/* Year Selector */}
+      <div className="space-y-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Year Selection</h3>
+        <select
+          value={selectedYear}
+          onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+        >
+          {availableYears.map((year) => (
+            <option key={year} value={year}>
+              {year}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-gray-600 dark:text-gray-400">
+          Data closes on Dec 31st of each year
+        </p>
+      </div>
+
       {/* Action Buttons Group */}
       <div className="space-y-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
         <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Actions</h3>
         <button
+          onClick={() => setShowChangePasswordModal(true)}
+          className="w-full text-left px-4 py-2 rounded hover:bg-blue-300 dark:hover:bg-gray-800"
+        >
+          Change Credentials
+        </button>
+        <button
           onClick={() => router.push('/forms')}
-          className="w-full text-left px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+          className="w-full text-left px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
         >
           Set Meeting
         </button>
@@ -111,12 +151,6 @@ const Sidebar = ({
           className="w-full text-left px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 transition-colors"
         >
           Manage Meeting
-        </button>
-        <button
-          onClick={onShowChangePassword}
-          className="w-full text-left px-4 py-2 rounded bg-purple-600 text-white hover:bg-purple-700 transition-colors"
-        >
-          Change Password
         </button>
       </div>
       
@@ -176,16 +210,69 @@ function getTopCongregations(attendanceData, year) {
   return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3);
 }
 
+function handleEditAttendance(id) {
+  toast(`Edit functionality for entry ${id} - not implemented yet`);
+}
+
+function handleDeleteAttendance(id) {
+  toast(`Delete functionality for entry ${id} - not implemented yet`);
+}
+
 export default function Dashboard({ onLogout }) {
   const [view, setView] = useState("home");
   const [darkMode, setDarkMode] = useState(false);
+  const [attendanceData, setAttendanceData] = useState([]);
+  const [apologyData, setApologyData] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showSidebar, setShowSidebar] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [showManageMeetingModal, setShowManageMeetingModal] = useState(false);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
-  const [attendanceData, setAttendanceData] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [deactivating, setDeactivating] = useState(false);
+  const [showPINModal, setShowPINModal] = useState(false);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const router = useRouter();
+  
+  // Get available years from attendance data
+  const getAvailableYears = () => {
+    const years = new Set();
+    const currentYear = new Date().getFullYear();
+    
+    // Always include current year
+    years.add(currentYear);
+    
+    // Add years from attendance data, but only current year and future years
+    if (attendanceData && attendanceData.length > 0) {
+      attendanceData.forEach(entry => {
+        if (entry.meeting_date) {
+          const date = new Date(entry.meeting_date);
+          const entryYear = date.getFullYear();
+          // Only include current year and future years, exclude 2024 and earlier
+          if (entryYear >= currentYear) {
+            years.add(entryYear);
+          }
+        }
+      });
+    }
+    
+    return Array.from(years).sort((a, b) => b - a); // Sort descending (newest first)
+  };
+
+  const availableYears = getAvailableYears();
+
+  // Update selected year if current selection is not available
+  useEffect(() => {
+    if (!availableYears.includes(selectedYear)) {
+      setSelectedYear(availableYears[0] || new Date().getFullYear());
+    }
+  }, [availableYears, selectedYear]);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme");
@@ -199,19 +286,48 @@ export default function Dashboard({ onLogout }) {
     localStorage.setItem("theme", darkMode ? "dark" : "light");
   }, [darkMode]);
 
+  const fetchAttendance = async () => {
+    try {
+      const res = await fetch('/api/attendance-summary', {
+        credentials: 'include'
+      });
+      if (!res.ok) throw new Error('Failed to fetch attendance data');
+      const data = await res.json();
+      setAttendanceData(data);
+    } catch (error) {
+      console.error('Error fetching attendance data:', error);
+      toast.error('Failed to fetch attendance data');
+    }
+  };
+
+  const fetchApologies = async () => {
+    try {
+      const res = await fetch('/api/submit-apologies', {
+        credentials: 'include'
+      });
+      if (!res.ok) throw new Error('Failed to fetch apology data');
+      const data = await res.json();
+      setApologyData(data);
+    } catch (error) {
+      console.error('Error fetching apology data:', error);
+      // Don't show error toast for apologies as they might not exist yet
+    }
+  };
+
   useEffect(() => {
-    async function fetchAttendance() {
+    const fetchAllData = async () => {
+      setLoading(true);
       try {
-        const res = await fetch("/api/attendance-summary/", { credentials: "include" });
-        const data = await res.json();
-        setAttendanceData(data);
-      } catch (err) {
-        toast.error("Failed to load attendance data");
+        await Promise.all([fetchAttendance(), fetchApologies()]);
+      } catch (error) {
+        console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
-    }
-    fetchAttendance();
+    };
+    
+    fetchAllData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const toggleDarkMode = () => setDarkMode((prev) => !prev);
@@ -223,6 +339,39 @@ export default function Dashboard({ onLogout }) {
 
   const handleManageMeeting = () => {
     setShowManageMeetingModal(true);
+  };
+
+  const handleDeactivateMeeting = () => {
+    setShowManageMeetingModal(false);
+    setShowPINModal(true);
+  };
+
+  const handleDeactivateWithPIN = async () => {
+    setDeactivating(true);
+    try {
+      const res = await fetch('/api/deactivate-meeting', { 
+        method: 'POST',
+        credentials: 'include'
+      });
+      
+      if (res.ok) {
+        toast.success('Meeting deactivated successfully!');
+        // Optionally refresh the page or update state
+        window.location.reload();
+      } else {
+        const data = await res.json();
+        toast.error(data.error || 'Failed to deactivate meeting');
+      }
+    } catch (err) {
+      toast.error('Network error occurred');
+    } finally {
+      setDeactivating(false);
+      setShowPINModal(false);
+    }
+  };
+
+  const handlePINSuccess = () => {
+    handleDeactivateWithPIN();
   };
 
   if (loading) {
@@ -264,7 +413,10 @@ export default function Dashboard({ onLogout }) {
           </div>
           <div className="space-y-2 mt-4">
             <button
-              onClick={() => setView("home")}
+              onClick={() => {
+                setView("home");
+                if (isMobile) setShowSidebar(false);
+              }}
               className={cn(
                 "w-full text-left px-4 py-2 rounded",
                 view === "home"
@@ -275,7 +427,10 @@ export default function Dashboard({ onLogout }) {
               Home
             </button>
             <button
-              onClick={() => setView("local")}
+              onClick={() => {
+                setView("local");
+                if (isMobile) setShowSidebar(false);
+              }}
               className={cn(
                 "w-full text-left px-4 py-2 rounded",
                 view === "local"
@@ -286,7 +441,10 @@ export default function Dashboard({ onLogout }) {
               Local
             </button>
             <button
-              onClick={() => setView("district")}
+              onClick={() => {
+                setView("district");
+                if (isMobile) setShowSidebar(false);
+              }}
               className={cn(
                 "w-full text-left px-4 py-2 rounded",
                 view === "district"
@@ -297,7 +455,10 @@ export default function Dashboard({ onLogout }) {
               District
             </button>
             <button
-              onClick={() => setView("records")}
+              onClick={() => {
+                setView("records");
+                if (isMobile) setShowSidebar(false);
+              }}
               className={cn(
                 "w-full text-left px-4 py-2 rounded flex items-center gap-2",
                 view === "records"
@@ -310,14 +471,33 @@ export default function Dashboard({ onLogout }) {
           </div>
         </div>
         <div className="space-y-3">
+          {/* Year Selector */}
+          <div className="space-y-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Year Selection</h3>
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+            >
+              {availableYears.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-600 dark:text-gray-400">
+              Data closes on Dec 31st of each year
+            </p>
+          </div>
+
           {/* Action Buttons Group */}
           <div className="space-y-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
             <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Actions</h3>
             <button
               onClick={() => setShowChangePasswordModal(true)}
-              className="w-full text-left px-4 py-2 rounded hover:bg-blue-300 dark:hover:bg-gray-800"
+              className="w-full text-left px-4 py-2 text-white bg-amber-500 rounded hover:bg-blue-300 dark:hover:bg-gray-800"
             >
-              Change Password
+              Change Credentials
             </button>
             <button
               onClick={() => router.push('/forms')}
@@ -352,16 +532,40 @@ export default function Dashboard({ onLogout }) {
         {view === "home" ? (
           <DashboardHome 
             darkMode={darkMode}
-            getTopCongregations={getTopCongregations}
             attendanceData={attendanceData}
-            currentYear={new Date().getFullYear()}
+            apologyData={apologyData}
+            currentYear={selectedYear}
+            onEdit={handleEditAttendance}
+            onDelete={handleDeleteAttendance}
+            refetchAttendanceData={fetchAttendance}
+            refetchApologyData={fetchApologies}
           />
         ) : view === "local" ? (
-          <DashboardLocal darkMode={darkMode} />
+          <DashboardLocal 
+            darkMode={darkMode} 
+            attendanceData={attendanceData}
+            apologyData={apologyData}
+            onEdit={handleEditAttendance} 
+            onDelete={handleDeleteAttendance}
+            refetchAttendanceData={fetchAttendance}
+            refetchApologyData={fetchApologies}
+          />
         ) : view === "district" ? (
-          <DashboardDistrict darkMode={darkMode} />
+          <DashboardDistrict 
+            darkMode={darkMode} 
+            attendanceData={attendanceData}
+            apologyData={apologyData}
+            onEdit={handleEditAttendance} 
+            onDelete={handleDeleteAttendance}
+            refetchAttendanceData={fetchAttendance}
+            refetchApologyData={fetchApologies}
+          />
         ) : view === "records" ? (
-          <RecordsLibrary darkMode={darkMode} />
+          <RecordsLibrary 
+            darkMode={darkMode} 
+            attendanceData={attendanceData}
+            apologyData={apologyData}
+          />
         ) : null}
       </div>
 
@@ -388,20 +592,7 @@ export default function Dashboard({ onLogout }) {
                 Cancel
               </button>
               <button
-                onClick={async () => {
-                  setDeactivating(true);
-                  // Simulate API call or add your real API call here
-                  try {
-                    // await fetch('/api/deactivate-meeting', { method: 'POST' });
-                    await new Promise(res => setTimeout(res, 1500));
-                    toast.success('Meeting deactivated!');
-                  } catch (err) {
-                    toast.error('Failed to deactivate meeting');
-                  } finally {
-                    setDeactivating(false);
-                    setShowManageMeetingModal(false);
-                  }
-                }}
+                onClick={handleDeactivateMeeting}
                 className="px-4 py-2 bg-red-600 rounded text-white hover:bg-red-700"
                 disabled={deactivating}
               >
@@ -413,10 +604,19 @@ export default function Dashboard({ onLogout }) {
         </div>
       )}
 
-      {/* Change Password Modal */}
+      {/* Change Credentials Modal */}
       {showChangePasswordModal && (
         <ChangePasswordForm onClose={() => setShowChangePasswordModal(false)} />
       )}
+
+      {/* PIN Modal */}
+      <PINModal
+        isOpen={showPINModal}
+        onClose={() => setShowPINModal(false)}
+        onSuccess={handlePINSuccess}
+        title="Enter PIN to Deactivate Meeting"
+        message="Please enter the 4-digit PIN to deactivate the current meeting"
+      />
     </div>
   );
 }

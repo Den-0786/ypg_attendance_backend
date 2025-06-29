@@ -179,14 +179,7 @@ export default function YearEndChart({ attendanceData, darkMode }) {
                 <p className="font-semibold text-lg">{data.attendanceRate}%</p>
               </div>
             </div>
-          {/* {selectedYear === currentYear && data.currentYearProgress && (
-              <div className="mt-3 p-2 bg-blue-900/20 rounded-lg">
-                <p className="text-blue-300 ">Current Year Progress</p>
-                <p className="text-blue-200  text-sm">
-                  {data.currentYearProgress}% 
-                </p>
-              </div> 
-            )} */}
+          
             <div className="mt-3 pt-3 border-t border-gray-700">
               <p className="text-xs text-gray-400 mb-2">Monthly Breakdown:</p>
               <div className="grid grid-cols-4 gap-1">
@@ -269,25 +262,6 @@ export default function YearEndChart({ attendanceData, darkMode }) {
         </h2>
         
         <div className="flex items-center gap-2 mt-2 md:mt-0">
-          {availableYears.length > 1 && (
-            <>
-              <label className="text-sm text-gray-600 dark:text-gray-400">Year:</label>
-              <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                className={`px-3 py-1 text-sm border rounded-md ${
-                  darkMode 
-                    ? 'bg-gray-700 border-gray-600 text-white' 
-                    : 'bg-white border-gray-300 text-gray-900'
-                }`}
-              >
-                {availableYears.map(year => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
-            </>
-          )}
-          
           {chartData.length > 0 && (
             <button
               onClick={exportData}
@@ -465,7 +439,7 @@ export default function YearEndChart({ attendanceData, darkMode }) {
                   </span>
                 </div>
                 <div className="flex items-center justify-between p-2 bg-red-50 dark:bg-red-900/20 rounded">
-                  <span className="text-red-700 dark:text-red-300">Needs Improvement (&lt;70%)</span>
+                  <span className="text-red-700 dark:text-red-300">Needs Improvement (&lt; 69%)</span>
                   <span className="font-semibold text-red-700 dark:text-red-300">
                     {chartData.filter(data => parseFloat(data.attendanceRate) < 70).length}
                   </span>

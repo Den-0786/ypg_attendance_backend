@@ -5,7 +5,8 @@ from .views import (
     delete_attendance, edit_attendance, delete_apology, edit_apology, attendance_by_meeting_title,
     change_password, request_password_reset, reset_password_confirm,
     set_meeting, current_meeting, deactivate_meeting,
-    login_view_django
+    login_view_django, verify_pin, change_pin, get_pin_status, setup_initial_pin,
+    change_credentials, clear_all_data
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -13,7 +14,7 @@ from rest_framework_simplejwt.views import (
 )
 from .views import (
     soft_delete_record, restore_record, bulk_soft_delete, bulk_restore,
-    update_notes_tags, export_record_pdf, advanced_records_list, audit_log_list
+    update_notes_tags, export_record_pdf, advanced_records_list, advanced_combined_records_list, audit_log_list
 )
 from core import views as core_views
 
@@ -30,9 +31,11 @@ urlpatterns = [
     path('delete-apology/<int:pk>', delete_apology, name='delete_apology'),
     path('edit-apology/<int:pk>', edit_apology, name='edit_apology'),
     path('attendance-by-meeting-title', attendance_by_meeting_title, name='attendance_by_meeting_title'),
+    path('clear-all-data', clear_all_data, name='clear_all_data'),
 
     # Authentication & Password
     path('change-password', change_password, name='change_password'),
+    path('change-credentials', change_credentials, name='change_credentials'),
     path('request-password-reset', request_password_reset, name='request_password_reset'),
     path('reset-password-confirm', reset_password_confirm, name='reset_password_confirm'),
     path('login', login_view, name='login'),
@@ -63,6 +66,17 @@ urlpatterns = [
     path('records/<str:record_type>/<int:pk>/notes-tags/', update_notes_tags),
     path('records/<str:record_type>/<int:pk>/export-pdf/', export_record_pdf),
     path('records/<str:record_type>/advanced/', advanced_records_list),
+    path('records/<str:record_type>/advanced-combined/', advanced_combined_records_list),
     path('audit-log/', audit_log_list),
+    
+    # PIN Management
+    path('pin/verify/', verify_pin, name='verify_pin'),
+    path('pin/verify', verify_pin, name='verify_pin_no_slash'),
+    path('pin/change/', change_pin, name='change_pin'),
+    path('pin/change', change_pin, name='change_pin_no_slash'),
+    path('pin/status/', get_pin_status, name='get_pin_status'),
+    path('pin/status', get_pin_status, name='get_pin_status_no_slash'),
+    path('pin/setup/', setup_initial_pin, name='setup_initial_pin'),
+    path('pin/setup', setup_initial_pin, name='setup_initial_pin_no_slash'),
 ]
 

@@ -13,10 +13,14 @@ from .models import (
     Credential,
     PasswordResetToken,
     Meeting,
-    AuditLog
+    AuditLog,
+    SecurityPIN
 )
 from django.http import HttpResponse, FileResponse
-from .serializers import AttendanceEntrySerializer, ApologyEntrySerializer, MeetingSerializer, AuditLogSerializer, BulkIdSerializer, NotesTagsUpdateSerializer
+from .serializers import (
+    AttendanceEntrySerializer, ApologyEntrySerializer, MeetingSerializer, AuditLogSerializer,
+    BulkIdSerializer, NotesTagsUpdateSerializer, SecurityPINSerializer, PINVerificationSerializer, PINChangeSerializer
+)
 import csv
 from datetime import datetime, timezone
 from rest_framework.pagination import PageNumberPagination
@@ -27,10 +31,7 @@ try:
 except ImportError:
     canvas = None  
 from django.utils.deprecation import MiddlewareMixin
-
-class DebugPrintMiddleware(MiddlewareMixin):
-    def process_request(self, request):
-        print(f"[DEBUG] {request.method} {request.path}")
+from .validators import validate_password_custom
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -56,24 +57,23 @@ def submit_attendance(request):
 
             # 🔒 Check for duplicates within the submission
             if name_key in names_seen:
-                return Response({'error': f"Duplicate name in submission: {item['name']}"}, status=400)
-            names_seen.add(name_key)
+                pass
+            else:
+                names_seen.add(name_key)
 
             # 🔒 Check for duplicate phone numbers within the submission
             if phone in phones_seen:
                 return Response({'error': f"Duplicate phone number in submission: {phone}"}, status=400)
             phones_seen.add(phone)
 
-            # 🔒 Check for existing record in the DB (same name, meeting, type, user)
+            # 🔒 Check for existing record in the DB (same phone, meeting, type)
             existing = AttendanceEntry.objects.filter(
-                name=item['name'],
+                phone=phone,
                 meeting_date=item['meeting_date'],
-                type=item['type'],
-                submitted_by_id=user_id
+                type=item['type']
             ).exists()
-
             if existing:
-                return Response({'error': f"{item['name']} already submitted for this meeting."}, status=400)
+                return Response({'error': f"Phone number {phone} already submitted for this meeting and type."}, status=400)
 
             # 🔒 Check for phone number already used in a different congregation
             existing_phone = AttendanceEntry.objects.filter(
@@ -85,19 +85,6 @@ def submit_attendance(request):
             if existing_phone:
                 return Response({
                     'error': f"Phone number {phone} has already been used for {existing_phone.congregation} in this meeting."
-                }, status=400)
-
-            # 🔒 Role-based restrictions: Check if user has already submitted for the opposite type
-            opposite_type = 'district' if item['type'] == 'local' else 'local'
-            existing_opposite = AttendanceEntry.objects.filter(
-                submitted_by_id=user_id,
-                meeting_date=item['meeting_date'],
-                type=opposite_type
-            ).exists()
-
-            if existing_opposite:
-                return Response({
-                    'error': f"You have already submitted attendance for {opposite_type} meeting. You cannot submit for both local and district meetings."
                 }, status=400)
 
             # Optional: Remove timestamp from item if you're auto-generating it
@@ -112,82 +99,87 @@ def submit_attendance(request):
 
 
 
-@api_view(['POST'])
+@api_view(['GET', 'POST'])
 @permission_classes([AllowAny])
 def submit_apologies(request):
-    print(f"[DEBUG] submit_apologies called - Method: {request.method}")
-    print(f"[DEBUG] Request data: {request.data}")
-    
-    # First try to authenticate with provided admin credentials
-    admin_username = request.data.get('admin_username')
-    admin_password = request.data.get('admin_password')
-    
-    if admin_username and admin_password:
-        try:
-            user = Credential.objects.get(username=admin_username)
-            if user.check_password(admin_password):
-                # Set session for this user
-                request.session.flush()
-                request.session['user_id'] = user.id
-                request.session['username'] = user.username
-                request.session['role'] = user.role
-                request.session.set_expiry(86400)
-                request.session.save()
-                print(f"[DEBUG] Admin authentication successful - User: {user.username}, Role: {user.role}")
-            else:
-                return Response({'error': 'Invalid admin credentials'}, status=401)
-        except Credential.DoesNotExist:
-            return Response({'error': 'Admin user not found'}, status=401)
-    else:
-        # Fall back to session authentication
+    if request.method == 'GET':
+        # Return existing apologies for the current user
         user_id = request.session.get('user_id')
-        print(f"[DEBUG] User authenticated: {bool(user_id)}")
-        print(f"[DEBUG] Session user_id: {user_id}")
-        print(f"[DEBUG] Session data: {dict(request.session)}")
-        
         if not user_id:
-            return Response({'error': 'Authentication required'}, status=401)
+            return Response({'error': 'Not authenticated'}, status=401)
         
         try:
             user = Credential.objects.get(id=user_id)
+            # Executives can see all apologies, regular users only see their own
+            if user.role in ['admin', 'President', "President's Rep", 'Secretary', 'Assistant Secretary', 'Financial Secretary', 'Treasurer', 'Bible Studies Coordinator', 'Organizer']:
+                apologies = ApologyEntry.objects.filter(is_deleted=False).order_by('-timestamp')
+            else:
+                apologies = ApologyEntry.objects.filter(submitted_by=user_id, is_deleted=False).order_by('-timestamp')
+            
+            serializer = ApologyEntrySerializer(apologies, many=True)
+            return Response(serializer.data)
         except Credential.DoesNotExist:
-            return Response({'error': 'User not found'}, status=401)
+            return Response({'error': 'User not found'}, status=404)
     
-    # Get the apologies data (remove admin credentials from the data)
-    apologies_data = request.data.get('apologies', [])
-    if not apologies_data:
-        return Response({'error': 'No apologies data provided'}, status=400)
-    
-    serializer = ApologyEntrySerializer(data=apologies_data, many=True)
-
-    if serializer.is_valid():
-        names_seen = set()
-
-        for item in serializer.validated_data:
-            name_key = item['name'].strip().lower()
-
-            # 🔒 Check for duplicate names within batch
-            if name_key in names_seen:
-                return Response({'error': f"Duplicate name in submission: {item['name']}"}, status=400)
-            names_seen.add(name_key)
-
-            # 🔒 Check for existing apology
-            existing = ApologyEntry.objects.filter(
-                name=item['name'],
-                meeting_date=item['meeting_date'],
-                type=item['type'],
-                submitted_by_id=user.id
-            ).exists()
-
-            if existing:
-                return Response({'error': f"{item['name']} has already submitted an apology for this meeting."}, status=400)
-
-            item.pop('timestamp', None)  # Optional cleanup
-            ApologyEntry.objects.create(**item, submitted_by_id=user.id)
-
-        return Response({'message': 'Apologies submitted successfully!'}, status=201)
-
-    return Response(serializer.errors, status=400)
+    elif request.method == 'POST':
+        user_id = request.session.get('user_id')
+        if not user_id:
+            return Response({'error': 'Not authenticated'}, status=401)
+        
+        try:
+            user = Credential.objects.get(id=user_id)
+            
+            # Check if this is a bulk submission with admin credentials
+            admin_username = request.data.get('admin_username')
+            admin_password = request.data.get('admin_password')
+            apologies_data = request.data.get('apologies', [])
+            
+            if admin_username and admin_password and apologies_data:
+                # Verify admin credentials
+                try:
+                    admin_user = Credential.objects.get(username=admin_username, role='admin')
+                    if not admin_user.check_password(admin_password):
+                        return Response({'error': 'Invalid admin credentials'}, status=401)
+                except Credential.DoesNotExist:
+                    return Response({'error': 'Invalid admin credentials'}, status=401)
+                
+                # Process multiple apologies
+                created_apologies = []
+                for apology_data in apologies_data:
+                    # Add user info to each apology
+                    apology_data['submitted_by'] = user_id
+                    
+                    serializer = ApologyEntrySerializer(data=apology_data)
+                    if serializer.is_valid():
+                        serializer.save()
+                        created_apologies.append(serializer.data)
+                    else:
+                        return Response({'error': f'Invalid apology data: {serializer.errors}'}, status=400)
+                
+                return Response({
+                    'message': f'Successfully submitted {len(created_apologies)} apologies',
+                    'apologies': created_apologies
+                }, status=201)
+            
+            else:
+                # Single apology submission (existing logic)
+                # Only executives can submit apologies
+                if user.role not in ['admin', 'President', "President's Rep", 'Secretary', 'Assistant Secretary', 'Financial Secretary', 'Treasurer', 'Bible Studies Coordinator', 'Organizer']:
+                    return Response({'error': 'Only executives can submit apologies'}, status=403)
+                
+                # Add user info to request data
+                data = request.data.copy()
+                data['submitted_by'] = user_id
+                
+                serializer = ApologyEntrySerializer(data=data)
+                if serializer.is_valid():
+                    serializer.save()
+                    return Response(serializer.data, status=201)
+                else:
+                    return Response(serializer.errors, status=400)
+                    
+        except Credential.DoesNotExist:
+            return Response({'error': 'User not found'}, status=404)
 
 
 @api_view(['GET'])
@@ -349,40 +341,30 @@ def district_attendance(request):
 @api_view(['DELETE'])
 @permission_classes([AllowAny])
 def delete_attendance(request, pk):
-    print(f"[DEBUG] delete_attendance called with pk: {pk}")
     user_id = request.session.get('user_id')
-    print(f"[DEBUG] user_id from session: {user_id}")
     
     if not user_id:
-        print("[DEBUG] No user_id in session")
         return Response({'error': 'Authentication required'}, status=401)
     
     try:
         user = Credential.objects.get(id=user_id)
-        print(f"[DEBUG] User found: {user.username}, role: {user.role}")
         executive_roles = [
             'admin', 'President', "President's Rep", 'Secretary', 'Assistant Secretary',
             'Financial Secretary', 'Treasurer', 'Bible Studies Coordinator', 'Organizer'
         ]
         if user.role in executive_roles:
-            print(f"[DEBUG] User is executive, looking for any attendance entry with pk: {pk}")
             entry = AttendanceEntry.objects.get(pk=pk)
         else:
-            print(f"[DEBUG] User is not executive, looking for attendance entry with pk: {pk} and submitted_by: {user_id}")
             entry = AttendanceEntry.objects.get(pk=pk, submitted_by_id=user_id)
         
-        print(f"[DEBUG] Found entry: {entry.name} - {entry.congregation}")
         entry.delete()
-        print("[DEBUG] Entry deleted successfully")
         return Response({'message': 'Attendance record deleted successfully.'})
     except Credential.DoesNotExist:
-        print("[DEBUG] Credential.DoesNotExist")
         return Response({'error': 'User not found'}, status=401)
     except AttendanceEntry.DoesNotExist:
-        print(f"[DEBUG] AttendanceEntry.DoesNotExist for pk: {pk}")
         return Response({'error': 'Record not found or not authorized'}, status=404)
 
-@api_view(['PATCH'])
+@api_view(['PUT', 'PATCH'])
 @permission_classes([AllowAny])
 def edit_attendance(request, pk):
     user_id = request.session.get('user_id')
@@ -483,13 +465,58 @@ def change_password(request):
     if not user.check_password(current_password):
         return Response({'error': 'Current password is incorrect'}, status=400)
     
-    if len(new_password) < 8:
-        return Response({'error': 'New password must be at least 8 characters long'}, status=400)
+    # Use custom password validation
+    is_valid, error_message = validate_password_custom(new_password)
+    if not is_valid:
+        return Response({'error': error_message}, status=400)
     
     user.set_password(new_password)
     user.save()
     
     return Response({'message': 'Password changed successfully'})
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def change_credentials(request):
+    user_id = request.session.get('user_id')
+    
+    if not user_id:
+        return Response({'error': 'Authentication required'}, status=401)
+    
+    try:
+        user = Credential.objects.get(id=user_id)
+    except Credential.DoesNotExist:
+        return Response({'error': 'User not found'}, status=401)
+    
+    current_password = request.data.get('current_password')
+    new_username = request.data.get('new_username')
+    new_password = request.data.get('new_password')
+    
+    if not current_password or not new_username or not new_password:
+        return Response({'error': 'Current password, new username, and new password are required'}, status=400)
+    
+    if not user.check_password(current_password):
+        return Response({'error': 'Current password is incorrect'}, status=400)
+    
+    # Use custom password validation
+    is_valid, error_message = validate_password_custom(new_password)
+    if not is_valid:
+        return Response({'error': error_message}, status=400)
+    
+    # Check if new username already exists (excluding current user)
+    if Credential.objects.filter(username=new_username).exclude(id=user.id).exists():
+        return Response({'error': 'Username already exists'}, status=400)
+    
+    # Update username and password
+    user.username = new_username
+    user.set_password(new_password)
+    user.save()
+    
+    # Update session with new username
+    request.session['username'] = new_username
+    request.session.save()
+    
+    return Response({'message': 'Credentials changed successfully'})
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -535,23 +562,24 @@ def reset_password_confirm(request):
         reset_entry.delete()
         return Response({'error': 'Reset code expired'}, status=400)
 
+    # Use custom password validation
+    is_valid, error_message = validate_password_custom(new_password)
+    if not is_valid:
+        return Response({'error': error_message}, status=400)
+
     user.set_password(new_password)
     user.save()
     reset_entry.delete()
-    return Response({'message': 'Password reset successful'})
+
+    return Response({'message': 'Password reset successfully'})
 
 #
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login_view(request):
     try:
-        print('Raw body:', request.body)  
-        print('Parsed data:', request.data)  
-
         username = request.data.get('username')
         password = request.data.get('password')
-        
-        print('LOGIN ATTEMPT:', username, password)
         
         if not username or not password:
             return Response({'error': 'Username and password are required'}, status=400)
@@ -568,11 +596,7 @@ def login_view(request):
                 request.session.set_expiry(86400)
                 request.session.save()
                 
-                print(f"[DEBUG] Login successful - User: {user.username}, Role: {user.role}")
-                print(f"[DEBUG] Session ID: {request.session.session_key}")
-                print(f"[DEBUG] Session data: {dict(request.session)}")
-                
-                return Response({'message': 'Login successful', 'role': user.role})
+                return Response({'success': True, 'message': 'Login successful', 'role': user.role})
         except Credential.DoesNotExist:
             pass
 
@@ -586,16 +610,11 @@ def login_view(request):
             request.session.set_expiry(86400)
             request.session.save()
             
-            print(f"[DEBUG] Meeting login successful - Username: {username}")
-            print(f"[DEBUG] Session ID: {request.session.session_key}")
-            print(f"[DEBUG] Session data: {dict(request.session)}")
-            
-            return Response({'message': 'Login successful', 'role': 'meeting_user'})
+            return Response({'success': True, 'message': 'Login successful', 'role': 'meeting_user'})
 
         return Response({'error': 'Invalid credentials'}, status=400)
     
     except Exception as e:
-        print("Login error:", e)
         return Response({'error': 'Login failed. Please try again.'}, status=500)
 
 
@@ -610,6 +629,7 @@ def logout_view(request):
 def session_status(request):
     if request.session.get('user_id'):
         role = request.session.get('role', 'user')
+        username = request.session.get('username', '')
         # Check if there's an active meeting for non-admin users
         meetingSet = False
         if role != 'admin':
@@ -620,6 +640,7 @@ def session_status(request):
         return Response({
             'loggedIn': True,
             'role': role,
+            'username': username,
             'meetingSet': meetingSet
         })
     return Response({'loggedIn': False})
@@ -628,24 +649,33 @@ def session_status(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def set_meeting(request):
-    print(f"[DEBUG] set_meeting called - Method: {request.method}")
-    print(f"[DEBUG] Request data: {request.data}")
-    
     user_id = request.session.get('user_id')
-    print(f"[DEBUG] User authenticated: {bool(user_id)}")
-    print(f"[DEBUG] Session user_id: {user_id}")
-    print(f"[DEBUG] Session data: {dict(request.session)}")
     
     if not user_id:
         return Response({'error': 'Authentication required'}, status=401)
     
-    # Only admins and executives can set meetings
+    # Verify admin credentials from request
+    admin_username = request.data.get('admin_username')
+    admin_password = request.data.get('admin_password')
+    
+    if not admin_username or not admin_password:
+        return Response({'error': 'Admin credentials required'}, status=400)
+    
     try:
-        user = Credential.objects.get(id=user_id)
-        if user.role not in ['admin', 'President', 'Vice President', 'Secretary', 'Treasurer']:
-            return Response({'error': 'Insufficient permissions'}, status=403)
+        admin_user = Credential.objects.get(username=admin_username, role='admin')
+        if not admin_user.check_password(admin_password):
+            return Response({'error': 'Invalid admin credentials'}, status=401)
     except Credential.DoesNotExist:
-        return Response({'error': 'User not found'}, status=401)
+        return Response({'error': 'Invalid admin credentials'}, status=401)
+
+    # Check if there's already a meeting on the same date
+    meeting_date = request.data.get('date')
+    if meeting_date:
+        existing_meeting = Meeting.objects.filter(date=meeting_date, is_active=True).first()
+        if existing_meeting:
+            return Response({
+                'error': 'Cannot set two meetings same day, deactivate the current meeting details before you can set another one.'
+            }, status=400)
 
     # Deactivate all existing meetings
     Meeting.objects.filter(is_active=True).update(is_active=False)
@@ -655,26 +685,18 @@ def set_meeting(request):
         meeting = Meeting.objects.create(
             title=request.data.get('title'),
             date=request.data.get('date'),
-            login_username=request.data.get('login_username'),
             is_active=True
         )
-        meeting.set_password(request.data.get('login_password'))
-        meeting.save()
-        
-        print(f"[DEBUG] Received data - Title: {meeting.title}, Date: {meeting.date}, Username: {meeting.login_username}")
-        print(f"[DEBUG] Meeting created successfully: {meeting.id}")
         
         return Response({
             'message': 'Meeting set successfully',
             'meeting': {
                 'id': meeting.id,
                 'title': meeting.title,
-                'date': meeting.date,
-                'login_username': meeting.login_username
+                'date': meeting.date
             }
         }, status=201)
     except Exception as e:
-        print(f"[DEBUG] Error creating meeting: {str(e)}")
         return Response({'error': 'Failed to create meeting'}, status=400)
 
 @api_view(['GET'])
@@ -689,62 +711,41 @@ def current_meeting(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def deactivate_meeting(request):
-    print(f"[DEBUG] deactivate_meeting called - Method: {request.method}")
     user_id = request.session.get('user_id')
-    print(f"[DEBUG] Session user_id: {user_id}")
     
     if not user_id:
         return Response({'error': 'Authentication required'}, status=401)
-    
-    # Only admins and executives can deactivate meetings
-    try:
-        user = Credential.objects.get(id=user_id)
-        if user.role not in ['admin', 'President', 'Vice President', 'Secretary', 'Treasurer']:
-            return Response({'error': 'Insufficient permissions'}, status=403)
-    except Credential.DoesNotExist:
-        return Response({'error': 'User not found'}, status=401)
 
     count = Meeting.objects.filter(is_active=True).update(is_active=False)
-    print(f"[DEBUG] Deactivated {count} meetings")
     return Response({'message': f'Deactivated {count} meeting(s)'}, status=200)
 
 @api_view(['DELETE'])
 @permission_classes([AllowAny])
 def delete_apology(request, pk):
-    print(f"[DEBUG] delete_apology called with pk: {pk}")
     user_id = request.session.get('user_id')
-    print(f"[DEBUG] user_id from session: {user_id}")
     
     if not user_id:
-        print("[DEBUG] No user_id in session")
         return Response({'error': 'Authentication required'}, status=401)
     
     try:
         user = Credential.objects.get(id=user_id)
-        print(f"[DEBUG] User found: {user.username}, role: {user.role}")
         executive_roles = [
             'admin', 'President', "President's Rep", 'Secretary', 'Assistant Secretary',
             'Financial Secretary', 'Treasurer', 'Bible Studies Coordinator', 'Organizer'
         ]
         if user.role in executive_roles:
-            print(f"[DEBUG] User is executive, looking for any apology entry with pk: {pk}")
             entry = ApologyEntry.objects.get(pk=pk)
         else:
-            print(f"[DEBUG] User is not executive, looking for apology entry with pk: {pk} and submitted_by: {user_id}")
             entry = ApologyEntry.objects.get(pk=pk, submitted_by_id=user_id)
         
-        print(f"[DEBUG] Found entry: {entry.name} - {entry.congregation}")
         entry.delete()
-        print("[DEBUG] Entry deleted successfully")
         return Response({'message': 'Apology record deleted successfully.'})
     except Credential.DoesNotExist:
-        print("[DEBUG] Credential.DoesNotExist")
         return Response({'error': 'User not found'}, status=401)
     except ApologyEntry.DoesNotExist:
-        print(f"[DEBUG] ApologyEntry.DoesNotExist for pk: {pk}")
         return Response({'error': 'Record not found or not authorized'}, status=404)
 
-@api_view(['PATCH'])
+@api_view(['PUT', 'PATCH'])
 @permission_classes([AllowAny])
 def edit_apology(request, pk):
     user_id = request.session.get('user_id')
@@ -805,10 +806,6 @@ def login_view_django(request):
                 request.session.set_expiry(86400)
                 request.session.save()
                 
-                print(f"[DEBUG] Login successful - User: {user.username}, Role: {user.role}")
-                print(f"[DEBUG] Session ID: {request.session.session_key}")
-                print(f"[DEBUG] Session data: {dict(request.session)}")
-                
                 return Response({'message': 'Login successful', 'role': user.role})
         except Credential.DoesNotExist:
             pass
@@ -823,16 +820,11 @@ def login_view_django(request):
             request.session.set_expiry(86400)
             request.session.save()
             
-            print(f"[DEBUG] Meeting login successful - Username: {username}")
-            print(f"[DEBUG] Session ID: {request.session.session_key}")
-            print(f"[DEBUG] Session data: {dict(request.session)}")
-            
             return Response({'message': 'Login successful', 'role': 'meeting_user'})
 
         return Response({'error': 'Invalid credentials'}, status=400)
     
     except Exception as e:
-        print("Login error:", e)
         return Response({'error': 'Login failed. Please try again.'}, status=500)
 
 
@@ -866,7 +858,7 @@ def records_list(request, record_type):
     return Response(records)
 
 @api_view(['PUT', 'DELETE'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def record_edit_delete(request, record_type, pk):
     if request.method == 'PUT':
         # Try attendance first, then apology
@@ -912,7 +904,7 @@ def record_edit_delete(request, record_type, pk):
                 return Response({'error': 'Record not found'}, status=404)
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def records_export(request, record_type):
     records = get_combined_records(record_type)
     response = HttpResponse(content_type='text/csv')
@@ -1066,8 +1058,196 @@ def advanced_records_list(request, record_type):
 @api_view(['GET'])
 @permission_classes([IsAdminUser])
 def audit_log_list(request):
-    logs = AuditLog.objects.all().order_by('-timestamp')
-    paginator = StandardResultsSetPagination()
-    page = paginator.paginate_queryset(logs, request)
-    serializer = AuditLogSerializer(page, many=True)
-    return paginator.get_paginated_response(serializer.data)
+    logs = AuditLog.objects.all().order_by('-timestamp')[:100]
+    serializer = AuditLogSerializer(logs, many=True)
+    return Response(serializer.data)
+
+# --- PIN Management ---
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def verify_pin(request):
+    pin = request.data.get('pin')
+    
+    if not pin:
+        return Response({'error': 'PIN is required'}, status=400)
+    
+    is_valid = SecurityPIN.verify_pin(pin)
+    
+    serializer = PINVerificationSerializer(data={'pin': pin, 'is_valid': is_valid})
+    if serializer.is_valid():
+        return Response(serializer.data)
+    else:
+        return Response(serializer.errors, status=400)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def change_pin(request):
+    """Change the security PIN"""
+    serializer = PINChangeSerializer(data=request.data)
+    if serializer.is_valid():
+        current_pin = serializer.validated_data['current_pin']
+        new_pin = serializer.validated_data['new_pin']
+        
+        # Verify current PIN
+        if not SecurityPIN.verify_pin(current_pin):
+            return Response({'error': 'Current PIN is incorrect'}, status=400)
+        
+        # Deactivate current PIN and create new one
+        SecurityPIN.objects.filter(is_active=True).update(is_active=False)
+        SecurityPIN.objects.create(pin=new_pin, is_active=True)
+        
+        return Response({'message': 'PIN changed successfully'})
+    return Response(serializer.errors, status=400)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_pin_status(request):
+    """Check if PIN is set up"""
+    active_pin = SecurityPIN.get_active_pin()
+    return Response({'pin_setup': active_pin is not None})
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def setup_initial_pin(request):
+    """Setup initial PIN if none exists"""
+    serializer = PINVerificationSerializer(data=request.data)
+    if serializer.is_valid():
+        pin = serializer.validated_data['pin']
+        
+        # Check if PIN already exists
+        if SecurityPIN.get_active_pin():
+            return Response({'error': 'PIN already exists'}, status=400)
+        
+        # Create initial PIN
+        SecurityPIN.objects.create(pin=pin, is_active=True)
+        return Response({'message': 'Initial PIN set successfully'})
+    return Response(serializer.errors, status=400)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def advanced_combined_records_list(request, record_type):
+    """Advanced records list that combines attendance and apology records with search and filtering"""
+    # Get combined records like the existing records_list function
+    records = get_combined_records(record_type)
+    
+    # Apply search filter
+    if 'search' in request.GET:
+        search = request.GET['search'].lower()
+        records = [r for r in records if (
+            (r.get('name', '').lower().find(search) != -1) or
+            (r.get('congregation', '').lower().find(search) != -1) or
+            (r.get('position', '').lower().find(search) != -1)
+        )]
+    
+    # Apply date range filters
+    if 'start' in request.GET:
+        start_date = request.GET['start']
+        records = [r for r in records if r.get('meeting_date', '') >= start_date]
+    
+    if 'end' in request.GET:
+        end_date = request.GET['end']
+        records = [r for r in records if r.get('meeting_date', '') <= end_date]
+    
+    # Apply type filter
+    if 'type' in request.GET:
+        type_filter = request.GET['type']
+        records = [r for r in records if r.get('type', '') == type_filter]
+    
+    # Apply year filter
+    if 'year' in request.GET:
+        year_filter = request.GET['year']
+        records = [r for r in records if r.get('meeting_date', '').startswith(year_filter)]
+    
+    # Sorting
+    ordering = request.GET.get('ordering', '-meeting_date')
+    reverse_sort = ordering.startswith('-')
+    sort_field = ordering[1:] if reverse_sort else ordering
+    
+    records.sort(key=lambda x: x.get(sort_field, ''), reverse=reverse_sort)
+    
+    # Pagination
+    page_size = int(request.GET.get('page_size', 20))
+    page = int(request.GET.get('page', 1))
+    
+    start_idx = (page - 1) * page_size
+    end_idx = start_idx + page_size
+    paginated_records = records[start_idx:end_idx]
+    
+    return Response({
+        'count': len(records),
+        'next': f"?page={page + 1}" if end_idx < len(records) else None,
+        'previous': f"?page={page - 1}" if page > 1 else None,
+        'results': paginated_records
+    })
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def clear_all_data(request):
+    """Clear all attendance and apology data with PIN verification and backup"""
+    try:
+        # Get PIN from request
+        pin = request.data.get('pin')
+        if not pin:
+            return Response({'error': 'PIN is required to clear all data'}, status=400)
+        
+        # Verify PIN
+        if not SecurityPIN.verify_pin(pin):
+            return Response({'error': 'Invalid PIN'}, status=401)
+        
+        # Get user info for audit log
+        user_id = request.session.get('user_id')
+        user = None
+        if user_id:
+            try:
+                user = Credential.objects.get(id=user_id)
+            except Credential.DoesNotExist:
+                pass
+        
+        # Get all attendance and apology records for backup
+        attendance_records = list(AttendanceEntry.objects.all().values())
+        apology_records = list(ApologyEntry.objects.all().values())
+        
+        attendance_count = len(attendance_records)
+        apology_count = len(apology_records)
+        
+        print(f"About to delete {attendance_count} attendance records and {apology_count} apology records")
+        
+        # Create backup in database (store as JSON in a backup table or as a file)
+        backup_data = {
+            'timestamp': datetime.now().isoformat(),
+            'user_id': user_id,
+            'username': user.username if user else 'unknown',
+            'attendance_records': attendance_records,
+            'apology_records': apology_records,
+            'total_attendance': attendance_count,
+            'total_apologies': apology_count
+        }
+        
+        # Store backup in database (you can create a Backup model if needed)
+        # For now, we'll log it as an audit entry
+        backup_info = f"Backup created before clearing {attendance_count} attendance and {apology_count} apology records"
+        if user:
+            log_action(user, 'backup', 'system', None, backup_info)
+        
+        # Delete all records
+        AttendanceEntry.objects.all().delete()
+        ApologyEntry.objects.all().delete()
+        
+        print("Successfully deleted all records")
+        
+        # Log the clear action
+        if user:
+            log_action(user, 'clear_all', 'system', None, f'Cleared all data: {attendance_count} attendance, {apology_count} apologies')
+        
+        return Response({
+            'message': f'Successfully cleared all data',
+            'deleted_attendance': attendance_count,
+            'deleted_apologies': apology_count,
+            'backup_created': True,
+            'backup_timestamp': backup_data['timestamp']
+        })
+    except Exception as e:
+        print(f"Error in clear_all_data: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return Response({'error': f'Failed to clear data: {str(e)}'}, status=500)

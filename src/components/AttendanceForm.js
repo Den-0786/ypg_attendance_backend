@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useMeetingDate } from '../components/MeetingDateContext';
 import { MdMoreVert, MdEdit, MdDelete } from 'react-icons/md';
 import toast from 'react-hot-toast';
+import { FaExclamationCircle } from 'react-icons/fa';
+import { capitalizeFirst } from '../lib/utils';
 
 const congregations = [
   "Emmanuel Congregation Ahinsan", "Peniel Congregation Esreso No 1",
@@ -27,31 +29,18 @@ const toTitleCase = (str) =>
     word.charAt(0).toUpperCase() + word.slice(1)
   ).join(' ');
 
+function capitalizeWords(str) {
+  return str
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
+
 export default function AttendanceForm({ meetingInfo }) {
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const context = useMeetingDate ? useMeetingDate() : {};
-  
-  const [meetingDate, setMeetingDate] = useState('');
-  const [meetingTitle, setMeetingTitle] = useState('');
-
-  useEffect(() => {
-    // Set meeting info after component mounts (Chrome-safe)
-    const storedDate = 
-      (meetingInfo && meetingInfo.date) ||
-      context.meetingDate ||
-      localStorage.getItem('meetingDate') ||
-      '';
-    const storedTitle = 
-      (meetingInfo && meetingInfo.title) ||
-      context.meetingTitle ||
-      localStorage.getItem('meetingTitle') ||
-      '';
-    
-    setMeetingDate(storedDate);
-    setMeetingTitle(storedTitle);
-  
-  }, [meetingInfo, context.meetingDate, context.meetingTitle]);
+  const { meetingDate, meetingTitle } = context;
 
   const [type, setType] = useState('local');
   const [form, setForm] = useState({
@@ -84,14 +73,20 @@ export default function AttendanceForm({ meetingInfo }) {
 
   const validateField = (name, value) => {
     let error = '';
-    if (name === 'name' && !/^[a-zA-Z\s\-]+$/.test(value)) {
-      error = 'Only letters, spaces, and hyphens allowed.';
+    if (name === 'name') {
+      if (!/^[a-zA-Z\s\-]+$/.test(value)) {
+        error = 'Only letters, spaces, and hyphens allowed.';
+      }
     }
-    if (name === 'phone' && !/^\d+$/.test(value)) {
-      error = 'Only digits allowed.';
+    if (name === 'phone') {
+      if (!/^\d{10}$/.test(value)) {
+        error = 'Phone number must be exactly 10 digits.';
+      }
     }
-    if (name === 'email' && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-      error = 'Invalid email format.';
+    if (name === 'email' && value) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        error = 'Invalid email format.';
+      }
     }
     setErrors(prev => ({ ...prev, [name]: error }));
   };
@@ -99,20 +94,49 @@ export default function AttendanceForm({ meetingInfo }) {
   const handleChange = (e) => {
     const { name, value } = e.target;
     validateField(name, value);
-    setForm(prev => ({ ...prev, [name]: value }));
+    let newValue = value;
+    if (["name", "congregation", "position", "reason"].includes(name)) {
+      newValue = capitalizeWords(value);
+    }
+    setForm(prev => ({ ...prev, [name]: newValue }));
   };
 
-  const checkForDuplicates = (entry) => {
+  const checkForDuplicatePhone = (entry) => {
     return attendees.some((existing, index) => {
       if (index === editingIndex) return false;
       return (
-        existing.name.toLowerCase() === entry.name.toLowerCase() &&
         existing.phone === entry.phone &&
-        existing.position === entry.position &&
         existing.meetingDate === meetingDate &&
         existing.type === entry.type
       );
     });
+  };
+
+  // Helper to check if position is already used for this meeting/type (local or district)
+  const checkForDuplicatePosition = (entry) => {
+    if (entry.type === 'local') {
+      // For local: block if position is used for the same congregation, meeting, and type
+      return attendees.some((existing, index) => {
+        if (index === editingIndex) return false;
+        return (
+          existing.position === entry.position &&
+          existing.congregation === entry.congregation &&
+          existing.meetingDate === meetingDate &&
+          existing.type === 'local'
+        );
+      });
+    } else if (entry.type === 'district') {
+      // For district: block if position is used for the same meeting and type (district), regardless of congregation
+      return attendees.some((existing, index) => {
+        if (index === editingIndex) return false;
+        return (
+          existing.position === entry.position &&
+          existing.meetingDate === meetingDate &&
+          existing.type === 'district'
+        );
+      });
+    }
+    return false;
   };
 
   const handleSubmit = (e) => {
@@ -136,17 +160,24 @@ export default function AttendanceForm({ meetingInfo }) {
       position: form.position.trim()
     };
 
-    if (checkForDuplicates({ ...cleaned, type })) {
-      toast.error('This person has already been registered');
+    // Only block if phone is used for this meeting/type
+    if (checkForDuplicatePhone({ ...cleaned, type })) {
+      toast.error('This phone number has already been used for this meeting.');
       return;
     }
 
+    // Only block if position is used for this meeting/type
+    if (checkForDuplicatePosition({ ...cleaned, type })) {
+      toast.error('This position has already been used for this meeting.');
+      return;
+    }
+
+    // For local, max 2 per congregation per meeting
     const sameCongregationCount = attendees.filter(
       a => a.congregation === cleaned.congregation &&
           a.meetingDate === meetingDate &&
           a.type === 'local'
     ).length;
-
     if (
       type === 'local' &&
       editingIndex === null &&
@@ -242,6 +273,8 @@ export default function AttendanceForm({ meetingInfo }) {
         toast.success('Attendance submitted successfully!');
         setAttendees([]);
         setShowModal(false);
+        // Dispatch custom event to notify dashboard components
+        window.dispatchEvent(new CustomEvent('attendanceDataChanged'));
       } else {
         toast.error(data.error || 'Failed to submit attendance');
       }
@@ -318,18 +351,21 @@ export default function AttendanceForm({ meetingInfo }) {
             { label: 'Phone Number', name: 'phone', required: true },
             { label: 'Email Address (optional)', name: 'email', required: false }
           ].map(({ label, name, required }) => (
-            <label key={name} className="block text-sm font-medium">
+            <label key={name} className="block text-sm font-medium mb-2">
               {label} {required && <span className="text-red-600">*</span>}
               <input
                 name={name}
                 value={form[name]}
                 required={required}
                 onChange={handleChange}
-                className={`w-full mt-1 p-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-400 ${
-                  errors[name] ? 'border-red-500' : 'border-gray-300'
-                }`}
+                className={`w-full mt-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-400 ${errors[name] ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
               />
-              {errors[name] && <p className="text-xs text-red-500 mt-1">{errors[name]}</p>}
+              {errors[name] && (
+                <div className="flex items-center gap-2 bg-red-100 text-red-700 rounded px-2 py-1 mt-1 animate-pulse">
+                  <FaExclamationCircle className="text-red-500" />
+                  <span className="text-xs">{errors[name]}</span>
+                </div>
+              )}
             </label>
           ))}
 
@@ -500,21 +536,21 @@ export default function AttendanceForm({ meetingInfo }) {
       {/* ✅ Delete Confirmation Modal */}
       {confirmIndex !== null && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl shadow-xl max-w-md w-full">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-xl max-w-md w-full">
             <h3 className="text-lg font-bold text-red-600 mb-3">Confirm Delete</h3>
-            <p className="mb-4 text-sm text-gray-700">
-              Are you sure you want to delete <strong>{attendees[confirmIndex]?.name}</strong>&apos;s entry?
+            <p className="mb-4 text-sm text-gray-700 dark:text-gray-200">
+              Are you sure you want to delete <strong className="text-gray-900 dark:text-white">{attendees[confirmIndex]?.name}</strong>&apos;s entry?
             </p>
             <div className="flex justify-end gap-4">
               <button 
                 onClick={() => setConfirmIndex(null)} 
-                className="px-4 py-2 bg-gray-800 text-white rounded"
+                className="px-4 py-2 bg-gray-800 dark:bg-gray-600 text-white rounded hover:bg-gray-700 dark:hover:bg-gray-500"
               >
                 Cancel
               </button>
               <button 
                 onClick={confirmDelete} 
-                className="px-4 py-2 bg-red-600 text-white rounded"
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
               >
                 Delete
               </button>

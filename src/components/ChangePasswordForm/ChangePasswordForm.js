@@ -1,13 +1,14 @@
 'use client';
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
+import PasswordInput from '../PasswordInput';
 
 export default function ChangePasswordForm() {
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [isNewPasswordValid, setIsNewPasswordValid] = useState(false);
 
     const handleChange = async (e) => {
         e.preventDefault();
@@ -17,8 +18,8 @@ export default function ChangePasswordForm() {
         return;
         }
 
-        if (!isStrongPassword()) {
-        toast.error("Password doesn't meet strength requirements");
+        if (!isNewPasswordValid) {
+        toast.error("Password doesn't meet requirements");
         return;
         }
 
@@ -52,19 +53,6 @@ export default function ChangePasswordForm() {
         }
     };
 
-    // 🔐 Password strength checks
-    const hasUppercase = /[A-Z]/.test(newPassword);
-    const hasLowercase = /[a-z]/.test(newPassword);
-    const hasNumber = /\d/.test(newPassword);
-    const hasSymbol = /[@$!%*?&#^+=]/.test(newPassword);
-    const hasMinLength = newPassword.length >= 8;
-
-    const strengthCount = [hasUppercase, hasLowercase, hasNumber, hasSymbol, hasMinLength].filter(Boolean).length;
-    const isStrongPassword = () => strengthCount === 5;
-
-    const renderCheck = (condition) =>
-        condition ? <FaCheckCircle className="text-green-500" /> : <FaTimesCircle className="text-red-500" />;
-
     return (
         <form
         onSubmit={handleChange}
@@ -72,67 +60,66 @@ export default function ChangePasswordForm() {
         >
         <h2 className="text-xl font-bold">Change Password</h2>
 
-        <input
-            type="password"
-            placeholder="Current Password"
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            className="w-full px-3 py-2 border rounded dark:bg-gray-700"
-            required
-        />
+        <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Current Password
+            </label>
+            <input
+                type="password"
+                placeholder="Current Password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:text-white text-sm"
+                required
+            />
+        </div>
 
-        <input
-            type="password"
-            placeholder="New Password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            className="w-full px-3 py-2 border rounded dark:bg-gray-700"
-            required
-        />
+        <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                New Password
+            </label>
+            <PasswordInput
+                value={newPassword}
+                onChange={setNewPassword}
+                placeholder="Enter new password"
+                label=""
+                required={true}
+                showStrength={true}
+                maxLength={8}
+                onValidationChange={setIsNewPasswordValid}
+            />
+        </div>
+        
+        <div className="text-xs text-gray-600 dark:text-gray-400 bg-blue-50 dark:bg-blue-900 p-2 rounded">
+            <strong>Password Requirements:</strong> Exactly 8 characters with at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character.
+        </div>
 
-        {/* ✅ Strength Indicator */}
-        {newPassword && (
-            <>
-            {/* 🔵 Progress Bar */}
-            <div className="h-2 bg-gray-300 rounded">
-                <div
-                className={`h-2 rounded transition-all duration-300 ${
-                    strengthCount < 3
-                    ? 'bg-red-500 w-1/4'
-                    : strengthCount === 3
-                    ? 'bg-yellow-500 w-2/4'
-                    : strengthCount === 4
-                    ? 'bg-blue-500 w-3/4'
-                    : 'bg-green-500 w-full'
-                }`}
-                />
+        <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Confirm New Password
+            </label>
+            <input
+                type="password"
+                placeholder="Confirm new password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value.slice(0, 8))}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:text-white text-sm"
+                required
+            />
+        </div>
+
+        {confirmPassword && newPassword !== confirmPassword && (
+            <div className="text-red-500 text-sm">
+                Passwords do not match
             </div>
-
-            {/* ✅ Checklist */}
-            <div className="text-sm bg-gray-100 dark:bg-gray-700 rounded p-3 mt-2 space-y-1">
-                <div className="flex items-center gap-2">{renderCheck(hasUppercase)} At least one uppercase letter</div>
-                <div className="flex items-center gap-2">{renderCheck(hasLowercase)} At least one lowercase letter</div>
-                <div className="flex items-center gap-2">{renderCheck(hasNumber)} At least one number</div>
-                <div className="flex items-center gap-2">{renderCheck(hasSymbol)} At least one symbol (e.g. @, #, $)</div>
-                <div className="flex items-center gap-2">{renderCheck(hasMinLength)} Minimum 8 characters</div>
-            </div>
-            </>
         )}
-
-        <input
-            type="password"
-            placeholder="Confirm New Password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full px-3 py-2 border rounded dark:bg-gray-700"
-            required
-        />
 
         <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+            disabled={isLoading || !isNewPasswordValid || newPassword !== confirmPassword}
+            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
-            Change Password
+            {isLoading ? 'Changing...' : 'Change Password'}
         </button>
         </form>
     );

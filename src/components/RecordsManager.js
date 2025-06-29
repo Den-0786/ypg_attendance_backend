@@ -3,6 +3,14 @@
 import { useState, useEffect } from "react";
 import { FaEdit, FaTrash, FaEye, FaTimes, FaSave } from "react-icons/fa";
 import toast from "react-hot-toast";
+import { capitalizeFirst } from '../lib/utils';
+
+function capitalizeWords(str) {
+  return str
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
 
 export default function RecordsManager({ recordType = "attendance" }) {
   const [records, setRecords] = useState([]);
@@ -64,13 +72,18 @@ export default function RecordsManager({ recordType = "attendance" }) {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('Update failed:', response.status, errorData);
+        throw new Error(`HTTP error! status: ${response.status} - ${errorData.error || response.statusText}`);
       }
 
       toast.success('Record updated successfully');
       setIsEditing(false);
       setEditingRecord(null);
       fetchRecords();
+      // Dispatch custom event to notify dashboard components
+      const eventName = recordType === 'attendance' ? 'attendanceDataChanged' : 'apologyDataChanged';
+      window.dispatchEvent(new CustomEvent(eventName));
     } catch (error) {
       console.error('Error updating record:', error);
       toast.error('Failed to update record');
@@ -98,6 +111,9 @@ export default function RecordsManager({ recordType = "attendance" }) {
 
       toast.success('Record deleted successfully');
       fetchRecords();
+      // Dispatch custom event to notify dashboard components
+      const eventName = recordType === 'attendance' ? 'attendanceDataChanged' : 'apologyDataChanged';
+      window.dispatchEvent(new CustomEvent(eventName));
     } catch (error) {
       console.error('Error deleting record:', error);
       toast.error('Failed to delete record');
@@ -105,8 +121,9 @@ export default function RecordsManager({ recordType = "attendance" }) {
   };
 
   const filteredRecords = records.filter(record => 
-    record.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    record.congregation?.toLowerCase().includes(searchTerm.toLowerCase())
+    (record.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (record.congregation || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (record.position || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getFieldLabel = (field) => {
@@ -180,7 +197,7 @@ export default function RecordsManager({ recordType = "attendance" }) {
                   <input
                     type={field === 'email' ? 'email' : 'text'}
                     value={editingRecord[field] || ''}
-                    onChange={(e) => setEditingRecord(prev => ({ ...prev, [field]: e.target.value }))}
+                    onChange={(e) => setEditingRecord(prev => ({ ...prev, [field]: ['name','congregation','position','type','reason'].includes(field) ? capitalizeWords(e.target.value) : e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   />
                 )}

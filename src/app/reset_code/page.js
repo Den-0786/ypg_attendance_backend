@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { FaCheckCircle, FaTimesCircle, FaEye, FaEyeSlash } from 'react-icons/fa';
+import PasswordInput from '@components/PasswordInput';
 
 export default function ResetCode() {
     const router = useRouter();
@@ -15,22 +16,13 @@ export default function ResetCode() {
     const [showNew, setShowNew] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [isNewPasswordValid, setIsNewPasswordValid] = useState(false);
 
     if (!username) {
         toast.error('Missing email. Start over.');
         router.push('/forgot_password');
         return null;
     }
-
-    const hasUppercase = /[A-Z]/.test(newPassword);
-    const hasLowercase = /[a-z]/.test(newPassword);
-    const hasNumber = /\d/.test(newPassword);
-    const hasSymbol = /[@$!%*?&#^+=]/.test(newPassword);
-    const hasMinLength = newPassword.length >= 8;
-    const strengthCount = [hasUppercase, hasLowercase, hasNumber, hasSymbol, hasMinLength].filter(Boolean).length;
-
-    const renderCheck = (condition) =>
-        condition ? <FaCheckCircle className="text-green-500" /> : <FaTimesCircle className="text-red-500" />;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -42,8 +34,8 @@ export default function ResetCode() {
         toast.error('Passwords do not match');
         return;
         }
-        if (strengthCount < 5) {
-        toast.error('Password does not meet all requirements');
+        if (!isNewPasswordValid) {
+        toast.error('Password does not meet requirements');
         return;
         }
 
@@ -79,90 +71,81 @@ export default function ResetCode() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-6">
-        <div className="bg-white dark:bg-gray-800 shadow p-6 rounded max-w-md w-full">
-            <h2 className="text-xl font-bold mb-4 text-center">Reset Password</h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-            <input
-                type="text"
-                placeholder="Enter reset code"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                className="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:text-white"
-                required
-            />
-
-            <div className="relative">
-                <input
-                type={showNew ? 'text' : 'password'}
-                placeholder="New password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:text-white"
-                required
-                />
-                <button
-                type="button"
-                className="absolute top-1/2 right-3 transform -translate-y-1/2"
-                onClick={() => setShowNew(!showNew)}
-                >
-                {showNew ? <FaEyeSlash /> : <FaEye />}
-                </button>
-            </div>
-
-            {/* Password Strength */}
-            {newPassword && (
-                <>
-                <div className="h-2 bg-gray-300 rounded">
-                    <div
-                    className={`h-2 rounded transition-all duration-300 ${
-                        strengthCount < 3
-                        ? 'bg-red-500 w-1/4'
-                        : strengthCount === 3
-                        ? 'bg-yellow-500 w-2/4'
-                        : strengthCount === 4
-                        ? 'bg-blue-500 w-3/4'
-                        : 'bg-green-500 w-full'
-                    }`}
+        <div className="min-h-screen flex flex-col items-center justify-center p-6">
+            <div className="bg-white dark:bg-gray-800 shadow p-6 rounded max-w-md w-full">
+                <h2 className="text-xl font-bold mb-4 text-center">Reset Password</h2>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <input
+                        type="text"
+                        placeholder="Enter reset code"
+                        value={code}
+                        onChange={(e) => setCode(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     />
-                </div>
-                <div className="text-sm bg-gray-100 dark:bg-gray-700 rounded p-3 mt-2 space-y-1">
-                    <div className="flex items-center gap-2">{renderCheck(hasUppercase)} One uppercase letter</div>
-                    <div className="flex items-center gap-2">{renderCheck(hasLowercase)} One lowercase letter</div>
-                    <div className="flex items-center gap-2">{renderCheck(hasNumber)} One number</div>
-                    <div className="flex items-center gap-2">{renderCheck(hasSymbol)} One symbol</div>
-                    <div className="flex items-center gap-2">{renderCheck(hasMinLength)} At least 8 characters</div>
-                </div>
-                </>
-            )}
+                    
+                    <PasswordInput
+                        value={newPassword}
+                        onChange={setNewPassword}
+                        placeholder="Enter new password"
+                        label="New Password"
+                        required={true}
+                        showStrength={true}
+                        maxLength={8}
+                        onValidationChange={setIsNewPasswordValid}
+                    />
+                    
+                    <div className="text-xs text-gray-600 dark:text-gray-400 bg-blue-50 dark:bg-blue-900 p-2 rounded">
+                        <strong>Password Requirements:</strong> Exactly 8 characters with at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character.
+                    </div>
 
-            <div className="relative">
-                <input
-                type={showConfirm ? 'text' : 'password'}
-                placeholder="Confirm new password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:text-white"
-                required
-                />
-                <button
-                type="button"
-                className="absolute top-1/2 right-3 transform -translate-y-1/2"
-                onClick={() => setShowConfirm(!showConfirm)}
-                >
-                {showConfirm ? <FaEyeSlash /> : <FaEye />}
-                </button>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Confirm New Password
+                        </label>
+                        <div className="relative">
+                            <input
+                                type={showConfirm ? 'text' : 'password'}
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value.slice(0, 8))}
+                                placeholder="Confirm new password"
+                                maxLength={8}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white pr-10"
+                                required
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowConfirm(!showConfirm)}
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                            >
+                                {showConfirm ? <FaEyeSlash /> : <FaEye />}
+                            </button>
+                        </div>
+                        {confirmPassword && newPassword !== confirmPassword && (
+                            <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                                Passwords do not match
+                            </p>
+                        )}
+                        {confirmPassword && (
+                            <div className="text-xs text-gray-500 dark:text-gray-400 text-right mt-1">
+                                {confirmPassword.length}/8 characters
+                            </div>
+                        )}
+                    </div>
+
+                    <button 
+                        type="submit" 
+                        className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition-colors" 
+                        disabled={isLoading || !isNewPasswordValid || newPassword !== confirmPassword}
+                    >
+                        {isLoading ? 'Resetting...' : 'Reset Password'}
+                    </button>
+                    <div className="text-center">
+                        <a href="/" className="text-blue-600 hover:underline text-sm">
+                            Back to Login
+                        </a>
+                    </div>
+                </form>
             </div>
-
-            <button
-                type="submit"
-                className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
-                disabled={isLoading}
-            >
-                {isLoading ? 'Resetting...' : 'Reset Password'}
-            </button>
-            </form>
-        </div>
         </div>
     );
 }

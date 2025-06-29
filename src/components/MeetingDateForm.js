@@ -4,20 +4,24 @@ import { useMeetingDate } from './MeetingDateContext';
 import { toast } from 'react-hot-toast';
 import { HiEye, HiEyeOff } from 'react-icons/hi';
 import { useRouter } from 'next/navigation';
+import { capitalizeFirst, toTitleCase } from '../lib/utils';
+import PINModal from './PINModal';
 
 export default function MeetingDateForm({ onClose, onMeetingSet }) {
   const { setMeetingDate, setMeetingTitle } = useMeetingDate();
   const router = useRouter();
   const [dateInput, setDateInput] = useState('');
   const [titleInput, setTitleInput] = useState('');
-  const [usernameInput, setUsernameInput] = useState('');
-  const [passwordInput, setPasswordInput] = useState('');
+  const [adminUsername, setAdminUsername] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [deactivating, setDeactivating] = useState(false);
-  const [adminUsername, setAdminUsername] = useState('');
-  const [adminPassword, setAdminPassword] = useState('');
   const [authError, setAuthError] = useState('');
+  
+  // PIN verification states
+  const [showPINModal, setShowPINModal] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null); // 'activate' or 'deactivate'
 
   const handleBackToForms = () => {
     onClose();
@@ -25,11 +29,13 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Show PIN modal for activation
+    setPendingAction('activate');
+    setShowPINModal(true);
+  };
+
+  const handleActivateWithPIN = async () => {
     setAuthError('');
-    // if (!dateInput || !usernameInput || !passwordInput || !adminUsername || !adminPassword) {
-    //   toast.error('Please fill in all fields');
-    //   return;
-    // }
     setLoading(true);
     try {
       const res = await fetch(`/api/set-meeting`, {
@@ -41,8 +47,6 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
         body: JSON.stringify({
           title: titleInput,
           date: dateInput,
-          login_username: usernameInput,
-          login_password: passwordInput,
           admin_username: adminUsername,
           admin_password: adminPassword,
         }),
@@ -51,21 +55,54 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
       if (res.ok) {
         toast.success('Meeting set successfully');
         setMeetingDate(dateInput);
-        setMeetingTitle(titleInput);
+        setMeetingTitle(toTitleCase(titleInput));
         localStorage.setItem('meetingDate', dateInput);
-        localStorage.setItem('meetingTitle', titleInput);
+        localStorage.setItem('meetingTitle', toTitleCase(titleInput));
         setDateInput('');
         setTitleInput('');
-        setUsernameInput('');
-        setPasswordInput('');
         setAdminUsername('');
         setAdminPassword('');
         setAuthError('');
         onClose();
         onMeetingSet();
       } else {
-        setAuthError(data.error || 'Failed to set meeting');
-        toast.error(data.error || 'Failed to set meeting');
+        // Check if it's the duplicate meeting error
+        if (data.error && data.error.includes('Cannot set two meetings same day')) {
+          // Show special toast with loading bar
+          toast.custom((t) => (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 max-w-sm mx-auto">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm font-medium text-red-800">
+                      Cannot set two meetings same day
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => toast.dismiss(t.id)}
+                  className="text-red-400 hover:text-red-600"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="w-full bg-red-200 rounded-full h-2 mb-2">
+                <div className="bg-red-600 h-2 rounded-full animate-pulse" style={{ width: '100%' }}></div>
+              </div>
+              <p className="text-sm text-red-700">
+                Deactivate the current meeting details before you can set another one.
+              </p>
+            </div>
+          ), { duration: 8000 });
+        } else {
+          setAuthError(data.error || 'Failed to set meeting');
+          toast.error(data.error || 'Failed to set meeting');
+        }
       }
     } catch (error) {
       setAuthError('Network error occurred');
@@ -75,7 +112,13 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
     }
   };
 
-  const handleDeactivateMeeting = async () => {
+  const handleDeactivateMeeting = () => {
+    // Show PIN modal for deactivation
+    setPendingAction('deactivate');
+    setShowPINModal(true);
+  };
+
+  const handleDeactivateWithPIN = async () => {
     setDeactivating(true);
     try {
       const res = await fetch(`/api/deactivate-meeting`, {
@@ -102,11 +145,22 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
     }
   };
 
+  // PIN success handler
+  const handlePINSuccess = () => {
+    if (pendingAction === 'activate') {
+      handleActivateWithPIN();
+    } else if (pendingAction === 'deactivate') {
+      handleDeactivateWithPIN();
+    }
+    setPendingAction(null);
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-yellow-50 to-white py-8">
       <form
         onSubmit={handleSubmit}
         className="bg-white p-4 rounded-2xl shadow-xl w-full max-w-md space-y-6 border-2 border-yellow-400"
+        autoComplete="off"
       >
         <h2 className="text-2xl font-bold text-center text-yellow-700 mb-2">Set Meeting Details</h2>
         <p className="text-center text-gray-500 mb-4">Please enter the details for the new meeting</p>
@@ -139,10 +193,11 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
           <input
             type="text"
             value={titleInput}
-            onChange={(e) => setTitleInput(e.target.value)}
+            onChange={(e) => setTitleInput(toTitleCase(e.target.value))}
             placeholder="e.g. Emergency Meeting"
             className="w-full p-1 border border-yellow-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition"
             required
+            autoComplete="off"
           />
         </div>
 
@@ -155,42 +210,9 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
             className="w-full p-1 border border-yellow-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition"
             required
             min={new Date().toISOString().split('T')[0]}
+            autoComplete="off"
           />
         </div>
-
-        {/* <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">Login Username</label>
-          <input
-            type="text"
-            value={usernameInput}
-            onChange={(e) => setUsernameInput(e.target.value)}
-            placeholder="e.g. districtypg2025"
-            className="w-full p-1 border border-yellow-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition"
-            required
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">Login Password</label>
-          <div className="relative">
-            <input
-              type={showPassword ? 'text' : 'password'}
-              value={passwordInput}
-              onChange={(e) => setPasswordInput(e.target.value)}
-              placeholder="Set a password for this meeting"
-              className="w-full p-1 border border-yellow-300 rounded-xl text-gray-900 pr-10 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition"
-              required
-            />
-            <button
-              type="button"
-              className="absolute right-3 top-2 text-gray-500 hover:text-yellow-600"
-              onClick={() => setShowPassword(!showPassword)}
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
-            >
-              {showPassword ? <HiEye size={20} /> : <HiEyeOff size={20} />}
-            </button>
-          </div>
-        </div> */}
 
         <div className="space-y-1">
           <label className="block text-sm font-medium text-gray-700">Admin Username</label>
@@ -234,6 +256,19 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
           {loading ? 'Setting...' : 'Continue'}
         </button>
       </form>
+
+      {/* PIN Modal */}
+      <PINModal
+        className="text-gray-900"
+        isOpen={showPINModal}
+        onClose={() => {
+          setShowPINModal(false);
+          setPendingAction(null);
+        }}
+        onSuccess={handlePINSuccess}
+        title={pendingAction === 'activate' ? 'Enter PIN to Activate Meeting' : 'Enter PIN to Deactivate Meeting'}
+        message={pendingAction === 'activate' ? 'Please enter the 4-digit PIN to activate this meeting' : 'Please enter the 4-digit PIN to deactivate the current meeting'}
+      />
     </div>
   );
 }

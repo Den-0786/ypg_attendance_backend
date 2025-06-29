@@ -9,40 +9,65 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@components/hooks/useAuth';
+import { useAuthStore } from '@components/store/authStore';
 import LoginForm from '@components/LoginForm';
 
 export default function Page() {
-  const { checkSession, handleLogin, loggedIn, userRole } = useAuth();
+  const { handleLogin, loggedIn, userRole } = useAuth();
+  const store = useAuthStore();
+  const setLoggedIn = store.setLoggedIn;
+  const setUserRole = store.setUserRole;
+  const setMeetingSet = store.setMeetingSet;
+  
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [loginLoading, setLoginLoading] = useState(false);
-  const hasCheckedSession = useRef(false);
+  const hasInitialized = useRef(false);
 
-  // List of executive roles
-  const executiveRoles = [
-    'admin', 'President', "President's Rep", 'Secretary', 'Assistant Secretary',
-    'Financial Secretary', 'Treasurer', 'Bible Studies Coordinator', 'Organizer'
-  ];
+  // Only admin and user roles are supported
+  const allowedRoles = ['admin', 'user'];
 
-  // Run session check once on mount only if not already logged in and we haven't checked yet
+  // Always start fresh - clear any existing session state
   useEffect(() => {
-    if (!hasCheckedSession.current) {
-      hasCheckedSession.current = true;
-      if (!loggedIn) {
-        checkSession().finally(() => setIsLoading(false));
-      } else {
-        setIsLoading(false);
+    if (!hasInitialized.current) {
+      hasInitialized.current = true;
+      
+      // Clear any existing session state immediately
+      if (typeof setLoggedIn === 'function') {
+        setLoggedIn(false);
       }
+      if (typeof setUserRole === 'function') {
+        setUserRole(null);
+      }
+      if (typeof setMeetingSet === 'function') {
+        setMeetingSet(false);
+      }
+      
+      // Clear any stored session data
+      if (typeof window !== 'undefined') {
+        // Clear localStorage and sessionStorage
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // Clear server-side session
+        fetch('/api/logout', {
+          method: 'POST',
+          credentials: 'include',
+        }).catch(() => {
+          // Ignore errors - we just want to clear any existing session
+        });
+      }
+      
+      setIsLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [setLoggedIn, setUserRole, setMeetingSet]);
 
-  // Redirect after session check is complete
+  // Redirect after successful login
   useEffect(() => {
-    if (!isLoading && loggedIn) {
-      if (executiveRoles.includes(userRole)) {
+    if (!isLoading && loggedIn && userRole) {
+      if (userRole === 'admin') {
         router.replace('/dashboard');
-      } else if (userRole === 'meeting_user' || userRole === 'user') {
+      } else if (userRole === 'user') {
         router.replace('/forms');
       }
     }
@@ -51,16 +76,22 @@ export default function Page() {
 
   const onLogin = async (username, password) => {
     setLoginLoading(true);
-    const role = await handleLogin(username, password);
-    if (executiveRoles.includes(role)) {
-      router.replace('/dashboard');
-    } else if (role === 'meeting_user' || role === 'user') {
-      router.replace('/forms');
+    try {
+      const role = await handleLogin(username, password);
+      if (role === 'admin') {
+        router.replace('/dashboard');
+      } else if (role === 'user') {
+        router.replace('/forms');
+      }
+    } catch (error) {
+      console.error('Login failed:', error);
+    } finally {
+      setLoginLoading(false);
     }
   };
 
-  // Prevent flashing anything until session is checked or during login
-  if (isLoading || loginLoading || (loggedIn && userRole)) {
+  // Show loading only during login process
+  if (isLoading || loginLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-600">
         <div className="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-12 w-12 mb-4 animate-spin border-t-blue-600"></div>

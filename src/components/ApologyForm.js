@@ -1,9 +1,11 @@
 // ApologyForm.js
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useMeetingDate } from './MeetingDateContext';
 import { MdMoreVert, MdEdit, MdDelete } from 'react-icons/md';
 import toast from 'react-hot-toast';
+import { FaExclamationCircle } from 'react-icons/fa';
+import { capitalizeFirst } from '../lib/utils';
 
 const congregations = [
   "Emmanuel Congregation Ahinsan",
@@ -38,12 +40,37 @@ const toTitleCase = (str) => {
     .join(' ');
 };
 
+function capitalizeWords(str) {
+  return str
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
+
 export default function ApologyForm({ meetingInfo }) {
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  const context = useMeetingDate ? useMeetingDate() : {};
-  const meetingDate = meetingInfo ? meetingInfo.date : context.meetingDate;
+  const { meetingDate: contextMeetingDate, setMeetingDate } = useMeetingDate ? useMeetingDate() : { meetingDate: '', setMeetingDate: () => {} };
+  const meetingDate = meetingInfo ? meetingInfo.date : contextMeetingDate;
+  
+  // Debug logging with Chrome detection
+  useEffect(() => {
+    const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+    console.log('ApologyForm - Browser:', isChrome ? 'Chrome' : 'Other');
+    console.log('ApologyForm - meetingInfo:', meetingInfo);
+    console.log('ApologyForm - contextMeetingDate:', contextMeetingDate);
+    console.log('ApologyForm - final meetingDate:', meetingDate);
+    
+    // Chrome-specific fix: Force re-render if meetingInfo changes
+    if (isChrome && meetingInfo && !meetingDate) {
+      console.log('Chrome detected - forcing re-render');
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
+    }
+  }, [meetingInfo, contextMeetingDate, meetingDate]);
+  
   const [type, setType] = useState('local');
-  const [form, setForm] = useState({ name: '', congregation: '', position: '', reason: '' });
+  const [form, setForm] = useState({ name: '', phone: '', email: '', congregation: '', position: '', reason: '' });
   const [apologies, setApologies] = useState([]);
   const [editingIndex, setEditingIndex] = useState(null);
   const [menuOpenIndex, setMenuOpenIndex] = useState(null);
@@ -52,22 +79,68 @@ export default function ApologyForm({ meetingInfo }) {
   const [adminUsername, setAdminUsername] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [authError, setAuthError] = useState('');
+  const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    // If meeting is deactivated, clear form state
+    if (!contextMeetingDate && !meetingInfo?.title) {
+      setForm({ name: '', phone: '', email: '', congregation: '', position: '', reason: '' });
+      setApologies([]);
+    }
+  }, [contextMeetingDate, meetingInfo?.title]);
 
   const handleChange = (e) => {
-    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    validateField(name, value);
+    let newValue = value;
+    if (["name", "congregation", "position", "reason"].includes(name)) {
+      newValue = capitalizeWords(value);
+    }
+    setForm(prev => ({ ...prev, [name]: newValue }));
+  };
+
+  const validateField = (name, value) => {
+    let error = '';
+    if (name === 'name') {
+      if (!/^[a-zA-Z\s\-]+$/.test(value)) {
+        error = 'Only letters, spaces, and hyphens allowed.';
+      }
+    }
+    if (name === 'phone') {
+      if (!/^\d{10}$/.test(value)) {
+        error = 'Phone number must be exactly 10 digits.';
+      }
+    }
+    if (name === 'email' && value) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        error = 'Invalid email format.';
+      }
+    }
+    setErrors(prev => ({ ...prev, [name]: error }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const cleanedName = toTitleCase(form.name);
+    if (!form.name || !form.phone || !form.congregation || !form.position || !form.reason) {
+      toast.error('Please fill all required fields');
+      return;
+    }
+    if (Object.values(errors).some(error => error)) {
+      toast.error('Please fix the errors in the form');
+      return;
+    }
     const nameExists = apologies.some((a, idx) => a.name === form.name && idx !== editingIndex);
     if (nameExists) {
       toast.error('This person has already been added.');
       return;
     }
+    if (checkForDuplicatePhone({ ...form, type })) {
+      toast.error('This phone number has already been used for this meeting.');
+      return;
+    }
     const now = new Date();
     const timestamp = now.toTimeString().slice(0, 8);
-
     const entry = { 
       ...form,
       name: cleanedName,
@@ -75,7 +148,6 @@ export default function ApologyForm({ meetingInfo }) {
       meetingDate, 
       timestamp 
     };
-
     if (editingIndex !== null) {
       const updated = [...apologies];
       updated[editingIndex] = entry;
@@ -84,7 +156,7 @@ export default function ApologyForm({ meetingInfo }) {
     } else {
       setApologies(prev => [entry, ...prev]);
     }
-    setForm({ name: '', congregation: '', position: '', reason: '' });
+    setForm({ name: '', phone: '', email: '', congregation: '', position: '', reason: '' });
     setShowModal(true);
   };
 
@@ -132,6 +204,8 @@ export default function ApologyForm({ meetingInfo }) {
         setAdminUsername('');
         setAdminPassword('');
         setAuthError('');
+        // Dispatch custom event to notify dashboard components
+        window.dispatchEvent(new CustomEvent('apologyDataChanged'));
       } else {
         setAuthError(data.error || 'Failed to submit apologies');
         toast.error(data.error || 'Failed to submit apologies');
@@ -143,6 +217,17 @@ export default function ApologyForm({ meetingInfo }) {
   };
 
   const positions = type === 'district' ? districtPositions : localPositions;
+
+  const checkForDuplicatePhone = (entry) => {
+    return apologies.some((existing, index) => {
+      if (index === editingIndex) return false;
+      return (
+        existing.phone === entry.phone &&
+        existing.meetingDate === meetingDate &&
+        existing.type === entry.type
+      );
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -184,7 +269,7 @@ export default function ApologyForm({ meetingInfo }) {
 
         <form onSubmit={handleSubmit} className="space-y-4 text-gray-700">
           {/* Name Field */}
-          <label className="block text-sm font-medium">
+          <label className="block text-sm font-medium mb-2">
             Name <span className="text-red-500">*</span>
             <input
               name="name"
@@ -192,8 +277,51 @@ export default function ApologyForm({ meetingInfo }) {
               placeholder="Name"
               value={form.name}
               onChange={handleChange}
-              className="w-full mt-1 p-1 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+              className={`w-full mt-1 p-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-yellow-400 ${errors.name ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
             />
+            {errors.name && (
+              <div className="flex items-center gap-2 bg-red-100 text-red-700 rounded px-2 py-1 mt-1 animate-pulse">
+                <FaExclamationCircle className="text-red-500" />
+                <span className="text-xs">{errors.name}</span>
+              </div>
+            )}
+          </label>
+
+          {/* Phone Field */}
+          <label className="block text-sm font-medium mb-2">
+            Phone Number <span className="text-red-500">*</span>
+            <input
+              name="phone"
+              required
+              placeholder="Phone Number"
+              value={form.phone}
+              onChange={handleChange}
+              className={`w-full mt-1 p-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-yellow-400 ${errors.phone ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
+            />
+            {errors.phone && (
+              <div className="flex items-center gap-2 bg-red-100 text-red-700 rounded px-2 py-1 mt-1 animate-pulse">
+                <FaExclamationCircle className="text-red-500" />
+                <span className="text-xs">{errors.phone}</span>
+              </div>
+            )}
+          </label>
+
+          {/* Email Field (optional) */}
+          <label className="block text-sm font-medium mb-2">
+            Email Address (optional)
+            <input
+              name="email"
+              placeholder="Email Address"
+              value={form.email}
+              onChange={handleChange}
+              className={`w-full mt-1 p-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-yellow-400 ${errors.email ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
+            />
+            {errors.email && (
+              <div className="flex items-center gap-2 bg-red-100 text-red-700 rounded px-2 py-1 mt-1 animate-pulse">
+                <FaExclamationCircle className="text-red-500" />
+                <span className="text-xs">{errors.email}</span>
+              </div>
+            )}
           </label>
 
           {/* Congregation Select */}
@@ -326,13 +454,13 @@ export default function ApologyForm({ meetingInfo }) {
       {/* Delete Confirmation */}
       {confirmIndex !== null && (
         <div className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-md">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-xl w-full max-w-md">
             <h3 className="text-lg font-bold text-red-600 mb-3">Confirm Delete</h3>
-            <p className="mb-4 text-sm text-gray-700">
-              Are you sure you want to delete <strong>{apologies[confirmIndex].name}</strong>&apos;s entry?
+            <p className="mb-4 text-sm text-gray-700 dark:text-gray-200">
+              Are you sure you want to delete <strong className="text-gray-900 dark:text-white">{apologies[confirmIndex].name}</strong>&apos;s entry?
             </p>
             <div className="flex justify-end gap-4">
-              <button onClick={() => setConfirmIndex(null)} className="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-600">
+              <button onClick={() => setConfirmIndex(null)} className="px-4 py-2 bg-gray-800 dark:bg-gray-600 text-white rounded hover:bg-gray-600 dark:hover:bg-gray-500">
                 Cancel
               </button>
               <button onClick={() => {

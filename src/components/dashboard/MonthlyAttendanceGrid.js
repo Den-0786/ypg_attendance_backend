@@ -46,11 +46,11 @@ export default function MonthlyAttendanceGrid({ attendanceData, darkMode }) {
     // Process attendance data if available
     if (attendanceData && attendanceData.length > 0) {
       attendanceData.forEach(entry => {
+        if (entry.type !== 'local') return; // Only count local entries
         const date = new Date(entry.meeting_date);
         const month = date.getMonth(); // 0-11
         const year = date.getFullYear();
         const key = `${year}-${month}`;
-        
         if (congregationMap.has(entry.congregation)) {
           const congregationData = congregationMap.get(entry.congregation);
           if (!congregationData.has(key)) {

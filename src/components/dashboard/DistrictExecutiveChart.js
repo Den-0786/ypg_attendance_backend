@@ -235,25 +235,6 @@ export default function DistrictExecutiveChart({ attendanceData, darkMode }) {
         </h2>
         
         <div className="flex items-center gap-2 mt-2 md:mt-0">
-          {availableYears.length > 1 && (
-            <>
-              <label className="text-sm text-gray-600 dark:text-gray-400">Year:</label>
-              <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                className={`px-3 py-1 text-sm border rounded-md ${
-                  darkMode 
-                    ? 'bg-gray-700 border-gray-600 text-white' 
-                    : 'bg-white border-gray-300 text-gray-900'
-                }`}
-              >
-                {availableYears.map(year => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
-            </>
-          )}
-          
           {chartData.length > 0 && (
             <button
               onClick={exportData}

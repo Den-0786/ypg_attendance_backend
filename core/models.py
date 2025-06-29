@@ -124,3 +124,28 @@ class AuditLog(models.Model):
 
     def __str__(self):
         return f"{self.user} {self.action} {self.model} {self.object_id} at {self.timestamp}"
+
+# --- PIN Model for Edit/Delete Operations ---
+class SecurityPIN(models.Model):
+    pin = models.CharField(max_length=4, help_text="4-digit PIN for edit/delete operations")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"PIN: {'*' * 4} (Active: {self.is_active})"
+
+    @classmethod
+    def get_active_pin(cls):
+        """Get the currently active PIN"""
+        return cls.objects.filter(is_active=True).first()
+
+    @classmethod
+    def verify_pin(cls, pin):
+        """Verify if the provided PIN matches the active PIN"""
+        active_pin = cls.objects.filter(is_active=True).first()
+        if not active_pin:
+            return False
+        
+        result = active_pin.pin == pin
+        return result

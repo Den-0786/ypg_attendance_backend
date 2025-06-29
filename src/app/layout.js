@@ -2,6 +2,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from 'react-hot-toast';
 import { MeetingDateProvider } from '@components/MeetingDateContext';
+import AutoLogoutWrapper from '../components/AutoLogoutWrapper';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,6 +36,7 @@ export default function RootLayout({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <MeetingDateProvider>
+          <AutoLogoutWrapper />
           <Toaster position="top-center" />
           {children}
         </MeetingDateProvider>

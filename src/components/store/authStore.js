@@ -1,7 +1,7 @@
 // store/authStore.js
 import { create } from 'zustand';
 
-export const useAuthStore = create((set) => ({
+export const useAuthStore = create((set, get) => ({
     loggedIn: false,
     userRole: null,
     meetingSet: false,
