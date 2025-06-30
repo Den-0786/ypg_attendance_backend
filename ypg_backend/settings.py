@@ -237,7 +237,7 @@ if DEBUG:
 
 # Session settings
 SESSION_COOKIE_SAMESITE = "None"  # Allows cross-site cookies for local dev and production
-SESSION_COOKIE_SECURE = False      # Set to True in production (HTTPS only)
+SESSION_COOKIE_SECURE = True     # Set to True in production (HTTPS only)
 SESSION_COOKIE_HTTPONLY = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_AGE = 86400  # 24 hours
