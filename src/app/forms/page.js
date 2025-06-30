@@ -95,7 +95,7 @@ export default function MeetingPage() {
     if (loggedIn && userRole === 'admin') {
       // Admin: fetch current meeting to decide what to show
       setLoadingMeeting(true);
-      fetch(`${API_URL}/api/current-meeting`, {
+      fetch(`${API_URL}/api/current-meeting/`, {
         credentials: 'include'
       })
         .then(res => res.json())
@@ -117,7 +117,7 @@ export default function MeetingPage() {
     }
     if (loggedIn && userRole === 'user') {
       setLoadingMeeting(true);
-      fetch(`${API_URL}/api/current-meeting`, {
+      fetch(`${API_URL}/api/current-meeting/`, {
         credentials: 'include'
       })
         .then(res => res.json())
@@ -175,7 +175,7 @@ export default function MeetingPage() {
         // Multiple attempts to fetch meeting info for Chrome compatibility
         const fetchMeetingInfo = async (attempt = 1) => {
           try {
-            const res = await fetch(`${API_URL}/api/current-meeting`, { credentials: 'include' });
+            const res = await fetch(`${API_URL}/api/current-meeting/`, { credentials: 'include' });
             if (res.ok) {
               const data = await res.json();
               if (data.meeting) {

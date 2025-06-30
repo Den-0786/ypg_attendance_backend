@@ -26,7 +26,7 @@ export default function PINModal({
     setError('');
 
     try {
-      const res = await fetch(`${API_URL}/api/verify-pin`, {
+      const res = await fetch(`${API_URL}/api/pin/verify/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

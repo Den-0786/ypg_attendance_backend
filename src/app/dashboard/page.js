@@ -102,7 +102,7 @@ export default function AdminPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const checkActiveMeeting = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/current-meeting`, {
+      const res = await fetch(`${API_URL}/api/current-meeting/`, {
         credentials: 'include'
       });
       const data = await res.json();
@@ -157,7 +157,7 @@ export default function AdminPage() {
     if (loggedIn && userRole === 'admin') {
       // Admin: fetch current meeting to decide what to show
       setLoadingMeeting(true);
-      fetch(`${API_URL}/api/current-meeting`, {
+      fetch(`${API_URL}/api/current-meeting/`, {
         credentials: 'include'
       })
         .then(res => res.json())
