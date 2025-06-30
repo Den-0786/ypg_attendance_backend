@@ -1,11 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Enable static exports for deployment
-  output: 'standalone',
-  
   // Optimize images
   images: {
-    domains: ['localhost', '127.0.0.1'],
+    domains: ['localhost', '127.0.0.1', 'ypg-attendance-backend-1.onrender.com'],
     unoptimized: true,
   },
   
@@ -44,16 +41,6 @@ const nextConfig = {
         source: '/admin',
         destination: '/api/admin/',
         permanent: true,
-      },
-    ];
-  },
-  
-  // Rewrites for API proxy
-  async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: 'http://127.0.0.1:8000/api/:path*',
       },
     ];
   },
