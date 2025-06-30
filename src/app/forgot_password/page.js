@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import toast from 'react-hot-toast';
 
 export default function ForgotPassword() {
@@ -57,9 +58,9 @@ export default function ForgotPassword() {
                 {isLoading ? 'Sending...' : 'Send Reset Code'}
             </button>
             <div className="text-center">
-                <a href="/" className="text-blue-600 hover:underline text-sm">
+                <Link href="/" className="text-blue-600 hover:underline text-sm">
                     Back to Login
-                </a>
+                </Link>
             </div>
             </form>
         </div>

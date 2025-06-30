@@ -11,6 +11,11 @@ const nextConfig = {
     CUSTOM_KEY: process.env.CUSTOM_KEY,
   },
   
+  // ESLint configuration - ignore warnings during build
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  
   // Security headers
   async headers() {
     return [

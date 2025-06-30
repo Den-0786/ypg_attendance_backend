@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import { FaCheckCircle, FaTimesCircle, FaEye, FaEyeSlash } from 'react-icons/fa';
 import PasswordInput from '@components/PasswordInput';
@@ -140,9 +141,9 @@ export default function ResetCode() {
                         {isLoading ? 'Resetting...' : 'Reset Password'}
                     </button>
                     <div className="text-center">
-                        <a href="/" className="text-blue-600 hover:underline text-sm">
+                        <Link href="/" className="text-blue-600 hover:underline text-sm">
                             Back to Login
-                        </a>
+                        </Link>
                     </div>
                 </form>
             </div>
