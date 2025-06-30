@@ -68,10 +68,25 @@ export default function Page() {
   // Redirect after successful login
   useEffect(() => {
     if (!isLoading && loggedIn && userRole) {
+      // Check if it's a mobile device
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      
+      console.log('useEffect triggered - loggedIn:', loggedIn, 'userRole:', userRole, 'isMobile:', isMobile);
+      
       if (userRole === 'admin') {
-        router.replace('/dashboard');
+        console.log('useEffect: Navigating to dashboard...');
+        if (isMobile) {
+          window.location.href = '/dashboard';
+        } else {
+          router.replace('/dashboard');
+        }
       } else if (userRole === 'user') {
-        router.replace('/forms');
+        console.log('useEffect: Navigating to forms...');
+        if (isMobile) {
+          window.location.href = '/forms';
+        } else {
+          router.replace('/forms');
+        }
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -81,10 +96,31 @@ export default function Page() {
     setLoginLoading(true);
     try {
       const role = await handleLogin(username, password);
+      
+      // Check if it's a mobile device
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      
+      console.log('Login successful, role:', role, 'isMobile:', isMobile);
+      
+      // Force a delay for mobile browsers
+      await new Promise(resolve => setTimeout(resolve, isMobile ? 200 : 100));
+      
       if (role === 'admin') {
-        router.replace('/dashboard');
+        console.log('Navigating to dashboard...');
+        if (isMobile) {
+          // Use direct navigation for mobile devices
+          window.location.href = '/dashboard';
+        } else {
+          router.replace('/dashboard');
+        }
       } else if (role === 'user') {
-        router.replace('/forms');
+        console.log('Navigating to forms...');
+        if (isMobile) {
+          // Use direct navigation for mobile devices
+          window.location.href = '/forms';
+        } else {
+          router.replace('/forms');
+        }
       }
     } catch (error) {
       // Handle login errors gracefully without logging to console
