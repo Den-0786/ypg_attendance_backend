@@ -172,6 +172,20 @@ export function useAuth() {
         }, isMobile ? 150 : 50);
         
         toast.success('Login successful');
+        
+        // Force immediate navigation for mobile
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobile) {
+          console.log('Mobile detected, forcing navigation...');
+          setTimeout(() => {
+            if (data.role === 'admin') {
+              window.location.href = '/dashboard';
+            } else if (data.role === 'user') {
+              window.location.href = '/forms';
+            }
+          }, 300);
+        }
+        
         return data.role;
       } else {
         // Show error toast and throw error

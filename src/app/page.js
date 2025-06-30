@@ -76,14 +76,36 @@ export default function Page() {
       if (userRole === 'admin') {
         console.log('useEffect: Navigating to dashboard...');
         if (isMobile) {
-          window.location.href = '/dashboard';
+          // Try multiple navigation attempts for mobile
+          const navigateToDashboard = () => {
+            console.log('Attempting navigation to dashboard...');
+            window.location.href = '/dashboard';
+          };
+          
+          // Immediate attempt
+          navigateToDashboard();
+          
+          // Fallback attempts
+          setTimeout(navigateToDashboard, 500);
+          setTimeout(navigateToDashboard, 1000);
         } else {
           router.replace('/dashboard');
         }
       } else if (userRole === 'user') {
         console.log('useEffect: Navigating to forms...');
         if (isMobile) {
-          window.location.href = '/forms';
+          // Try multiple navigation attempts for mobile
+          const navigateToForms = () => {
+            console.log('Attempting navigation to forms...');
+            window.location.href = '/forms';
+          };
+          
+          // Immediate attempt
+          navigateToForms();
+          
+          // Fallback attempts
+          setTimeout(navigateToForms, 500);
+          setTimeout(navigateToForms, 1000);
         } else {
           router.replace('/forms');
         }
@@ -103,21 +125,25 @@ export default function Page() {
       console.log('Login successful, role:', role, 'isMobile:', isMobile);
       
       // Force a delay for mobile browsers
-      await new Promise(resolve => setTimeout(resolve, isMobile ? 200 : 100));
+      await new Promise(resolve => setTimeout(resolve, isMobile ? 500 : 100));
       
       if (role === 'admin') {
         console.log('Navigating to dashboard...');
         if (isMobile) {
-          // Use direct navigation for mobile devices
-          window.location.href = '/dashboard';
+          // Force navigation for mobile devices
+          setTimeout(() => {
+            window.location.href = '/dashboard';
+          }, 100);
         } else {
           router.replace('/dashboard');
         }
       } else if (role === 'user') {
         console.log('Navigating to forms...');
         if (isMobile) {
-          // Use direct navigation for mobile devices
-          window.location.href = '/forms';
+          // Force navigation for mobile devices
+          setTimeout(() => {
+            window.location.href = '/forms';
+          }, 100);
         } else {
           router.replace('/forms');
         }
@@ -145,6 +171,12 @@ export default function Page() {
         <span className="ml-4">Loading...</span>
       </div>
     );
+  }
+
+  // Debug info for mobile testing
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  if (isMobile) {
+    console.log('Current state - loggedIn:', loggedIn, 'userRole:', userRole, 'isLoading:', isLoading);
   }
 
   return <LoginForm onLogin={onLogin} />;
