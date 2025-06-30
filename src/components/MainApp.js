@@ -19,53 +19,57 @@ export default function MainApp({ activeTab, setActiveTab, handleLogout, meeting
     };
 
     return (
-        <div className="min-h-screen bg-gray-100 pt-20"> 
+        <div className="min-h-screen bg-gray-100 pt-24 sm:pt-20"> 
             <header className="fixed top-0 left-0 right-0 bg-gray-200 z-10 shadow">
-                <div className="flex justify-center items-center space-x-4 py-4">
+                <div className="container mx-auto flex flex-col sm:flex-row flex-wrap justify-center items-center gap-x-2 gap-y-2 py-3 px-2">
                     <button
                         onClick={() => setActiveTab('attendance')}
-                        className={`px-4 py-2 rounded font-medium transition ${
-                            activeTab === 'attendance'
+                        className={`w-full sm:w-auto px-4 py-2 rounded font-medium transition text-base sm:text-sm md:text-base
+                            ${activeTab === 'attendance'
                                 ? 'bg-green-600 text-white'
-                                : 'bg-green-300 text-black hover:bg-green-500 hover:text-white'
-                        }`}
+                                : 'bg-green-300 text-black hover:bg-green-500 hover:text-white'}
+                        `}
                     >
                         Attendance
                     </button>
                     <button
                         onClick={() => setActiveTab('apology')}
-                        className={`px-4 py-2 rounded font-medium transition ${
-                            activeTab === 'apology'
+                        className={`w-full sm:w-auto px-4 py-2 rounded font-medium transition text-base sm:text-sm md:text-base
+                            ${activeTab === 'apology'
                                 ? 'bg-amber-500 text-white'
-                                : 'bg-amber-300 text-black hover:bg-amber-400 hover:text-white'
-                        }`}
+                                : 'bg-amber-300 text-black hover:bg-amber-400 hover:text-white'}
+                        `}
                     >
                         Apology
                     </button>
                     <button
                         onClick={handleGoToDashboard}
-                        className="bg-blue-600 text-white px-4 py-2 rounded font-medium hover:bg-blue-700 transition"
+                        className="w-full sm:w-auto bg-blue-600 text-white px-4 py-2 rounded font-medium hover:bg-blue-700 transition text-base sm:text-sm md:text-base"
                     >
                         Go to Dashboard
                     </button>
                     {showManageMeeting && (
                         <button
                             onClick={onManageMeeting}
-                            className="bg-yellow-500 text-white px-4 py-2 rounded font-medium hover:bg-yellow-600 transition"
+                            className="w-full sm:w-auto bg-yellow-500 text-white px-4 py-2 rounded font-medium hover:bg-yellow-600 transition text-base sm:text-sm md:text-base"
                         >
                             Manage Meeting
                         </button>
                     )}
                     <button
                         onClick={handleLogout}
-                        className="bg-red-500 text-white px-4 py-2 rounded font-medium hover:bg-red-600 transition"
+                        className="w-full sm:w-auto bg-red-500 text-white px-4 py-2 rounded font-medium hover:bg-red-600 transition text-base sm:text-sm md:text-base"
                     >
                         Logout
                     </button>
                 </div>
             </header>
 
-            {activeTab === 'attendance' ? <AttendanceForm meetingInfo={meetingInfo} /> : <ApologyForm meetingInfo={meetingInfo} />}
+            <main className="flex flex-col items-center justify-center w-full px-2 mt-6 sm:mt-10">
+                <div className="w-full max-w-lg bg-white rounded shadow p-4 sm:p-6 md:p-8">
+                    {activeTab === 'attendance' ? <AttendanceForm meetingInfo={meetingInfo} /> : <ApologyForm meetingInfo={meetingInfo} />}
+                </div>
+            </main>
 
             {/* PIN Modal for Dashboard Access */}
             <PINModal
