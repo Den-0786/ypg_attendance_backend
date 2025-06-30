@@ -1,28 +1,47 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import { FaCheckCircle, FaTimesCircle, FaEye, FaEyeSlash } from 'react-icons/fa';
 import PasswordInput from '@components/PasswordInput';
 
+// Force dynamic rendering to prevent prerendering issues
+export const dynamic = 'force-dynamic';
+
 export default function ResetCode() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const username = searchParams.get('identifier');
+    const [username, setUsername] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
 
     const [code, setCode] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showNew, setShowNew] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [isNewPasswordValid, setIsNewPasswordValid] = useState(false);
 
-    if (!username) {
-        toast.error('Missing email. Start over.');
-        router.push('/forgot_password');
-        return null;
+    useEffect(() => {
+        const identifier = searchParams.get('identifier');
+        if (!identifier) {
+            toast.error('Missing email. Start over.');
+            router.push('/forgot_password');
+            return;
+        }
+        setUsername(identifier);
+        setIsLoading(false);
+    }, [searchParams, router]);
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center p-6">
+                <div className="bg-white dark:bg-gray-800 shadow p-6 rounded max-w-md w-full">
+                    <div className="text-center">Loading...</div>
+                </div>
+            </div>
+        );
     }
 
     const handleSubmit = async (e) => {
@@ -41,7 +60,7 @@ export default function ResetCode() {
         }
 
         try {
-        setIsLoading(true);
+        setIsSubmitting(true);
         const res = await fetch(`/api/reset-password-confirm`, {
             method: 'POST',
             headers: {
@@ -67,7 +86,7 @@ export default function ResetCode() {
         console.error('Error resetting password:', error);
         toast.error('Network error occurred');
         } finally {
-        setIsLoading(false);
+        setIsSubmitting(false);
         }
     };
 
@@ -136,9 +155,9 @@ export default function ResetCode() {
                     <button 
                         type="submit" 
                         className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition-colors" 
-                        disabled={isLoading || !isNewPasswordValid || newPassword !== confirmPassword}
+                        disabled={isSubmitting || !isNewPasswordValid || newPassword !== confirmPassword}
                     >
-                        {isLoading ? 'Resetting...' : 'Reset Password'}
+                        {isSubmitting ? 'Resetting...' : 'Reset Password'}
                     </button>
                     <div className="text-center">
                         <Link href="/" className="text-blue-600 hover:underline text-sm">
