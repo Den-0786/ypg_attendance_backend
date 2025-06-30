@@ -1,20 +1,19 @@
 from django.urls import path
 from .views import (
-    login_view, logout_view, session_status, submit_attendance, submit_apologies,
-    get_attendance_summary, get_apology_summary, local_attendance, district_attendance,
-    delete_attendance, edit_attendance, delete_apology, edit_apology, attendance_by_meeting_title,
-    change_password, request_password_reset, reset_password_confirm,
+    get_attendance_summary, get_apology_summary, submit_attendance, submit_apologies,
+    delete_attendance, delete_apology, edit_attendance, edit_apology,
+    login_view, logout_view, session_status, change_credentials, request_password_reset,
+    reset_password_confirm, verify_pin, clear_all_data,
     set_meeting, current_meeting, deactivate_meeting,
-    login_view_django, verify_pin, change_pin, get_pin_status, setup_initial_pin,
-    change_credentials, clear_all_data
+    soft_delete_record, restore_record, bulk_soft_delete, bulk_restore,
+    update_notes_tags, export_record_pdf, advanced_records_list, advanced_combined_records_list, audit_log_list,
+    local_attendance, district_attendance, attendance_by_meeting_title,
+    change_password, login_view_django, change_pin, get_pin_status, setup_initial_pin,
+    current_user_info, get_all_users
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
-)
-from .views import (
-    soft_delete_record, restore_record, bulk_soft_delete, bulk_restore,
-    update_notes_tags, export_record_pdf, advanced_records_list, advanced_combined_records_list, audit_log_list
 )
 from core import views as core_views
 
@@ -36,11 +35,13 @@ urlpatterns = [
     # Authentication & Password
     path('change-password', change_password, name='change_password'),
     path('change-credentials', change_credentials, name='change_credentials'),
+    path('get-all-users', get_all_users, name='get_all_users'),
     path('request-password-reset', request_password_reset, name='request_password_reset'),
     path('reset-password-confirm', reset_password_confirm, name='reset_password_confirm'),
     path('login', login_view, name='login'),
     path('logout', logout_view, name='logout'),
     path('session-status', session_status, name='session_status'),
+    path('current-user-info', current_user_info, name='current_user_info'),
     path('login-django', login_view_django, name='login_django'),
 
     # JWT tokens (optional if you want to switch to token auth later)
@@ -51,7 +52,7 @@ urlpatterns = [
     path('set-meeting', set_meeting, name='set_meeting'),
     path('current-meeting', current_meeting, name='current_meeting'),
     path('deactivate-meeting', deactivate_meeting, name='deactivate_meeting'),
-    
+
     #Records management
     path('records/<str:record_type>', core_views.records_list, name='records-list'),
     path('records/<str:record_type>/<int:pk>', core_views.record_edit_delete, name='record-edit-delete'),

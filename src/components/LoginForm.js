@@ -60,7 +60,7 @@ export default function LoginForm({ onLogin }) {
               onClick={() => setShowPassword(!showPassword)}
               aria-label={showPassword ? 'Hide password' : 'Show password'}
             >
-              {showPassword ? <HiEyeOff size={20} /> : <HiEye size={20} />}
+              {showPassword ? <HiEye size={20} /> : <HiEyeOff size={20} />}
             </button>
           </div>
         </div>

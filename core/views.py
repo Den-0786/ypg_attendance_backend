@@ -7,6 +7,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.utils.crypto import get_random_string
 from django.contrib.auth import logout, login as django_login, authenticate
+from django.utils import timezone
 from .models import (
     AttendanceEntry,
     ApologyEntry,
@@ -22,7 +23,7 @@ from .serializers import (
     BulkIdSerializer, NotesTagsUpdateSerializer, SecurityPINSerializer, PINVerificationSerializer, PINChangeSerializer
 )
 import csv
-from datetime import datetime, timezone
+from datetime import datetime
 from rest_framework.pagination import PageNumberPagination
 import io
 try:
@@ -479,44 +480,96 @@ def change_password(request):
 @permission_classes([AllowAny])
 def change_credentials(request):
     user_id = request.session.get('user_id')
+    role = request.session.get('role', 'unknown')
     
     if not user_id:
         return Response({'error': 'Authentication required'}, status=401)
     
     try:
-        user = Credential.objects.get(id=user_id)
-    except Credential.DoesNotExist:
-        return Response({'error': 'User not found'}, status=401)
+        current_user = Credential.objects.get(id=user_id)  # type: ignore
+    except Credential.DoesNotExist:  # type: ignore
+        return Response({'error': f'User not found in Credential model. User ID: {user_id}, Role: {role}.'}, status=401)
     
-    current_password = request.data.get('current_password')
-    new_username = request.data.get('new_username')
-    new_password = request.data.get('new_password')
+    # Check if admin is changing another user's credentials
+    target_user_id = request.data.get('target_user_id')
+    is_admin_changing_other_user = (
+        current_user.role == 'admin' and 
+        target_user_id and 
+        str(target_user_id) != str(user_id)
+    )
     
-    if not current_password or not new_username or not new_password:
-        return Response({'error': 'Current password, new username, and new password are required'}, status=400)
+    if is_admin_changing_other_user:
+        # Admin changing another user's credentials
+        try:
+            target_user = Credential.objects.get(id=target_user_id)  # type: ignore
+        except Credential.DoesNotExist:  # type: ignore
+            return Response({'error': 'Target user not found'}, status=404)
+        
+        new_username = request.data.get('new_username')
+        new_password = request.data.get('new_password')
+        
+        if not new_username or not new_password:
+            return Response({'error': 'New username and new password are required'}, status=400)
+        
+        # Use custom password validation
+        is_valid, error_message = validate_password_custom(new_password)
+        if not is_valid:
+            return Response({'error': error_message}, status=400)
+        
+        # Check if new username already exists (excluding target user)
+        if Credential.objects.filter(username=new_username).exclude(id=target_user.id).exists():  # type: ignore
+            return Response({'error': 'Username already exists'}, status=400)
+        
+        # Update target user's credentials
+        target_user.username = new_username
+        target_user.set_password(new_password)
+        target_user.save()
+        
+        return Response({
+            'message': f'Successfully updated credentials for user: {target_user.username}',
+            'updated_user': {
+                'id': target_user.id,
+                'username': target_user.username,
+                'role': target_user.role
+            }
+        })
     
-    if not user.check_password(current_password):
-        return Response({'error': 'Current password is incorrect'}, status=400)
-    
-    # Use custom password validation
-    is_valid, error_message = validate_password_custom(new_password)
-    if not is_valid:
-        return Response({'error': error_message}, status=400)
-    
-    # Check if new username already exists (excluding current user)
-    if Credential.objects.filter(username=new_username).exclude(id=user.id).exists():
-        return Response({'error': 'Username already exists'}, status=400)
-    
-    # Update username and password
-    user.username = new_username
-    user.set_password(new_password)
-    user.save()
-    
-    # Update session with new username
-    request.session['username'] = new_username
-    request.session.save()
-    
-    return Response({'message': 'Credentials changed successfully'})
+    else:
+        # User changing their own credentials (existing logic)
+        current_password = request.data.get('current_password')
+        current_username = request.data.get('current_username')  # Optional validation
+        new_username = request.data.get('new_username')
+        new_password = request.data.get('new_password')
+        
+        if not current_password or not new_username or not new_password:
+            return Response({'error': 'Current password, new username, and new password are required'}, status=400)
+        
+        # Validate current username if provided (optional check)
+        if current_username and current_username != current_user.username:
+            return Response({'error': f'Current username does not match your account. Your username is: {current_user.username}'}, status=400)
+        
+        if not current_user.check_password(current_password):
+            return Response({'error': 'Current password is incorrect. Please verify your current password.'}, status=400)
+        
+        # Use custom password validation
+        is_valid, error_message = validate_password_custom(new_password)
+        if not is_valid:
+            return Response({'error': error_message}, status=400)
+        
+        # Check if new username already exists (excluding current user)
+        if Credential.objects.filter(username=new_username).exclude(id=current_user.id).exists():  # type: ignore
+            return Response({'error': 'Username already exists'}, status=400)
+        
+        # Update username and password
+        current_user.username = new_username
+        current_user.set_password(new_password)
+        current_user.save()
+        
+        # Update session with new username
+        request.session['username'] = new_username
+        request.session.save()
+        
+        return Response({'message': 'Credentials changed successfully'})
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -645,6 +698,26 @@ def session_status(request):
         })
     return Response({'loggedIn': False})
 
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def current_user_info(request):
+    """Get current user information for debugging"""
+    user_id = request.session.get('user_id')
+    
+    if not user_id:
+        return Response({'error': 'Authentication required'}, status=401)
+    
+    try:
+        user = Credential.objects.get(id=user_id)
+        return Response({
+            'id': user.id,
+            'username': user.username,
+            'role': user.role,
+            'email': user.email
+        })
+    except Credential.DoesNotExist:
+        return Response({'error': 'User not found'}, status=404)
+
 # --- Meeting Endpoints ---
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -668,14 +741,18 @@ def set_meeting(request):
     except Credential.DoesNotExist:
         return Response({'error': 'Invalid admin credentials'}, status=401)
 
-    # Check if there's already a meeting on the same date
+    # Check if there's already an active and non-expired meeting on the same date
     meeting_date = request.data.get('date')
     if meeting_date:
         existing_meeting = Meeting.objects.filter(date=meeting_date, is_active=True).first()
-        if existing_meeting:
+        if existing_meeting and not existing_meeting.is_expired():
             return Response({
                 'error': 'Cannot set two meetings same day, deactivate the current meeting details before you can set another one.'
             }, status=400)
+        elif existing_meeting and existing_meeting.is_expired():
+            # Auto-deactivate expired meeting
+            existing_meeting.is_active = False
+            existing_meeting.save()
 
     # Deactivate all existing meetings
     Meeting.objects.filter(is_active=True).update(is_active=False)
@@ -702,6 +779,21 @@ def set_meeting(request):
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def current_meeting(request):
+    # First, check for and deactivate any expired meetings
+    active_meetings = Meeting.objects.filter(is_active=True)
+    expired_meetings = []
+    
+    for meeting in active_meetings:
+        if meeting.is_expired():
+            meeting.is_active = False
+            meeting.save()
+            expired_meetings.append(meeting)
+    
+    # If any meetings were deactivated, log it
+    if expired_meetings:
+        pass
+    
+    # Now get the current active meeting
     meeting = Meeting.objects.filter(is_active=True).order_by('-date').first()
     if not meeting:
         return Response({'error': 'No active meeting set.'}, status=404)
@@ -1210,8 +1302,6 @@ def clear_all_data(request):
         attendance_count = len(attendance_records)
         apology_count = len(apology_records)
         
-        print(f"About to delete {attendance_count} attendance records and {apology_count} apology records")
-        
         # Create backup in database (store as JSON in a backup table or as a file)
         backup_data = {
             'timestamp': datetime.now().isoformat(),
@@ -1233,8 +1323,6 @@ def clear_all_data(request):
         AttendanceEntry.objects.all().delete()
         ApologyEntry.objects.all().delete()
         
-        print("Successfully deleted all records")
-        
         # Log the clear action
         if user:
             log_action(user, 'clear_all', 'system', None, f'Cleared all data: {attendance_count} attendance, {apology_count} apologies')
@@ -1247,7 +1335,32 @@ def clear_all_data(request):
             'backup_timestamp': backup_data['timestamp']
         })
     except Exception as e:
-        print(f"Error in clear_all_data: {str(e)}")
         import traceback
         traceback.print_exc()
         return Response({'error': f'Failed to clear data: {str(e)}'}, status=500)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_all_users(request):
+    """Get list of all users (admin only) for credential management"""
+    user_id = request.session.get('user_id')
+    
+    if not user_id:
+        return Response({'error': 'Authentication required'}, status=401)
+    
+    try:
+        current_user = Credential.objects.get(id=user_id)  # type: ignore
+    except Credential.DoesNotExist:  # type: ignore
+        return Response({'error': 'User not found'}, status=401)
+    
+    # Only admins can see all users
+    if current_user.role != 'admin':
+        return Response({'error': 'Admin access required'}, status=403)
+    
+    # Get all users with basic info (excluding password)
+    users = Credential.objects.all().values('id', 'username', 'role')  # type: ignore
+    
+    return Response({
+        'users': list(users),
+        'total_users': len(users)
+    })

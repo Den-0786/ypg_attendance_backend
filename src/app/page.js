@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@components/hooks/useAuth';
 import { useAuthStore } from '@components/store/authStore';
 import LoginForm from '@components/LoginForm';
+import { toast } from 'react-hot-toast';
 
 export default function Page() {
   const { handleLogin, loggedIn, userRole } = useAuth();
@@ -84,7 +85,15 @@ export default function Page() {
         router.replace('/forms');
       }
     } catch (error) {
-      console.error('Login failed:', error);
+      // Handle login errors gracefully without logging to console
+      if (error.isLoginError) {
+        // This is a login error, toast is already shown in useAuth
+        // Don't log to console or show duplicate toast
+      } else {
+        // This is a different type of error, log it for debugging
+        console.error('Login failed:', error);
+        // Don't show duplicate toast since useAuth already handles it
+      }
     } finally {
       setLoginLoading(false);
     }

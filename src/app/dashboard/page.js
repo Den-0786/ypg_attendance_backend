@@ -66,6 +66,7 @@ export default function AdminPage() {
   const { checkSession, loggedIn, userRole, handleLogout } = useAuth();
   const router = useRouter();
   const [checkingSession, setCheckingSession] = useState(true);
+  const [pinVerified, setPinVerified] = useState(false);
   const hasShownNoMeetingToast = useRef(false);
   const hasCheckedSession = useRef(false);
   const [meetingInfo, setMeetingInfo] = useState(null);
@@ -77,6 +78,15 @@ export default function AdminPage() {
     const hasShown = localStorage.getItem('hasShownNoMeetingToast');
     if (hasShown === 'true') {
       hasShownNoMeetingToast.current = true;
+    }
+    
+    // Check if PIN was verified (from URL params or localStorage)
+    const urlParams = new URLSearchParams(window.location.search);
+    const pinVerifiedParam = urlParams.get('pin_verified');
+    if (pinVerifiedParam === 'true') {
+      setPinVerified(true);
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, []);
 
@@ -131,14 +141,15 @@ export default function AdminPage() {
     if (!checkingSession) {
       if (!loggedIn) {
         router.replace('/');
-      } else if (userRole && !executiveRoles.includes(userRole)) {
+      } else if (userRole && !executiveRoles.includes(userRole) && !pinVerified) {
+        // Only redirect to forms if not admin AND not PIN verified
         router.replace('/forms');
-      } else if (loggedIn && executiveRoles.includes(userRole)) {
-        // Check for active meeting when executive logs in
+      } else {
+        // Allow access if admin OR PIN verified
         checkActiveMeeting();
       }
     }
-  }, [loggedIn, userRole, checkingSession, router, checkActiveMeeting, executiveRoles]);
+  }, [loggedIn, userRole, checkingSession, router, checkActiveMeeting, executiveRoles, pinVerified]);
 
   // 3. Admin meeting check - always called but only executes when conditions are met
   useEffect(() => {
@@ -180,13 +191,13 @@ export default function AdminPage() {
     loadingMessage = "Checking session...";
   } else if (!loggedIn) {
     loadingMessage = "Loading login page...";
-  } else if (userRole && !executiveRoles.includes(userRole)) {
+  } else if (userRole && !executiveRoles.includes(userRole) && !pinVerified) {
     loadingMessage = "Loading forms page...";
   } else {
     loadingMessage = "Loading dashboard...";
   }
 
-  if (checkingSession || !loggedIn || !executiveRoles.includes(userRole)) {
+  if (checkingSession || !loggedIn || (userRole && !executiveRoles.includes(userRole) && !pinVerified)) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-600">
         {loadingMessage}

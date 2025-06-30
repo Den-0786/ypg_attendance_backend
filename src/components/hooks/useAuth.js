@@ -155,11 +155,27 @@ export function useAuth() {
         toast.success('Login successful');
         return data.role;
       } else {
-        throw new Error(data.error || 'Login failed');
+        // Show error toast and throw error
+        toast.error(data.error || 'Invalid credentials');
+        const error = new Error(data.error || 'Login failed');
+        error.isLoginError = true;
+        throw error;
       }
     } catch (err) {
-      console.error('Login error:', err);
-      throw err;
+      // Only log non-login errors to console
+      if (!err.isLoginError) {
+        console.error('Login error:', err);
+        toast.error('Login failed. Please try again.');
+      }
+      // If it's already an Error object with a message, re-throw it
+      if (err instanceof Error) {
+        throw err;
+      }
+      // Otherwise, create a new error with a generic message
+      const error = new Error('Login failed. Please try again.');
+      error.isLoginError = true;
+      toast.error('Login failed. Please try again.');
+      throw error;
     }
   };
 

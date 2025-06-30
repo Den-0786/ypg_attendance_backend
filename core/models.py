@@ -95,12 +95,19 @@ class Meeting(models.Model):
     is_active = models.BooleanField(default=True)
     login_username = models.CharField(max_length=150)
     login_password = models.CharField(max_length=128)  # stores hashed password
+    created_at = models.DateTimeField(auto_now_add=True)  # Track when meeting was created
 
     def set_password(self, raw_password):
         self.login_password = make_password(raw_password)
 
     def check_password(self, raw_password):
         return check_password(raw_password, self.login_password)
+
+    def is_expired(self):
+        """Check if meeting has been active for more than 24 hours"""
+        from django.utils import timezone
+        from datetime import timedelta
+        return timezone.now() > self.created_at + timedelta(hours=24)
 
     def __str__(self):
         return f"{self.title} ({self.date})"

@@ -76,6 +76,14 @@ export function validatePassword(password) {
  * Gets password strength indicators for UI feedback
  */
 export function getPasswordStrength(password) {
+  if (!password) {
+    return {
+      score: 0,
+      isValid: false,
+      message: 'Enter a password'
+    };
+  }
+
   const checks = {
     length: password.length === 8,
     uppercase: /[A-Z]/.test(password),
@@ -85,10 +93,28 @@ export function getPasswordStrength(password) {
   };
 
   const validChecks = Object.values(checks).filter(Boolean).length;
+  const score = validChecks;
+  
+  let message = '';
+  if (score === 0) {
+    message = 'Very weak';
+  } else if (score === 1) {
+    message = 'Weak';
+  } else if (score === 2) {
+    message = 'Fair';
+  } else if (score === 3) {
+    message = 'Good';
+  } else if (score === 4) {
+    message = 'Strong';
+  } else if (score === 5) {
+    message = 'Very strong';
+  }
   
   return {
     checks,
     validChecks,
-    isValid: validChecks === 5 && password.length === 8
+    score,
+    isValid: validChecks === 5 && password.length === 8,
+    message
   };
 }

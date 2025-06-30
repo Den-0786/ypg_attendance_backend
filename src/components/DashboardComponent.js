@@ -8,7 +8,9 @@ import {
   FaSun,
   FaSignOutAlt,
   FaBars,
-  FaDatabase,} from "react-icons/fa";
+  FaDatabase,
+  FaUsers,
+} from "react-icons/fa";
 
 import { useRouter } from "next/navigation";
 import { cn } from "../lib/utils";
@@ -20,10 +22,12 @@ import RecordsLibrary from "./RecordsLibrary";
 import DistrictExecutiveChart from './dashboard/DistrictExecutiveChart';
 import YearEndChart from './dashboard/YearEndChart';
 import MonthlyAttendanceGrid from './dashboard/MonthlyAttendanceGrid';
+import MeetingTypePieChart from './dashboard/MeetingTypePieChart';
+import AttendanceChart from './dashboard/AttendanceChart';
+import PINModal from "./PINModal";
+import DashboardHome from "./DashboardHome";
 import DashboardLocal from "./DashboardLocal";
 import DashboardDistrict from "./DashboardDistrict";
-import DashboardHome from "./DashboardHome";
-import PINModal from "./PINModal";
 
 const Sidebar = ({
   view,
@@ -38,6 +42,7 @@ const Sidebar = ({
   router,
   selectedYear,
   setSelectedYear,
+  currentUser,
 }) => (
   <div
     className={cn(
@@ -144,6 +149,12 @@ const Sidebar = ({
           onClick={() => router.push('/forms')}
           className="w-full text-left px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
         >
+          Go to Form
+        </button>
+        <button
+          onClick={() => router.push('/forms')}
+          className="w-full text-left px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700"
+        >
           Set Meeting
         </button>
         <button
@@ -231,6 +242,7 @@ export default function Dashboard({ onLogout }) {
   const [deactivating, setDeactivating] = useState(false);
   const [showPINModal, setShowPINModal] = useState(false);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [currentUser, setCurrentUser] = useState(null);
   const router = useRouter();
   
   // Get available years from attendance data
@@ -286,6 +298,25 @@ export default function Dashboard({ onLogout }) {
     localStorage.setItem("theme", darkMode ? "dark" : "light");
   }, [darkMode]);
 
+  // Fetch current user info
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await fetch('/api/session-status', {
+        credentials: 'include'
+      });
+      const data = await response.json();
+      if (data.loggedIn) {
+        setCurrentUser(data);
+      }
+    } catch (error) {
+      console.error('Error fetching user info:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchCurrentUser();
+  }, []);
+
   const fetchAttendance = async () => {
     try {
       const res = await fetch('/api/attendance-summary', {
@@ -302,15 +333,18 @@ export default function Dashboard({ onLogout }) {
 
   const fetchApologies = async () => {
     try {
-      const res = await fetch('/api/submit-apologies', {
+      const res = await fetch('/api/apology-summary', {
         credentials: 'include'
       });
-      if (!res.ok) throw new Error('Failed to fetch apology data');
-      const data = await res.json();
-      setApologyData(data);
+      if (res.ok) {
+        const data = await res.json();
+        setApologyData(data);
+      } else {
+        throw new Error(`HTTP ${res.status}`);
+      }
     } catch (error) {
       console.error('Error fetching apology data:', error);
-      // Don't show error toast for apologies as they might not exist yet
+      setApologyData([]);
     }
   };
 
@@ -495,7 +529,7 @@ export default function Dashboard({ onLogout }) {
             <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Actions</h3>
             <button
               onClick={() => setShowChangePasswordModal(true)}
-              className="w-full text-left px-4 py-2 text-white bg-amber-500 rounded hover:bg-blue-300 dark:hover:bg-gray-800"
+              className="w-full text-left px-4 py-2 rounded hover:bg-blue-300 dark:hover:bg-gray-800"
             >
               Change Credentials
             </button>
@@ -503,11 +537,17 @@ export default function Dashboard({ onLogout }) {
               onClick={() => router.push('/forms')}
               className="w-full text-left px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
             >
+              Go to Form
+            </button>
+            <button
+              onClick={() => router.push('/forms')}
+              className="w-full text-left px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700"
+            >
               Set Meeting
             </button>
             <button
               onClick={handleManageMeeting}
-              className="w-full text-left px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700"
+              className="w-full text-left px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 transition-colors"
             >
               Manage Meeting
             </button>

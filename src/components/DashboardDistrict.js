@@ -72,6 +72,21 @@ export default function DashboardDistrict({
     return entryYear === selectedYear;
   });
 
+  // Add a helper function to identify apology entries
+  const isApologyEntry = (entry) => {
+    return apologyData.some(apology => apology.id === entry.id);
+  };
+
+  // Combine attendance and apology data for processing
+  const combinedData = [...attendanceData, ...apologyData];
+  
+  // Filter combined data by selected year
+  const filteredData = combinedData.filter(entry => {
+    if (!entry.meeting_date || !selectedYear) return false;
+    const entryYear = new Date(entry.meeting_date).getFullYear();
+    return entryYear === selectedYear;
+  });
+
   // Add lastDeleted state
   const [lastDeleted, setLastDeleted] = useState(null);
 
@@ -92,9 +107,9 @@ export default function DashboardDistrict({
 
   // Filter only district executive entries, and filter by showType
   const summary = {};
-  filteredAttendanceData.forEach((entry) => {
-    if (showType === 'attendance' && entry.type === 'apology') return;
-    if (showType === 'apology' && entry.type !== 'apology') return;
+  filteredData.forEach((entry) => {
+    if (showType === 'attendance' && isApologyEntry(entry)) return;
+    if (showType === 'apology' && !isApologyEntry(entry)) return;
     if (entry.type === "district") {
       if (!summary[entry.congregation]) {
         summary[entry.congregation] = [];
@@ -102,6 +117,9 @@ export default function DashboardDistrict({
       summary[entry.congregation].push(entry);
     }
   });
+
+  // Determine if there are any apologies in the summary
+  const hasApologies = Object.values(summary).some(entries => entries.some(e => isApologyEntry(e)));
 
   // Handler for deleting an entry (custom confirmation)
   const handleDelete = (entryId) => {
@@ -349,6 +367,10 @@ export default function DashboardDistrict({
                 <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Congregation</th>
                 <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Submitted Time(s)</th>
                 <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Presence Status</th>
+                {hasApologies && (
+                  <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Reason</th>
+                )}
+                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -388,18 +410,31 @@ export default function DashboardDistrict({
                       ))}
                     </td>
                     <td className="border px-2 md:px-4 py-2">
-                      <div className="flex gap-2 items-center">
-                        {[0].map((i) => (
-                          <span key={i} className="text-lg">
-                            {i < summary[name].length ? (
-                              <FaCheckCircle className="text-green-500" />
-                            ) : (
+                      {summary[name].map((entry, i) => (
+                        <div key={i} className="flex items-center gap-2 mb-1">
+                          <span className="text-lg">
+                            {isApologyEntry(entry) ? (
                               <FaTimesCircle className="text-red-500" />
+                            ) : (
+                              <FaCheckCircle className="text-green-500" />
                             )}
                           </span>
+                        </div>
+                      ))}
+                    </td>
+                    {hasApologies && (
+                      <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
+                        {summary[name].map((entry, i) => (
+                          <div key={i} className="text-xs md:text-sm">
+                            {isApologyEntry(entry) ? (entry.reason || 'No reason provided') : ''}
+                          </div>
                         ))}
+                      </td>
+                    )}
+                    <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
+                      <div className="flex gap-2 items-center">
                         <button
-                          className="text-blue-500 hover:underline text-sm ml-2"
+                          className="text-blue-500 hover:underline text-sm"
                           onClick={() => handleEdit(summary[name][0]?.id)}
                         >
                           Edit
@@ -421,7 +456,10 @@ export default function DashboardDistrict({
 
       {/* District Executive Attendance Chart */}
       <div className="my-8 md:my-12">
-        <DistrictExecutiveChart attendanceData={filteredAttendanceData} darkMode={darkMode} />
+        <DistrictExecutiveChart 
+          attendanceData={filteredData.filter(entry => !isApologyEntry(entry))} 
+          darkMode={darkMode} 
+        />
       </div>
 
       {/* Edit Modal */}

@@ -72,11 +72,26 @@ export default function DashboardLocal({
     return entryYear === selectedYear;
   });
 
+  // Add a helper function to identify apology entries
+  const isApologyEntry = (entry) => {
+    return apologyData.some(apology => apology.id === entry.id);
+  };
+
+  // Combine attendance and apology data for processing
+  const combinedData = [...attendanceData, ...apologyData];
+  
+  // Filter combined data by selected year
+  const filteredData = combinedData.filter(entry => {
+    if (!entry.meeting_date || !selectedYear) return false;
+    const entryYear = new Date(entry.meeting_date).getFullYear();
+    return entryYear === selectedYear;
+  });
+
   // Group by congregation and meeting title
   const grouped = {};
-  filteredAttendanceData.forEach((entry) => {
-    if (showType === 'attendance' && entry.type === 'apology') return;
-    if (showType === 'apology' && entry.type !== 'apology') return;
+  filteredData.forEach((entry) => {
+    if (showType === 'attendance' && isApologyEntry(entry)) return;
+    if (showType === 'apology' && !isApologyEntry(entry)) return;
     if (entry.type !== "district") {
       const cong = entry.congregation;
       const meeting = entry.meeting_title ? toTitleCase(entry.meeting_title) : 'Unknown Meeting';
@@ -88,9 +103,9 @@ export default function DashboardLocal({
 
   // Restore previous summary logic
   const summary = {};
-  filteredAttendanceData.forEach((entry) => {
-    if (showType === 'attendance' && entry.type === 'apology') return;
-    if (showType === 'apology' && entry.type !== 'apology') return;
+  filteredData.forEach((entry) => {
+    if (showType === 'attendance' && isApologyEntry(entry)) return;
+    if (showType === 'apology' && !isApologyEntry(entry)) return;
     if (entry.type !== "district") {
       if (!summary[entry.congregation]) {
         summary[entry.congregation] = [];
@@ -310,7 +325,7 @@ export default function DashboardLocal({
   }, [refetchAttendanceData, refetchApologyData]);
 
   // Determine if there are any apologies in the summary
-  const hasApologies = Object.values(summary).some(entries => entries.some(e => e.type === 'apology'));
+  const hasApologies = Object.values(summary).some(entries => entries.some(e => isApologyEntry(e)));
 
   return (
     <div>
@@ -429,7 +444,7 @@ export default function DashboardLocal({
                         {summary[name].map((entry, i) => (
                           <div key={i} className="flex items-center gap-2 mb-1">
                             <span className="text-lg">
-                              {entry.type === 'apology' ? (
+                              {isApologyEntry(entry) ? (
                                 <FaTimesCircle className="text-red-500" />
                               ) : (
                                 <FaCheckCircle className="text-green-500" />
@@ -442,7 +457,7 @@ export default function DashboardLocal({
                         <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
                           {summary[name].map((entry, i) => (
                             <div key={i} className="text-xs md:text-sm">
-                              {entry.type === 'apology' ? (entry.reason || 'No reason provided') : ''}
+                              {isApologyEntry(entry) ? (entry.reason || 'No reason provided') : ''}
                             </div>
                           ))}
                         </td>
@@ -450,11 +465,8 @@ export default function DashboardLocal({
                       <td className="border px-2 md:px-4 py-2">
                         {summary[name].map((entry, i) => (
                           <div key={i} className="flex items-center gap-2 mb-1">
-                            <span className="text-lg">
-                              <FaCheckCircle className="text-green-500" />
-                            </span>
                             <button
-                              className="text-blue-500 hover:underline text-xs ml-2"
+                              className="text-blue-500 hover:underline text-xs"
                               onClick={() => handleEdit(entry.id)}
                             >Edit</button>
                             <button

@@ -54,17 +54,31 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
       const data = await res.json();
       if (res.ok) {
         toast.success('Meeting set successfully');
+        
+        // Update context and localStorage
         setMeetingDate(dateInput);
         setMeetingTitle(toTitleCase(titleInput));
         localStorage.setItem('meetingDate', dateInput);
         localStorage.setItem('meetingTitle', toTitleCase(titleInput));
+        
+        // Clear form
         setDateInput('');
         setTitleInput('');
         setAdminUsername('');
         setAdminPassword('');
         setAuthError('');
+        
+        // Close modal and trigger refresh
         onClose();
-        onMeetingSet();
+        
+        // Force refresh for Chrome compatibility
+        setTimeout(() => {
+          onMeetingSet();
+          // Additional Chrome-specific refresh
+          if (/Chrome/.test(navigator.userAgent)) {
+            window.location.reload();
+          }
+        }, 500);
       } else {
         // Check if it's the duplicate meeting error
         if (data.error && data.error.includes('Cannot set two meetings same day')) {
@@ -105,8 +119,9 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
         }
       }
     } catch (error) {
-      setAuthError('Network error occurred');
-      toast.error('Network error occurred');
+      console.error('Meeting setting error:', error);
+      setAuthError('Network error occurred. Please check your connection.');
+      toast.error('Network error occurred. Please check your connection.');
     } finally {
       setLoading(false);
     }

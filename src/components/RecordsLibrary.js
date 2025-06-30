@@ -41,6 +41,7 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
   const [filterType, setFilterType] = useState("");
   const [filterYear, setFilterYear] = useState("");
   const [filterCong, setFilterCong] = useState("");
+  const [filterRecordKind, setFilterRecordKind] = useState("");
   const [sortField, setSortField] = useState("");
   const [sortAsc, setSortAsc] = useState(true);
   const [page, setPage] = useState(1);
@@ -84,45 +85,58 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
   useEffect(() => {
     fetchRecords();
     // eslint-disable-next-line
-  }, [tab, startDate, endDate, search, filterType, filterYear]);
+  }, [tab, startDate, endDate, search, filterType, filterYear, filterRecordKind]);
 
   const fetchRecords = async () => {
     setLoading(true);
     try {
-      // Use the correct, existing endpoints
-      let url = tab === "local" 
-        ? "/api/attendance-summary" 
-        : "/api/attendance-summary";
+      // Fetch both attendance and apology data
+      const [attendanceRes, apologyRes] = await Promise.all([
+        fetch("/api/attendance-summary", { credentials: "include" }),
+        fetch("/api/apology-summary", { credentials: "include" })
+      ]);
       
-      const params = [];
-      if (startDate) params.push(`start=${startDate}`);
-      if (endDate) params.push(`end=${endDate}`);
-      if (search) params.push(`search=${encodeURIComponent(search)}`);
-      if (filterType) params.push(`type=${filterType}`);
-      if (filterYear) params.push(`year=${filterYear}`);
-      if (params.length) url += `?${params.join("&")}`;
+      if (!attendanceRes.ok) throw new Error("Failed to fetch attendance records");
+      if (!apologyRes.ok) throw new Error("Failed to fetch apology records");
       
-      const res = await fetch(url, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to fetch records");
-      const data = await res.json();
+      const attendanceData = await attendanceRes.json();
+      const apologyData = await apologyRes.json();
       
-      // Filter by type (local vs district) since the endpoint returns all
-      let filteredData = data;
+      // Process attendance data
+      let filteredAttendanceData = attendanceData;
       if (tab === "local") {
-        filteredData = data.filter(record => record.type === 'local');
+        filteredAttendanceData = attendanceData.filter(record => record.type === 'local');
       } else if (tab === "district") {
-        filteredData = data.filter(record => record.type === 'district');
+        filteredAttendanceData = attendanceData.filter(record => record.type === 'district');
       }
       
-      // Add record_kind field for compatibility
-      const processedData = filteredData.map(record => ({
+      // Process apology data
+      let filteredApologyData = apologyData;
+      if (tab === "local") {
+        filteredApologyData = apologyData.filter(record => record.type === 'local');
+      } else if (tab === "district") {
+        filteredApologyData = apologyData.filter(record => record.type === 'district');
+      }
+      
+      // Add record_kind field and combine data
+      const processedAttendanceData = filteredAttendanceData.map(record => ({
         ...record,
-        record_kind: 'attendance', // All records in this view are attendance records
+        record_kind: 'attendance',
         notes: record.notes || "",
         tags: record.tags || []
       }));
       
-      setRecords(processedData);
+      const processedApologyData = filteredApologyData.map(record => ({
+        ...record,
+        record_kind: 'apology',
+        notes: record.notes || "",
+        tags: record.tags || []
+      }));
+      
+      // Combine attendance and apology data
+      const combinedData = [...processedAttendanceData, ...processedApologyData];
+      
+      setRecords(combinedData);
       setSelectedRecords([]);
     } catch (err) {
       setRecords([]);
@@ -157,7 +171,12 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
       localStorage.setItem('pendingUndo', JSON.stringify(undoData));
       setLastDeleted(record);
       
-      await fetch(`/api/delete-attendance/${deleteId}`, { method: "DELETE", credentials: "include" });
+      // Use different endpoints based on record type
+      const endpoint = record.record_kind === 'apology' 
+        ? `/api/delete-apology/${deleteId}`
+        : `/api/delete-attendance/${deleteId}`;
+      
+      await fetch(endpoint, { method: "DELETE", credentials: "include" });
       setShowConfirm(false);
       setDeleteId(null);
       setDeleteName("");
@@ -202,8 +221,10 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
 
   const saveEdit = async () => {
     try {
-      // Use the correct edit endpoint
-      const url = `/api/edit-attendance/${editRecord.id}`;
+      // Use different endpoints based on record type
+      const endpoint = editRecord.record_kind === 'apology'
+        ? `/api/edit-apology/${editRecord.id}`
+        : `/api/edit-attendance/${editRecord.id}`;
       
       // Only send the specific fields that are allowed to be edited
       const allowedFields = ['name', 'phone', 'congregation', 'position'];
@@ -214,7 +235,7 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
         }
       });
       
-      const res = await fetch(url, {
+      const res = await fetch(endpoint, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -261,7 +282,12 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
     setTagInput(value);
   };
   const saveTag = async (id) => {
-    await fetch(`/api/edit-attendance/${id}`, {
+    const record = records.find(r => r.id === id);
+    const endpoint = record.record_kind === 'apology'
+      ? `/api/edit-apology/${id}`
+      : `/api/edit-attendance/${id}`;
+      
+    await fetch(endpoint, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -280,7 +306,11 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
     // Year filter
     if (filterYear) {
       const entryYear = new Date(r.meeting_date).getFullYear();
-      match = match && entryYear === filterYear;
+      match = match && entryYear === parseInt(filterYear);
+    }
+    // Record kind filter
+    if (filterRecordKind) {
+      match = match && r.record_kind === filterRecordKind;
     }
     // Congregation filter
     if (filterCong) match = match && (r.congregation || r.position || "").toLowerCase().includes(filterCong.toLowerCase());
@@ -335,7 +365,12 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
       }
       
       for (const id of selectedRecords) {
-        await fetch(`/api/delete-attendance/${id}`, { method: "DELETE", credentials: "include" });
+        const record = records.find(r => r.id === id);
+        const endpoint = record.record_kind === 'apology'
+          ? `/api/delete-apology/${id}`
+          : `/api/delete-attendance/${id}`;
+          
+        await fetch(endpoint, { method: "DELETE", credentials: "include" });
       }
       setShowBulkConfirm(false);
       setSelectedRecords([]);
@@ -358,30 +393,67 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
       const undoData = JSON.parse(pendingUndo);
       if (undoData.component !== 'records') return;
       
-      // Use the submit-attendance endpoint to restore the record
-      const attendanceData = {
-        name: undoData.record.name,
-        phone: undoData.record.phone || '',
-        congregation: undoData.record.congregation,
-        type: undoData.record.type || 'local',
-        position: undoData.record.position,
-        meeting_date: undoData.record.meeting_date,
-        timestamp: undoData.record.timestamp
-      };
-      const res = await fetch('/api/submit-attendance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify([attendanceData]),
-      });
+      const record = undoData.record;
       
-      if (res.ok) {
-        localStorage.removeItem('pendingUndo');
-        setLastDeleted(null);
-        fetchRecords();
-        toast.success('Record restored successfully');
+      if (record.record_kind === 'apology') {
+        // Restore apology record
+        const apologyData = {
+          name: record.name,
+          phone: record.phone || '',
+          congregation: record.congregation,
+          type: record.type || 'local',
+          position: record.position,
+          meeting_date: record.meeting_date,
+          reason: record.reason,
+          timestamp: record.timestamp
+        };
+        
+        const res = await fetch('/api/submit-apologies', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            apologies: [apologyData],
+            admin_username: 'admin', // This will need to be handled properly
+            admin_password: 'admin'  // This will need to be handled properly
+          }),
+        });
+        
+        if (res.ok) {
+          localStorage.removeItem('pendingUndo');
+          setLastDeleted(null);
+          fetchRecords();
+          toast.success('Apology record restored successfully');
+        } else {
+          toast.error('Failed to restore apology record');
+        }
       } else {
-        toast.error('Failed to restore record');
+        // Restore attendance record
+        const attendanceData = {
+          name: record.name,
+          phone: record.phone || '',
+          congregation: record.congregation,
+          type: record.type || 'local',
+          position: record.position,
+          meeting_date: record.meeting_date,
+          timestamp: record.timestamp
+        };
+        
+        const res = await fetch('/api/submit-attendance', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify([attendanceData]),
+        });
+        
+        if (res.ok) {
+          localStorage.removeItem('pendingUndo');
+          setLastDeleted(null);
+          fetchRecords();
+          toast.success('Attendance record restored successfully');
+        } else {
+          toast.error('Failed to restore attendance record');
+        }
       }
     } catch (err) {
       toast.error('Failed to restore record');
@@ -407,7 +479,7 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
   }));
 
   // Determine if there are any apologies in the paginatedRecords
-  const hasApologies = paginatedRecords.some(r => r.type === 'apology');
+  const hasApologies = paginatedRecords.some(r => r.record_kind === 'apology');
 
   return (
     <div>
@@ -466,6 +538,13 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
             <option value="">All</option>
             <option value="local">Local</option>
             <option value="district">District</option>
+          </select>
+        </label>
+        <label className="text-sm flex items-center gap-1">Record Kind:
+          <select value={filterRecordKind} onChange={e => setFilterRecordKind(e.target.value)} className="ml-1 px-2 py-1 border rounded">
+            <option value="">All</option>
+            <option value="attendance">Attendance</option>
+            <option value="apology">Apology</option>
           </select>
         </label>
         <label className="text-sm flex items-center gap-1">Year:
@@ -622,7 +701,7 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
                   ))}
                   {hasApologies && (
                     <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
-                      {record.type === 'apology' ? (record.reason || 'No reason provided') : ''}
+                      {record.record_kind === 'apology' ? (record.reason || 'No reason provided') : ''}
                     </td>
                   )}
                   <td className="border px-2 md:px-4 py-2 flex gap-2">

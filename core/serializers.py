@@ -26,6 +26,7 @@ class AttendanceEntrySerializer(serializers.ModelSerializer):
 
 class ApologyEntrySerializer(serializers.ModelSerializer):
     submitted_by = serializers.CharField(source='submitted_by.username', read_only=True)
+    meeting_title = serializers.SerializerMethodField()
 
     class Meta:
         model = ApologyEntry
@@ -35,6 +36,10 @@ class ApologyEntrySerializer(serializers.ModelSerializer):
         if not re.match(r"^[A-Za-z\s\-']+$", value):
             raise serializers.ValidationError("Name must contain only letters, spaces, hyphens or apostrophes.")
         return value
+
+    def get_meeting_title(self, obj):
+        meeting = Meeting.objects.filter(date=obj.meeting_date).first()
+        return meeting.title if meeting else ""
 
 class MeetingSerializer(serializers.ModelSerializer):
     class Meta:

@@ -169,32 +169,40 @@ export default function MeetingPage() {
       onMeetingSet={() => {
         setShowMeetingForm(false);
         setLoadingMeeting(true);
-        // Add a small delay to ensure the backend has processed the meeting creation
-        setTimeout(() => {
-          fetch(`/api/current-meeting`, {
-            credentials: 'include'
-          })
-            .then(res => {
-              if (!res.ok) {
-                throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-              }
-              return res.json();
-            })
-            .then(data => {
-              if (data && !data.error) {
-                setMeetingInfo(data);
-                console.log('Meeting info updated:', data); // Debug log
+        
+        // Multiple attempts to fetch meeting info for Chrome compatibility
+        const fetchMeetingInfo = async (attempt = 1) => {
+          try {
+            const res = await fetch('/api/current-meeting', { credentials: 'include' });
+            if (res.ok) {
+              const data = await res.json();
+              if (data.meeting) {
+                setMeetingInfo(data.meeting);
+                setLoadingMeeting(false);
               } else {
-                console.log('No meeting data returned:', data); // Debug log
+                setMeetingInfo(null);
+                setLoadingMeeting(false);
               }
+            } else {
+              throw new Error(`HTTP ${res.status}`);
+            }
+          } catch (error) {
+            if (attempt < 3) {
+              setTimeout(() => fetchMeetingInfo(attempt + 1), 1000);
+            } else {
+              console.error('Error fetching meeting:', error);
               setLoadingMeeting(false);
-            })
-            .catch((error) => {
-              console.error('Error fetching meeting:', error); // Debug log
-              setLoadingMeeting(false);
-              // Don't show error toast for this - it's expected when no meeting is set
-            });
-        }, 500); // 500ms delay
+              
+              // Chrome-specific fix for meeting info issues
+              if (navigator.userAgent.includes('Chrome')) {
+                window.location.reload();
+              }
+            }
+          }
+        };
+        
+        // Start fetching with delay
+        setTimeout(() => fetchMeetingInfo(), 500);
       }} 
     />;
   }

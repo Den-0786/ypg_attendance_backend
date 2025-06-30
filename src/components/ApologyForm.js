@@ -49,25 +49,28 @@ function capitalizeWords(str) {
 
 export default function ApologyForm({ meetingInfo }) {
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  const { meetingDate: contextMeetingDate, setMeetingDate } = useMeetingDate ? useMeetingDate() : { meetingDate: '', setMeetingDate: () => {} };
-  const meetingDate = meetingInfo ? meetingInfo.date : contextMeetingDate;
+  const { meetingDate: contextMeetingDate, setMeetingDate, setMeetingTitle } = useMeetingDate ? useMeetingDate() : { meetingDate: '', setMeetingDate: () => {}, setMeetingTitle: () => {} };
   
-  // Debug logging with Chrome detection
+  // Determine the meeting date with better fallback logic
+  const meetingDate = meetingInfo?.date || contextMeetingDate || '';
+  const meetingTitle = meetingInfo?.title || '';
+  
   useEffect(() => {
-    const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
-    console.log('ApologyForm - Browser:', isChrome ? 'Chrome' : 'Other');
-    console.log('ApologyForm - meetingInfo:', meetingInfo);
-    console.log('ApologyForm - contextMeetingDate:', contextMeetingDate);
-    console.log('ApologyForm - final meetingDate:', meetingDate);
-    
-    // Chrome-specific fix: Force re-render if meetingInfo changes
-    if (isChrome && meetingInfo && !meetingDate) {
-      console.log('Chrome detected - forcing re-render');
-      setTimeout(() => {
-        window.location.reload();
-      }, 100);
+    if (meetingInfo) {
+      setMeetingDate(meetingInfo.meeting_date || '');
+      setMeetingTitle(meetingInfo.meeting_title || '');
+      
+      // Chrome-specific fix for meeting info display
+      if (navigator.userAgent.includes('Chrome')) {
+        // Force re-render for Chrome
+        setTimeout(() => {
+          setMeetingDate(meetingInfo.meeting_date || '');
+          setMeetingTitle(meetingInfo.meeting_title || '');
+        }, 100);
+      }
     }
-  }, [meetingInfo, contextMeetingDate, meetingDate]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [meetingInfo]);
   
   const [type, setType] = useState('local');
   const [form, setForm] = useState({ name: '', phone: '', email: '', congregation: '', position: '', reason: '' });
@@ -80,6 +83,8 @@ export default function ApologyForm({ meetingInfo }) {
   const [adminPassword, setAdminPassword] = useState('');
   const [authError, setAuthError] = useState('');
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     // If meeting is deactivated, clear form state
@@ -119,45 +124,56 @@ export default function ApologyForm({ meetingInfo }) {
     setErrors(prev => ({ ...prev, [name]: error }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const cleanedName = toTitleCase(form.name);
-    if (!form.name || !form.phone || !form.congregation || !form.position || !form.reason) {
-      toast.error('Please fill all required fields');
-      return;
+    setIsSubmitting(true);
+    setError('');
+
+    try {
+      const payload = {
+        apologies: [{
+          name: form.name,
+          phone: form.phone,
+          congregation: form.congregation,
+          type,
+          position: form.position,
+          meeting_date: meetingDate,
+          reason: form.reason
+        }],
+        admin_username: adminUsername,
+        admin_password: adminPassword
+      };
+
+      const response = await fetch('/api/submit-apologies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        toast.success('Apology submitted successfully');
+        setApologies([]);
+        setShowModal(false);
+        setAdminUsername('');
+        setAdminPassword('');
+        setAuthError('');
+        // Dispatch custom event to notify dashboard components
+        window.dispatchEvent(new CustomEvent('apologyDataChanged'));
+      } else {
+        const errorMessage = data.error || 'Failed to submit apology';
+        setAuthError(errorMessage);
+        toast.error(errorMessage);
+      }
+    } catch (error) {
+      console.error('Network error in apology submission:', error);
+      setAuthError('Network error. Please try again.');
+      toast.error('Network error. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
-    if (Object.values(errors).some(error => error)) {
-      toast.error('Please fix the errors in the form');
-      return;
-    }
-    const nameExists = apologies.some((a, idx) => a.name === form.name && idx !== editingIndex);
-    if (nameExists) {
-      toast.error('This person has already been added.');
-      return;
-    }
-    if (checkForDuplicatePhone({ ...form, type })) {
-      toast.error('This phone number has already been used for this meeting.');
-      return;
-    }
-    const now = new Date();
-    const timestamp = now.toTimeString().slice(0, 8);
-    const entry = { 
-      ...form,
-      name: cleanedName,
-      type, 
-      meetingDate, 
-      timestamp 
-    };
-    if (editingIndex !== null) {
-      const updated = [...apologies];
-      updated[editingIndex] = entry;
-      setApologies(updated);
-      setEditingIndex(null);
-    } else {
-      setApologies(prev => [entry, ...prev]);
-    }
-    setForm({ name: '', phone: '', email: '', congregation: '', position: '', reason: '' });
-    setShowModal(true);
   };
 
   const handleEdit = (index) => {
@@ -178,6 +194,19 @@ export default function ApologyForm({ meetingInfo }) {
       setAuthError('Admin username and password are required.');
       return;
     }
+    
+    // Validate that we have apologies to submit
+    if (apologies.length === 0) {
+      setAuthError('No apologies to submit.');
+      return;
+    }
+    
+    // Validate that we have a meeting date
+    if (!meetingDate) {
+      setAuthError('No meeting date available. Please ensure a meeting is set.');
+      return;
+    }
+    
     try {
       const payload = {
         apologies: apologies.map(({ meetingDate, ...rest }) => ({
@@ -188,6 +217,7 @@ export default function ApologyForm({ meetingInfo }) {
         admin_username: adminUsername,
         admin_password: adminPassword,
       };
+      
       const response = await fetch(`/api/submit-apologies`, {
         method: 'POST',
         headers: {
@@ -196,7 +226,9 @@ export default function ApologyForm({ meetingInfo }) {
         credentials: 'include',
         body: JSON.stringify(payload),
       });
+      
       const data = await response.json();
+      
       if (response.ok) {
         toast.success('Apologies submitted successfully!');
         setApologies([]);
@@ -207,12 +239,15 @@ export default function ApologyForm({ meetingInfo }) {
         // Dispatch custom event to notify dashboard components
         window.dispatchEvent(new CustomEvent('apologyDataChanged'));
       } else {
-        setAuthError(data.error || 'Failed to submit apologies');
-        toast.error(data.error || 'Failed to submit apologies');
+        const errorMessage = data.error || 'Failed to submit apologies';
+        setAuthError(errorMessage);
+        toast.error(errorMessage);
+        console.error('Apology submission failed:', data);
       }
     } catch (error) {
-      setAuthError('Network error occurred');
-      toast.error('Network error occurred');
+      console.error('Network error in apology submission:', error);
+      setAuthError('Network error occurred. Please check your connection and try again.');
+      toast.error('Network error occurred. Please check your connection and try again.');
     }
   };
 
@@ -261,8 +296,28 @@ export default function ApologyForm({ meetingInfo }) {
               <span className="text-sm">District</span>
             </label>
           </div>
-          {meetingDate && (
-            <p className="text-sm text-gray-500 italic">Meeting Date: {meetingDate}</p>
+          
+          {/* Enhanced Meeting Date Display */}
+          {meetingDate ? (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+              <p className="text-sm font-medium text-blue-800">
+                Meeting Date: <span className="font-bold">{meetingDate}</span>
+              </p>
+              {meetingTitle && (
+                <p className="text-xs text-blue-600 mt-1">
+                  Meeting: {meetingTitle}
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              <p className="text-sm font-medium text-red-800">
+                ⚠️ No meeting date set
+              </p>
+              <p className="text-xs text-red-600 mt-1">
+                Please ensure a meeting is active before logging apologies
+              </p>
+            </div>
           )}
         </div>
         <p className='text-red-400 text-sm flex items-center justify-center mb-2'>* indicates required question</p>
@@ -368,10 +423,20 @@ export default function ApologyForm({ meetingInfo }) {
           </label>
           <button
             type="submit"
-            className="w-full bg-yellow-500 text-white py-2 rounded-lg hover:bg-yellow-600 transition"
+            disabled={!meetingDate}
+            className={`w-full py-2 rounded-lg transition ${
+              meetingDate 
+                ? 'bg-yellow-500 text-white hover:bg-yellow-600' 
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            }`}
           >
             {editingIndex !== null ? 'Update Apology' : 'Submit Apology'}
           </button>
+          {!meetingDate && (
+            <p className="text-xs text-red-600 text-center mt-2">
+              ⚠️ Cannot submit apologies without an active meeting
+            </p>
+          )}
         </form>
       </div>
 
@@ -417,28 +482,36 @@ export default function ApologyForm({ meetingInfo }) {
                   ))}
                 </ul>
                 {/* Admin credentials fields */}
-                <div className="mt-4 space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
+                <div className="space-y-2">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                    <p className="text-xs text-blue-800 font-medium mb-1">
+                      🔐 Admin Verification Required
+                    </p>
+                    <p className="text-xs text-blue-600">
+                      Please enter admin credentials to submit apologies. This is different from PIN verification.
+                    </p>
+                  </div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400">
                     Admin Username <span className="text-red-500">*</span>
                     <input
                       type="text"
                       value={adminUsername}
                       onChange={e => setAdminUsername(e.target.value)}
-                      className="w-full mt-1 p-1 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                      className="w-full mt-1 px-2 py-1 border border-gray-300 dark:border-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400 dark:bg-gray-800 dark:text-white text-xs"
                       required
                     />
                   </label>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400">
                     Admin Password <span className="text-red-500">*</span>
                     <input
                       type="password"
                       value={adminPassword}
                       onChange={e => setAdminPassword(e.target.value)}
-                      className="w-full mt-1 p-1 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                      className="w-full mt-1 px-2 py-1 border border-gray-300 dark:border-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400 dark:bg-gray-800 dark:text-white text-xs"
                       required
                     />
                   </label>
-                  {authError && <p className="text-red-500 text-sm mt-1">{authError}</p>}
+                  {authError && <p className="text-red-500 text-xs mt-1">{authError}</p>}
                 </div>
                 <div className="text-right mt-4">
                   <button onClick={handleFinalSubmit} className="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700">

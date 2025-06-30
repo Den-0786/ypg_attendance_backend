@@ -7,6 +7,14 @@ import ApologyForm from "./ApologyForm";
 import toast from 'react-hot-toast';
 import { capitalizeFirst, toTitleCase } from '../lib/utils';
 import PINModal from './PINModal';
+import AttendanceChart from "./dashboard/AttendanceChart";
+
+// Helper function to identify apology entries
+function isApologyEntry(entry) {
+  // This function will be defined in the main component, but we need it here too
+  // For now, we'll check if the entry has a reason field which indicates it's an apology
+  return entry && entry.reason && entry.reason.length > 0;
+}
 
 // Helper functions for progress calculations
 function getLocalProgress(attendanceData, year) {
@@ -15,7 +23,7 @@ function getLocalProgress(attendanceData, year) {
   const congregationsWithAttendance = new Set();
   attendanceData.forEach(entry => {
     const date = new Date(entry.meeting_date);
-    if (date.getFullYear() === targetYear && entry.type !== 'district') {
+    if (date.getFullYear() === targetYear && entry.type !== 'district' && !isApologyEntry(entry)) {
       congregationsWithAttendance.add(entry.congregation);
     }
   });
@@ -27,35 +35,25 @@ function getLocalProgress(attendanceData, year) {
 function getDistrictProgress(attendanceData, year) {
   if (!Array.isArray(attendanceData)) return 0;
   const targetYear = year || new Date().getFullYear();
-  const districtExecutivesWithAttendance = new Set();
+  const executivesWithAttendance = new Set();
   attendanceData.forEach(entry => {
     const date = new Date(entry.meeting_date);
-    if (date.getFullYear() === targetYear && entry.type === 'district') {
-      districtExecutivesWithAttendance.add(entry.position);
+    if (date.getFullYear() === targetYear && entry.type === 'district' && !isApologyEntry(entry)) {
+      executivesWithAttendance.add(entry.position);
     }
   });
-  const totalDistrictExecutives = 8;
-  const progress = (districtExecutivesWithAttendance.size / totalDistrictExecutives) * 100;
+  const totalExecutives = 8;
+  const progress = (executivesWithAttendance.size / totalExecutives) * 100;
   return Math.round(progress);
 }
 
 function getGrandTotalProgress(attendanceData, year) {
   if (!Array.isArray(attendanceData)) return 0;
   const targetYear = year || new Date().getFullYear();
-  const entitiesWithAttendance = new Set();
-  attendanceData.forEach(entry => {
-    const date = new Date(entry.meeting_date);
-    if (date.getFullYear() === targetYear) {
-      if (entry.type === 'district') {
-        entitiesWithAttendance.add(`district_${entry.position}`);
-      } else {
-        entitiesWithAttendance.add(`local_${entry.congregation}`);
-      }
-    }
-  });
-  const totalEntities = 17;
-  const progress = (entitiesWithAttendance.size / totalEntities) * 100;
-  return Math.round(progress);
+  const localProgress = getLocalProgress(attendanceData, targetYear);
+  const districtProgress = getDistrictProgress(attendanceData, targetYear);
+  const grandTotal = (localProgress + districtProgress) / 2;
+  return Math.round(grandTotal);
 }
 
 // Color palette for cards
@@ -195,12 +193,27 @@ export default function DashboardHome({
   // Combine attendance and apology data for processing
   const combinedData = [...attendanceData, ...apologyData];
   
+  // Add a helper function to identify apology entries
+  const isApologyEntry = (entry) => {
+    // Check if the entry exists in the apologyData array by ID
+    return apologyData.some(apology => apology.id === entry.id);
+  };
+  
   // Filter combined data by selected year
   const filteredData = combinedData.filter(entry => {
-    if (!entry.meeting_date || !selectedYear) return false;
+    if (!entry.meeting_date) return false;
+    
+    // Ensure selectedYear has a valid value, default to current year
+    const yearToFilter = selectedYear || new Date().getFullYear();
+    
     const entryYear = new Date(entry.meeting_date).getFullYear();
-    return entryYear === selectedYear;
+    return entryYear === yearToFilter;
   });
+
+  // Debug logging
+  useEffect(() => {
+    // Debug logging removed for production
+  }, [attendanceData, apologyData, combinedData, selectedYear, filteredData]);
 
   // Add global event listener for data synchronization
   useEffect(() => {
@@ -262,10 +275,10 @@ export default function DashboardHome({
     filteredData.forEach((entry) => {
       // Filter by showType
       if (
-        showType === 'attendance' && entry.type === 'apology'
+        showType === 'attendance' && isApologyEntry(entry)
       ) return;
       if (
-        showType === 'apology' && entry.type !== 'apology'
+        showType === 'apology' && !isApologyEntry(entry)
       ) return;
       // Only add to summary if local
       if (entry.type === 'local') {
@@ -505,55 +518,27 @@ export default function DashboardHome({
   };
 
   const handleClearAllDataWithPIN = async (pin) => {
-    toast.custom((t) => (
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-red-400 max-w-md mx-auto flex flex-col items-center">
-        <div className="text-xl font-bold text-red-600 mb-4">⚠️ Clear All Data</div>
-        <div className="text-gray-700 dark:text-gray-200 mb-6 text-center">
-          This will permanently delete ALL attendance and apology records. A backup will be created before deletion. This action cannot be undone.
-        </div>
-        <div className="flex gap-3">
-          <button
-            className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700 font-semibold"
-            onClick={async () => {
-              toast.dismiss(t.id);
-              try {
-                console.log('Attempting to clear all data with PIN...');
-                const res = await fetch('/api/clear-all-data', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  credentials: 'include',
-                  body: JSON.stringify({ pin: pin }),
-                });
-                
-                console.log('Response status:', res.status);
-                console.log('Response ok:', res.ok);
-                
-                if (res.ok) {
-                  const result = await res.json();
-                  console.log('Success result:', result);
-                  toast.success(`Successfully cleared all data. Deleted ${result.deleted_attendance} attendance and ${result.deleted_apologies} apology records. Backup created at ${result.backup_timestamp}.`);
-                  if (refetchAttendanceData) refetchAttendanceData();
-                  if (refetchApologyData) refetchApologyData();
-                  window.dispatchEvent(new CustomEvent('attendanceDataChanged'));
-                } else {
-                  console.log('Response not ok, status:', res.status);
-                  const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
-                  console.log('Error data:', errorData);
-                  toast.error(`Failed to clear data: ${errorData.error || res.statusText}`);
-                }
-              } catch (err) {
-                console.error('Error in clear all data:', err);
-                toast.error('Network error while clearing data');
-              }
-            }}
-          >Yes, Clear All</button>
-          <button
-            className="bg-gray-300 text-gray-800 px-6 py-2 rounded hover:bg-gray-400 font-semibold"
-            onClick={() => toast.dismiss(t.id)}
-          >Cancel</button>
-        </div>
-      </div>
-    ), { duration: 10000 });
+    try {
+      const res = await fetch('/api/clear-all-data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ pin }),
+      });
+
+      if (res.ok) {
+        const result = await res.json();
+        toast.success('All data cleared successfully');
+        if (refetchAttendanceData) refetchAttendanceData();
+        if (refetchApologyData) refetchApologyData();
+      } else {
+        const errorData = await res.text();
+        toast.error(`Failed to clear data: ${errorData}`);
+      }
+    } catch (err) {
+      console.error('Error in clear all data:', err);
+      toast.error('Failed to clear data');
+    }
   };
 
   return (
@@ -809,7 +794,7 @@ export default function DashboardHome({
                         {filteredSummary[name].map((entry, i) => (
                           <div key={i} className="flex items-center gap-2 mb-1">
                             <span className="text-lg">
-                              {entry.type === 'apology' ? (
+                              {isApologyEntry(entry) ? (
                                 <FaTimesCircle className="text-red-500" />
                               ) : (
                                 <FaCheckCircle className="text-green-500" />
@@ -821,7 +806,7 @@ export default function DashboardHome({
                       <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
                         {filteredSummary[name].map((entry, i) => (
                           <div key={i} className="text-xs md:text-sm">
-                            {entry.type === 'apology' ? (entry.reason || 'No reason provided') : ''}
+                            {isApologyEntry(entry) ? (entry.reason || 'No reason provided') : ''}
                           </div>
                         ))}
                       </td>
@@ -849,7 +834,10 @@ export default function DashboardHome({
 
       {/* Year-End Attendance Chart */}
       <div className="my-8 md:my-12">
-        <YearEndChart attendanceData={filteredData} darkMode={darkMode} />
+        <YearEndChart 
+          attendanceData={filteredData.filter(entry => !isApologyEntry(entry))} 
+          darkMode={darkMode} 
+        />
       </div>
 
       {/* Top Congregations and Attendees */}
@@ -858,11 +846,11 @@ export default function DashboardHome({
           {/* Top 3 Congregations */}
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-bold text-purple-700 dark:text-purple-300 mb-3">Top 3 Congregations</h3>
-            {getTop3Congregations(filteredData, selectedYear).length === 0 ? (
+            {getTop3Congregations(filteredData.filter(entry => !isApologyEntry(entry)), selectedYear).length === 0 ? (
               <p className="text-gray-500 dark:text-gray-400">No data available</p>
             ) : (
               <div className="space-y-2">
-                {getTop3Congregations(filteredData, selectedYear).map(([congregation, count], idx) => (
+                {getTop3Congregations(filteredData.filter(entry => !isApologyEntry(entry)), selectedYear).map(([congregation, count], idx) => (
                   <div key={congregation} className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700 rounded">
                     <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
                       {idx + 1}. {congregation}
@@ -879,11 +867,11 @@ export default function DashboardHome({
           {/* Top 3 Attendees (5+ meetings) */}
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-bold text-green-700 dark:text-green-300 mb-3">Top 3 Attendees (5+ meetings)</h3>
-            {getTop3Attendees(filteredData, selectedYear).length === 0 ? (
+            {getTop3Attendees(filteredData.filter(entry => !isApologyEntry(entry)), selectedYear).length === 0 ? (
               <p className="text-gray-500 dark:text-gray-400">No data available</p>
             ) : (
               <div className="space-y-2">
-                {getTop3Attendees(filteredData, selectedYear).map(([person, count], idx) => (
+                {getTop3Attendees(filteredData.filter(entry => !isApologyEntry(entry)), selectedYear).map(([person, count], idx) => (
                   <div key={person} className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700 rounded">
                     <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
                       {idx + 1}. {person}
@@ -900,11 +888,11 @@ export default function DashboardHome({
           {/* Unique People (less than 5 meetings) */}
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-bold text-blue-700 dark:text-blue-300 mb-3">Unique People (&lt;5 meetings)</h3>
-            {getUniquePeopleLessThan5(filteredData, selectedYear).length === 0 ? (
+            {getUniquePeopleLessThan5(filteredData.filter(entry => !isApologyEntry(entry)), selectedYear).length === 0 ? (
               <p className="text-gray-500 dark:text-gray-400">No data available</p>
             ) : (
               <div className="space-y-2 max-h-48 overflow-y-auto">
-                {getUniquePeopleLessThan5(filteredData, selectedYear).map((person, idx) => (
+                {getUniquePeopleLessThan5(filteredData.filter(entry => !isApologyEntry(entry)), selectedYear).map((person, idx) => (
                   <div key={person} className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700 rounded">
                     <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
                       {idx + 1}. {person}
@@ -921,19 +909,19 @@ export default function DashboardHome({
           <div className="bg-purple-50 dark:bg-purple-900 p-3 rounded-lg border border-purple-200 dark:border-purple-700">
             <p className="text-sm font-semibold text-purple-700 dark:text-purple-300">Total Congregations</p>
             <p className="text-lg font-bold text-purple-900 dark:text-purple-100">
-              {getTop3Congregations(filteredData, selectedYear).length}
+              {getTop3Congregations(filteredData.filter(entry => !isApologyEntry(entry)), selectedYear).length}
             </p>
           </div>
           <div className="bg-green-50 dark:bg-green-900 p-3 rounded-lg border border-green-200 dark:border-green-700">
             <p className="text-sm font-semibold text-green-700 dark:text-green-300">Top Attendees (5+)</p>
             <p className="text-lg font-bold text-green-900 dark:text-green-100">
-              {getTop3Attendees(filteredData, selectedYear).length}
+              {getTop3Attendees(filteredData.filter(entry => !isApologyEntry(entry)), selectedYear).length}
             </p>
           </div>
           <div className="bg-blue-50 dark:bg-blue-900 p-3 rounded-lg border border-blue-200 dark:border-blue-700">
             <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">Unique People (&lt;5)</p>
             <p className="text-lg font-bold text-blue-900 dark:text-blue-100">
-              {getUniquePeopleLessThan5(filteredData, selectedYear).length}
+              {getUniquePeopleLessThan5(filteredData.filter(entry => !isApologyEntry(entry)), selectedYear).length}
             </p>
           </div>
         </div>
@@ -941,9 +929,17 @@ export default function DashboardHome({
 
       {/* Monthly Attendance Trend Chart */}
       <MonthlyAttendanceTrendChart
-        attendanceData={filteredData}
+        attendanceData={filteredData.filter(entry => !isApologyEntry(entry))}
         darkMode={darkMode}
       />
+
+      {/* Monthly Attendance Chart */}
+      <div className="my-8 md:my-12">
+        <AttendanceChart 
+          attendanceData={filteredData.filter(entry => !isApologyEntry(entry))} 
+          darkMode={darkMode} 
+        />
+      </div>
 
       {/* Edit Modal */}
       {editModal.open && (

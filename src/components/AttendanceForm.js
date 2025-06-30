@@ -40,7 +40,28 @@ export default function AttendanceForm({ meetingInfo }) {
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const context = useMeetingDate ? useMeetingDate() : {};
-  const { meetingDate, meetingTitle } = context;
+  const { meetingDate: contextMeetingDate, meetingTitle: contextMeetingTitle } = context;
+
+  // Use meetingInfo prop if available, otherwise fall back to context
+  const meetingDate = meetingInfo?.date || contextMeetingDate || '';
+  const meetingTitle = meetingInfo?.title || contextMeetingTitle || '';
+
+  // Chrome-specific fix for meeting info updates
+  useEffect(() => {
+    if (meetingInfo) {
+      setMeetingDate(meetingInfo.meeting_date || '');
+      setMeetingTitle(meetingInfo.meeting_title || '');
+      
+      // Chrome-specific fix for meeting info display
+      if (navigator.userAgent.includes('Chrome')) {
+        // Force re-render for Chrome
+        setTimeout(() => {
+          setMeetingDate(meetingInfo.meeting_date || '');
+          setMeetingTitle(meetingInfo.meeting_title || '');
+        }, 100);
+      }
+    }
+  }, [meetingInfo]);
 
   const [type, setType] = useState('local');
   const [form, setForm] = useState({
@@ -332,8 +353,10 @@ export default function AttendanceForm({ meetingInfo }) {
             </div>
             {meetingDate && (
               <p className="text-sm text-gray-500">Meeting Date: {meetingDate}</p>
-              )}
-            <p className='text-sm text-gray-500'>Meeting Type: <span className="font-semibold text-green-600">{meetingTitle}</span></p>
+            )}
+            {meetingTitle && (
+              <p className='text-sm text-gray-500'>Meeting: <span className="font-semibold text-green-600">{meetingTitle}</span></p>
+            )}
           </div>
         </div>
       </div>
