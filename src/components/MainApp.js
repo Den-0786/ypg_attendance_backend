@@ -15,7 +15,7 @@ export default function MainApp({ activeTab, setActiveTab, handleLogout, meeting
 
     const handlePINSuccess = () => {
         // PIN verification successful, navigate to dashboard
-        window.location.href = '/dashboard';
+        router.push('/dashboard?pin_verified=true');
     };
 
     return (

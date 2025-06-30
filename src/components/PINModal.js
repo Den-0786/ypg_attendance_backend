@@ -35,7 +35,7 @@ export default function PINModal({
 
       const data = await res.json();
 
-      if (res.ok && data.success) {
+      if (res.ok && data.is_valid) {
         onSuccess();
         onClose();
       } else {
