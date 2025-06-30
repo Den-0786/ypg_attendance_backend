@@ -11,6 +11,8 @@ export default function MeetingTypePieChart() {
     const [year, setYear] = useState(new Date().getFullYear());
     const [congregation, setCongregation] = useState('');
 
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+
     const fetchData = async () => {
         try {
             const params = new URLSearchParams({
@@ -19,7 +21,7 @@ export default function MeetingTypePieChart() {
                 meeting_type: meetingType
             });
             
-            const res = await fetch(`/api/attendance-by-meeting-title?${params}`);
+            const res = await fetch(`${API_URL}/api/attendance-by-meeting-title?${params}`);
             
             if (!res.ok) {
                 throw new Error(`HTTP error! status: ${res.status}`);

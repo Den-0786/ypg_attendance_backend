@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+
 export default function PINChangeModal({ isOpen, onClose }) {
   const [currentPin, setCurrentPin] = useState('');
   const [newPin, setNewPin] = useState('');
@@ -35,7 +37,7 @@ export default function PINChangeModal({ isOpen, onClose }) {
 
     setLoading(true);
     try {
-      const res = await fetch('/api/pin/change/', {
+      const res = await fetch(`${API_URL}/api/pin/change/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

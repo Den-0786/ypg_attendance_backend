@@ -229,6 +229,8 @@ function handleDeleteAttendance(id) {
   toast(`Delete functionality for entry ${id} - not implemented yet`);
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+
 export default function Dashboard({ onLogout }) {
   const [view, setView] = useState("home");
   const [darkMode, setDarkMode] = useState(false);
@@ -301,15 +303,13 @@ export default function Dashboard({ onLogout }) {
   // Fetch current user info
   const fetchCurrentUser = async () => {
     try {
-      const response = await fetch('/api/session-status', {
-        credentials: 'include'
+      const response = await fetch(`${API_URL}/api/session-status`, {
+        credentials: 'include',
       });
       const data = await response.json();
-      if (data.loggedIn) {
-        setCurrentUser(data);
-      }
-    } catch (error) {
-      console.error('Error fetching user info:', error);
+      setCurrentUser(data);
+    } catch (err) {
+      setCurrentUser(null);
     }
   };
 
@@ -319,31 +319,24 @@ export default function Dashboard({ onLogout }) {
 
   const fetchAttendance = async () => {
     try {
-      const res = await fetch('/api/attendance-summary', {
-        credentials: 'include'
+      const res = await fetch(`${API_URL}/api/attendance-summary`, {
+        credentials: 'include',
       });
-      if (!res.ok) throw new Error('Failed to fetch attendance data');
       const data = await res.json();
       setAttendanceData(data);
-    } catch (error) {
-      console.error('Error fetching attendance data:', error);
-      toast.error('Failed to fetch attendance data');
+    } catch (err) {
+      setAttendanceData([]);
     }
   };
 
   const fetchApologies = async () => {
     try {
-      const res = await fetch('/api/apology-summary', {
-        credentials: 'include'
+      const res = await fetch(`${API_URL}/api/apology-summary`, {
+        credentials: 'include',
       });
-      if (res.ok) {
-        const data = await res.json();
-        setApologyData(data);
-      } else {
-        throw new Error(`HTTP ${res.status}`);
-      }
-    } catch (error) {
-      console.error('Error fetching apology data:', error);
+      const data = await res.json();
+      setApologyData(data);
+    } catch (err) {
       setApologyData([]);
     }
   };
@@ -383,9 +376,9 @@ export default function Dashboard({ onLogout }) {
   const handleDeactivateWithPIN = async () => {
     setDeactivating(true);
     try {
-      const res = await fetch('/api/deactivate-meeting', { 
+      const res = await fetch(`${API_URL}/api/deactivate-meeting`, {
         method: 'POST',
-        credentials: 'include'
+        headers: { 'Content-Type': 'application/json' },
       });
       
       if (res.ok) {

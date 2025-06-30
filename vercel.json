@@ -2,6 +2,14 @@
   "version": 2,
   "builds": [
     {
+      "src": "ypg_backend/wsgi.py",
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "15mb",
+        "runtime": "python3.9"
+      }
+    },
+    {
       "src": "package.json",
       "use": "@vercel/next"
     }
@@ -9,7 +17,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/api/$1"
+      "dest": "ypg_backend/wsgi.py"
     },
     {
       "src": "/(.*)",

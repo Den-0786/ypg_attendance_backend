@@ -4,6 +4,8 @@ import { useAuthStore } from '@components/store/authStore';
 import { toast } from 'react-hot-toast';
 import { useState, useEffect, useRef } from 'react';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+
 // Custom toast component for no meeting notification
 const NoMeetingToast = ({ onClose }) => {
   const [progress, setProgress] = useState(0);
@@ -75,7 +77,7 @@ export function useAuth() {
 
   const checkSession = async () => {
     try {
-      const res = await fetch('/api/session-status', { credentials: 'include' });
+      const res = await fetch(`${API_URL}/api/session-status`, { credentials: 'include' });
       const data = await res.json();
       
       if (data.loggedIn) {
@@ -108,7 +110,7 @@ export function useAuth() {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/logout', {
+      await fetch(`${API_URL}/api/logout`, {
         method: 'POST',
         credentials: 'include'
       });
@@ -134,7 +136,7 @@ export function useAuth() {
 
   const handleLogin = async (username, password) => {
     try {
-      const res = await fetch('/api/login', {
+      const res = await fetch(`${API_URL}/api/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

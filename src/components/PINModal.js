@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+
 export default function PINModal({ 
   isOpen, 
   onClose, 
@@ -24,7 +26,7 @@ export default function PINModal({
     setError('');
 
     try {
-      const res = await fetch('/api/verify-pin', {
+      const res = await fetch(`${API_URL}/api/verify-pin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

@@ -40,7 +40,7 @@ export default function AttendanceForm({ meetingInfo }) {
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const context = useMeetingDate ? useMeetingDate() : {};
-  const { meetingDate: contextMeetingDate, meetingTitle: contextMeetingTitle } = context;
+  const { meetingDate: contextMeetingDate, meetingTitle: contextMeetingTitle, setMeetingDate, setMeetingTitle } = context;
 
   // Use meetingInfo prop if available, otherwise fall back to context
   const meetingDate = meetingInfo?.date || contextMeetingDate || '';

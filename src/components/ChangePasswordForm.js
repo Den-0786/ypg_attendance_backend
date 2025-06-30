@@ -6,6 +6,8 @@ import toast from "react-hot-toast";
 import PasswordInput from "./PasswordInput";
 import { getPasswordStrength } from "../lib/utils";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+
 export default function ChangePasswordForm({ onClose }) {
   const [formData, setFormData] = useState({
     currentUsername: "",
@@ -42,24 +44,22 @@ export default function ChangePasswordForm({ onClose }) {
 
   const fetchCurrentUser = async () => {
     try {
-      const response = await fetch('/api/session-status', {
+      const response = await fetch(`${API_URL}/api/session-status`, {
         credentials: 'include'
       });
       const data = await response.json();
-      if (data.loggedIn) {
-        setCurrentUser(data);
-        if (data.role === 'admin') {
-          fetchAllUsers();
-        }
+      setCurrentUser(data);
+      if (data.role === 'admin') {
+        fetchAllUsers();
       }
-    } catch (error) {
-      console.error('Error fetching user info:', error);
+    } catch (err) {
+      setCurrentUser(null);
     }
   };
 
   const fetchAllUsers = async () => {
     try {
-      const response = await fetch('/api/get-all-users', {
+      const response = await fetch(`${API_URL}/api/get-all-users`, {
         credentials: 'include'
       });
       const data = await response.json();
@@ -75,48 +75,39 @@ export default function ChangePasswordForm({ onClose }) {
       } else {
         console.error('Failed to fetch users:', data.error);
       }
-    } catch (error) {
-      console.error('Error fetching users:', error);
+    } catch (err) {
+      setUsers([]);
     }
   };
 
   const checkPINStatus = async () => {
     try {
-      const response = await fetch('/api/pin/status/', {
+      const response = await fetch(`${API_URL}/api/pin/status/`, {
         credentials: 'include'
       });
       const data = await response.json();
       setPinStatus(data.pin_setup ? 'exists' : 'not_setup');
-    } catch (error) {
-      console.error('Error checking PIN status:', error);
+    } catch (err) {
+      console.error('Error checking PIN status:', err);
       setPinStatus('not_setup');
     }
   };
 
   const setupInitialPIN = async (pin) => {
     try {
-      const response = await fetch('/api/pin/setup/', {
+      const response = await fetch(`${API_URL}/api/pin/setup/`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pin }),
       });
-
       const data = await response.json();
-      if (response.ok) {
-        toast.success('PIN set successfully');
+      if (data.message) {
         setPinStatus('exists');
-        return true;
-      } else {
-        toast.error(data.error || 'Failed to set PIN');
-        return false;
       }
-    } catch (error) {
-      console.error('Error setting PIN:', error);
+    } catch (err) {
+      console.error('Error setting PIN:', err);
       toast.error('Network error occurred');
-      return false;
+      setPinStatus('not_setup');
     }
   };
 
@@ -157,7 +148,7 @@ export default function ChangePasswordForm({ onClose }) {
           requestBody.target_user_id = selectedTargetUser.id;
         }
 
-        const response = await fetch(`/api/change-credentials`, {
+        const response = await fetch(`${API_URL}/api/change-credentials`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -207,7 +198,7 @@ export default function ChangePasswordForm({ onClose }) {
 
       setLoading(true);
       try {
-        const response = await fetch(`/api/pin/change/`, {
+        const response = await fetch(`${API_URL}/api/pin/change/`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -691,7 +682,7 @@ function PINInput({ onSuccess, onCancel, pinStatus, onSetupPIN }) {
         }
       } else {
         // Verify existing PIN
-        const res = await fetch('/api/pin/verify/', {
+        const res = await fetch(`${API_URL}/api/pin/verify/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',

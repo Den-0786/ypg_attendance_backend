@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation';
 import { capitalizeFirst, toTitleCase } from '../lib/utils';
 import PINModal from './PINModal';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+
 export default function MeetingDateForm({ onClose, onMeetingSet }) {
   const { setMeetingDate, setMeetingTitle } = useMeetingDate();
   const router = useRouter();
@@ -38,7 +40,7 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
     setAuthError('');
     setLoading(true);
     try {
-      const res = await fetch(`/api/set-meeting`, {
+      const res = await fetch(`${API_URL}/api/set-meeting`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -136,9 +138,9 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
   const handleDeactivateWithPIN = async () => {
     setDeactivating(true);
     try {
-      const res = await fetch(`/api/deactivate-meeting`, {
+      const res = await fetch(`${API_URL}/api/deactivate-meeting`, {
         method: 'POST',
-        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
       });
 
       const data = await res.json();

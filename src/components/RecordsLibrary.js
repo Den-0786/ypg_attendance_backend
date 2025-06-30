@@ -6,6 +6,7 @@ import { capitalizeFirst } from '../lib/utils';
 import PINModal from './PINModal';
 
 const isAdmin = true;
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
 function getUniqueYears(records) {
   const years = new Set(records.map(r => r.meeting_date && r.meeting_date.slice(0, 4)));
@@ -92,8 +93,8 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
     try {
       // Fetch both attendance and apology data
       const [attendanceRes, apologyRes] = await Promise.all([
-        fetch("/api/attendance-summary", { credentials: "include" }),
-        fetch("/api/apology-summary", { credentials: "include" })
+        fetch(`${API_URL}/api/attendance-summary`, { credentials: "include" }),
+        fetch(`${API_URL}/api/apology-summary`, { credentials: "include" })
       ]);
       
       if (!attendanceRes.ok) throw new Error("Failed to fetch attendance records");
@@ -173,8 +174,8 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
       
       // Use different endpoints based on record type
       const endpoint = record.record_kind === 'apology' 
-        ? `/api/delete-apology/${deleteId}`
-        : `/api/delete-attendance/${deleteId}`;
+        ? `${API_URL}/api/delete-apology/${deleteId}`
+        : `${API_URL}/api/delete-attendance/${deleteId}`;
       
       await fetch(endpoint, { method: "DELETE", credentials: "include" });
       setShowConfirm(false);
@@ -223,8 +224,8 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
     try {
       // Use different endpoints based on record type
       const endpoint = editRecord.record_kind === 'apology'
-        ? `/api/edit-apology/${editRecord.id}`
-        : `/api/edit-attendance/${editRecord.id}`;
+        ? `${API_URL}/api/edit-apology/${editRecord.id}`
+        : `${API_URL}/api/edit-attendance/${editRecord.id}`;
       
       // Only send the specific fields that are allowed to be edited
       const allowedFields = ['name', 'phone', 'congregation', 'position'];
@@ -272,7 +273,7 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
 
   // Export CSV
   const handleExport = () => {
-    window.open(`/api/records/${tab}/export`, "_blank");
+    window.open(`${API_URL}/api/records/${tab}/export`, "_blank");
     toast.success("Export started");
   };
 
@@ -284,8 +285,8 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
   const saveTag = async (id) => {
     const record = records.find(r => r.id === id);
     const endpoint = record.record_kind === 'apology'
-      ? `/api/edit-apology/${id}`
-      : `/api/edit-attendance/${id}`;
+      ? `${API_URL}/api/edit-apology/${id}`
+      : `${API_URL}/api/edit-attendance/${id}`;
       
     await fetch(endpoint, {
       method: "PUT",
@@ -367,8 +368,8 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
       for (const id of selectedRecords) {
         const record = records.find(r => r.id === id);
         const endpoint = record.record_kind === 'apology'
-          ? `/api/delete-apology/${id}`
-          : `/api/delete-attendance/${id}`;
+          ? `${API_URL}/api/delete-apology/${id}`
+          : `${API_URL}/api/delete-attendance/${id}`;
           
         await fetch(endpoint, { method: "DELETE", credentials: "include" });
       }
@@ -408,7 +409,7 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
           timestamp: record.timestamp
         };
         
-        const res = await fetch('/api/submit-apologies', {
+        const res = await fetch(`${API_URL}/api/submit-apologies`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
@@ -439,7 +440,7 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
           timestamp: record.timestamp
         };
         
-        const res = await fetch('/api/submit-attendance', {
+        const res = await fetch(`${API_URL}/api/submit-attendance`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',

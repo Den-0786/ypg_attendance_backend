@@ -3,6 +3,8 @@
 import { useAuthStore } from './store/authStore';
 import AutoLogout from './AutoLogout';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+
 export default function AutoLogoutWrapper() {
   const store = useAuthStore();
   const loggedIn = store.loggedIn;
@@ -11,7 +13,7 @@ export default function AutoLogoutWrapper() {
   
   const handleLogout = async () => {
     try {
-      await fetch('/api/logout', {
+      await fetch(`${API_URL}/api/logout`, {
         method: 'POST',
         credentials: 'include'
       });

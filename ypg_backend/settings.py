@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 from decouple import config
 import os
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -88,24 +89,40 @@ WSGI_APPLICATION = 'ypg_backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
+
+# # Use PostgreSQL in production
+# if not DEBUG:
+    
+#     database_url = config('DATABASE_URL', default='')
+#     if database_url:
+#         DATABASES['default'] = dj_database_url.config(
+#             default=database_url,
+#             conn_max_age=600,
+#             conn_health_checks=True,
+#         )
+
+DATABASES = {}
+
+database_url = os.environ.get('DATABASE_URL')
+if database_url:
+    DATABASES['default'] = dj_database_url.config(
+        default=database_url,
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
+else:
+    # Fallback to SQLite if DATABASE_URL is not set (optional)
+    DATABASES['default'] = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
-}
-
-# Use PostgreSQL in production
-if not DEBUG:
-    import dj_database_url
-    database_url = config('DATABASE_URL', default='')
-    if database_url:
-        DATABASES['default'] = dj_database_url.config(
-            default=database_url,
-            conn_max_age=600,
-            conn_health_checks=True,
-        )
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -219,8 +236,8 @@ if DEBUG:
     CORS_ORIGIN_ALLOW_ALL = True
 
 # Session settings
-SESSION_COOKIE_SAMESITE = "Lax"
-SESSION_COOKIE_SECURE = False
+SESSION_COOKIE_SAMESITE = "None"  # Allows cross-site cookies for local dev and production
+SESSION_COOKIE_SECURE = False      # Set to True in production (HTTPS only)
 SESSION_COOKIE_HTTPONLY = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_AGE = 86400  # 24 hours

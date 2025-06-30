@@ -13,6 +13,8 @@ import { useAuthStore } from '@components/store/authStore';
 import LoginForm from '@components/LoginForm';
 import { toast } from 'react-hot-toast';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+
 export default function Page() {
   const { handleLogin, loggedIn, userRole } = useAuth();
   const store = useAuthStore();
@@ -51,7 +53,7 @@ export default function Page() {
         sessionStorage.clear();
         
         // Clear server-side session
-        fetch('/api/logout', {
+        fetch(`${API_URL}/api/logout`, {
           method: 'POST',
           credentials: 'include',
         }).catch(() => {

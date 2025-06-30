@@ -13,6 +13,8 @@ function capitalizeWords(str) {
     .join(' ');
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+
 export default function DashboardLocal({
   attendanceData = [],
   apologyData = [],
@@ -164,7 +166,7 @@ export default function DashboardLocal({
             onClick={async () => {
               toast.dismiss(t.id);
               try {
-                const res = await fetch(`/api/delete-attendance/${entryId}`, {
+                const res = await fetch(`${API_URL}/api/delete-attendance/${entryId}`, {
                   method: 'DELETE',
                   credentials: 'include',
                 });
@@ -230,7 +232,7 @@ export default function DashboardLocal({
         timestamp: undoData.record.timestamp
       };
       
-      const res = await fetch('/api/submit-attendance', {
+      const res = await fetch(`${API_URL}/api/submit-attendance`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -281,7 +283,7 @@ export default function DashboardLocal({
   // Handler for saving edit
   const handleSaveEdit = async (updatedEntry) => {
     try {
-      const res = await fetch(`/api/edit-attendance/${updatedEntry.id}`, {
+      const res = await fetch(`${API_URL}/api/edit-attendance/${updatedEntry.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

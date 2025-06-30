@@ -72,6 +72,7 @@ export default function AdminPage() {
   const [meetingInfo, setMeetingInfo] = useState(null);
   const [showMeetingForm, setShowMeetingForm] = useState(false);
   const [loadingMeeting, setLoadingMeeting] = useState(false);
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
   // Check localStorage for toast state on mount
   useEffect(() => {
@@ -101,7 +102,7 @@ export default function AdminPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const checkActiveMeeting = async () => {
     try {
-      const res = await fetch('/api/current-meeting', {
+      const res = await fetch(`${API_URL}/api/current-meeting`, {
         credentials: 'include'
       });
       const data = await res.json();
@@ -156,7 +157,7 @@ export default function AdminPage() {
     if (loggedIn && userRole === 'admin') {
       // Admin: fetch current meeting to decide what to show
       setLoadingMeeting(true);
-      fetch(`/api/current-meeting`, {
+      fetch(`${API_URL}/api/current-meeting`, {
         credentials: 'include'
       })
         .then(res => res.json())
@@ -176,6 +177,7 @@ export default function AdminPage() {
           setLoadingMeeting(false);
         });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loggedIn, userRole]);
 
   // 4. Redirect if not logged in - always called

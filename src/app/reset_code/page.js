@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
@@ -9,7 +9,7 @@ import PasswordInput from '@components/PasswordInput';
 // Force dynamic rendering to prevent prerendering issues
 export const dynamic = 'force-dynamic';
 
-export default function ResetCode() {
+function ResetCodeContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [username, setUsername] = useState('');
@@ -168,4 +168,18 @@ export default function ResetCode() {
             </div>
         </div>
     );
+}
+
+export default function ResetCode() {
+  return (
+    <Suspense fallback={
+        <div className="min-h-screen flex flex-col items-center justify-center p-6">
+            <div className="bg-white dark:bg-gray-800 shadow p-6 rounded max-w-md w-full">
+                <div className="text-center">Loading...</div>
+            </div>
+        </div>
+    }>
+      <ResetCodeContent />
+    </Suspense>
+  )
 }

@@ -47,6 +47,8 @@ function capitalizeWords(str) {
     .join(' ');
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+
 export default function ApologyForm({ meetingInfo }) {
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const { meetingDate: contextMeetingDate, setMeetingDate, setMeetingTitle } = useMeetingDate ? useMeetingDate() : { meetingDate: '', setMeetingDate: () => {}, setMeetingTitle: () => {} };
@@ -218,7 +220,7 @@ export default function ApologyForm({ meetingInfo }) {
         admin_password: adminPassword,
       };
       
-      const response = await fetch(`/api/submit-apologies`, {
+      const response = await fetch(`${API_URL}/api/submit-apologies`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
