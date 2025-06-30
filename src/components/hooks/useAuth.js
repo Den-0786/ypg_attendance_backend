@@ -136,9 +136,6 @@ export function useAuth() {
 
   const handleLogin = async (username, password) => {
     try {
-      // Check if it's a mobile device
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      
       const res = await fetch(`${API_URL}/api/login`, {
         method: 'POST',
         headers: {
@@ -151,41 +148,13 @@ export function useAuth() {
       const data = await res.json();
 
       if (res.ok && data.success) {
-        console.log('Login response:', data, 'isMobile:', isMobile);
-        
-        // Force state updates for mobile compatibility
         if (typeof setLoggedIn === 'function') {
           setLoggedIn(true);
         }
         if (typeof setUserRole === 'function') {
           setUserRole(data.role);
         }
-        
-        // Force a re-render for mobile with longer delay
-        setTimeout(() => {
-          if (typeof setLoggedIn === 'function') {
-            setLoggedIn(true);
-          }
-          if (typeof setUserRole === 'function') {
-            setUserRole(data.role);
-          }
-        }, isMobile ? 150 : 50);
-        
         toast.success('Login successful');
-        
-        // Force immediate navigation for mobile
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        if (isMobile) {
-          console.log('Mobile detected, forcing navigation...');
-          setTimeout(() => {
-            if (data.role === 'admin') {
-              window.location.href = '/dashboard';
-            } else if (data.role === 'user') {
-              window.location.href = '/forms';
-            }
-          }, 300);
-        }
-        
         return data.role;
       } else {
         // Show error toast and throw error
