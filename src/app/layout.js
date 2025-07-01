@@ -26,3 +26,22 @@ export default function RootLayout({ children }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <script dangerouslySetInnerHTML={{
           __html: `
+            // Force HTTP in development
+            if (window.location.protocol === 'https:' && window.location.hostname === 'localhost') {
+              window.location.href = window.location.href.replace('https:', 'http:');
+            }
+          `
+        }} />
+      </head>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        <MeetingDateProvider>
+          <AutoLogoutWrapper />
+          <Toaster position="top-center" />
+          {children}
+        </MeetingDateProvider>
+      </body>
+    </html>
+  );
+}
