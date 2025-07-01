@@ -242,6 +242,10 @@ SESSION_COOKIE_HTTPONLY = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_AGE = 86400  # 24 hours
 
+# CSRF cookie settings for cross-origin authentication (important for mobile)
+CSRF_COOKIE_SAMESITE = "None"
+CSRF_COOKIE_SECURE = True
+
 # Security settings
 if not DEBUG:
     SECURE_BROWSER_XSS_FILTER = True

@@ -183,6 +183,7 @@ export function useAuth() {
 
   useEffect(() => {
     checkSession();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return { loggedIn, userRole, loading, handleLogout, handleLogin, checkSession };
