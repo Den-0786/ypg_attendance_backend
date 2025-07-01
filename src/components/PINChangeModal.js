@@ -96,7 +96,7 @@ export default function PINChangeModal({ isOpen, onClose }) {
               value={currentPin}
               onChange={(e) => setCurrentPin(e.target.value.slice(0, 4))}
               onKeyPress={handleKeyPress}
-              className="w-full px-2 py-1.5 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:text-white text-center text-lg tracking-widest bg-gray-50 dark:bg-gray-800 placeholder-gray-400 text-sm"
+              className="w-full px-2 py-1.5 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400  dark:text-white text-center  tracking-widest bg-gray-50 dark:bg-gray-800 placeholder-gray-400 text-sm"
               placeholder="••••"
               maxLength={4}
               autoFocus
@@ -112,7 +112,7 @@ export default function PINChangeModal({ isOpen, onClose }) {
               value={newPin}
               onChange={(e) => setNewPin(e.target.value.slice(0, 4))}
               onKeyPress={handleKeyPress}
-              className="w-full px-2 py-1.5 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:text-white text-center text-lg tracking-widest bg-gray-50 dark:bg-gray-800 placeholder-gray-400 text-sm"
+              className="w-full px-2 py-1.5 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400  dark:text-white text-center  tracking-widest bg-gray-50 dark:bg-gray-800 placeholder-gray-400 text-sm"
               placeholder="••••"
               maxLength={4}
               disabled={loading}
@@ -127,7 +127,7 @@ export default function PINChangeModal({ isOpen, onClose }) {
               value={confirmPin}
               onChange={(e) => setConfirmPin(e.target.value.slice(0, 4))}
               onKeyPress={handleKeyPress}
-              className="w-full px-2 py-1.5 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:text-white text-center text-lg tracking-widest bg-gray-50 dark:bg-gray-800 placeholder-gray-400 text-sm"
+              className="w-full px-2 py-1.5 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400  dark:text-white text-center tracking-widest bg-gray-50 dark:bg-gray-800 placeholder-gray-400 text-sm"
               placeholder="••••"
               maxLength={4}
               disabled={loading}

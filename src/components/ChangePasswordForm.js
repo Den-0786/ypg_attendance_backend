@@ -296,7 +296,7 @@ export default function ChangePasswordForm({ onClose }) {
       {/* PIN Modal */}
       {showPINModal && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-900 rounded-lg p-3 w-full max-w-sm shadow-xl">
+          <div className="bg-white dark:bg-gray-900 rounded-lg p-3 w-full max-w-xs shadow-xl">
             {pinStatus === null ? (
               <div className="text-center py-4">
                 <div className="inline-block w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mb-2"></div>
@@ -329,7 +329,7 @@ export default function ChangePasswordForm({ onClose }) {
       {/* Credentials Form */}
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-900 rounded-lg p-3 w-full max-w-sm shadow-xl">
+          <div className="bg-white dark:bg-gray-900 rounded-lg p-3 w-full max-w-xs shadow-xl">
             <div className="flex justify-between items-center mb-2">
               <h3 className="text-base font-bold text-blue-700 dark:text-blue-300">
                 Change Credentials

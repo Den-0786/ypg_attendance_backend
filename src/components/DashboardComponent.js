@@ -354,7 +354,6 @@ export default function Dashboard({ onLogout }) {
     };
     
     fetchAllData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const toggleDarkMode = () => setDarkMode((prev) => !prev);
