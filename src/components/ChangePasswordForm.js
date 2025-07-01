@@ -17,6 +17,7 @@ export default function ChangePasswordForm({ onClose }) {
     confirmPassword: "",
     newPIN: "",
     confirmPIN: "",
+    currentPIN: "",
   });
   const [showPasswords, setShowPasswords] = useState({
     current: false,
@@ -24,6 +25,7 @@ export default function ChangePasswordForm({ onClose }) {
     confirm: false,
     pin: false,
     confirmPin: false,
+    currentPin: false,
   });
   const [loading, setLoading] = useState(false);
   const [showPINModal, setShowPINModal] = useState(true);
@@ -172,6 +174,7 @@ export default function ChangePasswordForm({ onClose }) {
             confirmPassword: "",
             newPIN: "",
             confirmPIN: "",
+            currentPIN: "",
           });
           setSelectedTargetUser(null);
           setIsAdminMode(false);
@@ -205,6 +208,7 @@ export default function ChangePasswordForm({ onClose }) {
           },
           credentials: "include",
           body: JSON.stringify({
+            current_pin: formData.currentPIN,
             new_pin: formData.newPIN,
           }),
         });
@@ -213,7 +217,7 @@ export default function ChangePasswordForm({ onClose }) {
 
         if (response.ok) {
           toast.success("PIN changed successfully");
-          setFormData(prev => ({ ...prev, newPIN: "", confirmPIN: "" }));
+          setFormData(prev => ({ ...prev, newPIN: "", confirmPIN: "", currentPIN: "" }));
           onClose();
         } else {
           toast.error(data.error || "Failed to change PIN");
@@ -252,6 +256,7 @@ export default function ChangePasswordForm({ onClose }) {
       currentPassword: "",
       newPassword: "",
       confirmPassword: "",
+      currentPIN: "",
     }));
   };
 
@@ -577,6 +582,29 @@ export default function ChangePasswordForm({ onClose }) {
                 <>
                   <div>
                     <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Current PIN
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showPasswords.currentPin ? "text" : "password"}
+                        value={formData.currentPIN || ''}
+                        onChange={(e) => setFormData(prev => ({ ...prev, currentPIN: e.target.value }))}
+                        className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 dark:text-white text-sm bg-gray-50 dark:bg-gray-700"
+                        placeholder="Enter current 4-digit PIN"
+                        maxLength={4}
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => togglePasswordVisibility('currentPin')}
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                      >
+                        {showPasswords.currentPin ? <FaEyeSlash /> : <FaEye />}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                       New PIN
                     </label>
                     <div className="relative">
@@ -598,7 +626,6 @@ export default function ChangePasswordForm({ onClose }) {
                       </button>
                     </div>
                   </div>
-
                   <div>
                     <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Confirm New PIN
@@ -622,7 +649,6 @@ export default function ChangePasswordForm({ onClose }) {
                       </button>
                     </div>
                   </div>
-
                   <div className="flex gap-2 pt-2">
                     <button
                       type="button"
