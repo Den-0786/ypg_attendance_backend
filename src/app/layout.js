@@ -22,17 +22,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <script dangerouslySetInnerHTML={{
-          __html: `
-            // Force HTTP in development
-            if (window.location.protocol === 'https:' && window.location.hostname === 'localhost') {
-              window.location.href = window.location.href.replace('https:', 'http:');
-            }
-          `
-        }} />
-      </head>
+      <head></head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
