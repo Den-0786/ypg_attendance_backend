@@ -364,7 +364,7 @@ export default function AttendanceForm({ meetingInfo }) {
       <div className="w-full h-[1px] bg-gray-800 my-4"></div>
 
       {/* ✅ Attendance Form */}
-      <div className="w-2/3 sm:max-w-md md:max-w-lg lg:max-w-xl mx-auto space-y-4 bg-white p-6 rounded-2xl shadow-xl border border-gray-200">
+      <div className="w-3/3 sm:max-w-md md:max-w-lg lg:max-w-xl mx-auto space-y-4 bg-white p-6 rounded-2xl shadow-xl border border-gray-200">
         <h2 className="text-2xl text-green-700 font-bold text-center mb-2">Attendance Form</h2>
         <p className="text-red-600 text-sm text-center">* indicates required question</p>
 

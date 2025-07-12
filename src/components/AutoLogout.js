@@ -52,7 +52,7 @@ export default function AutoLogout({ loggedIn, onLogout }) {
             </button>
           </div>
         ), { 
-          duration: 30000, // 30 seconds
+          duration: 60000, // i minute
           style: {
             background: '#fef3c7',
             border: '1px solid #f59e0b',
