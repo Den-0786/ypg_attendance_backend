@@ -6,8 +6,8 @@ import { toast } from 'react-hot-toast';
 export default function AutoLogout({ loggedIn, onLogout }) {
   const logoutTimerRef = useRef(null);
   const warningTimerRef = useRef(null);
-  const INACTIVITY_TIMEOUT = 3 * 60 * 1000; // 3 minutes in milliseconds
-  const WARNING_TIMEOUT = 2.5 * 60 * 1000; // 2.5 minutes (30 seconds before logout)
+  const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 minutes in milliseconds
+  const WARNING_TIMEOUT = 1 * 60 * 1000; // 2.5 minutes (30 seconds before logout)
 
   const resetInactivityTimer = () => {
     // Clear existing timers
