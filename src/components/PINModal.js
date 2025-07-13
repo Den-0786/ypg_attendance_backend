@@ -60,7 +60,7 @@ export default function PINModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-900 p-3 rounded-2xl shadow-2xl max-w-[280px] w-full mx-2 border border-blue-200 dark:border-blue-700 relative animate-fadeIn">
+      <div className="bg-white dark:bg-gray-900 p-3 rounded-2xl shadow-2xl max-w-[280px] md:max-w-[280px] w-full mx-2 border border-blue-200 dark:border-blue-700 relative animate-fadeIn">
         <button
           onClick={onClose}
           className="absolute top-1 right-1 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-lg font-bold focus:outline-none w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"

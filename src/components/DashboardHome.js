@@ -463,7 +463,10 @@ export default function DashboardHome({
   };
 
   const handleEditWithPIN = (entryId) => {
-    const entry = attendanceData.find(e => e.id === entryId);
+    let entry = attendanceData.find(e => e.id === entryId);
+    if (!entry) {
+      entry = apologyData.find(e => e.id === entryId);
+    }
     if (entry) {
       setEditModal({ open: true, entry });
     } else {
@@ -491,7 +494,13 @@ export default function DashboardHome({
   // Handler for saving edit
   const handleSaveEdit = async (updatedEntry) => {
     try {
-      const res = await fetch(`${API_URL}/api/edit-attendance/${updatedEntry.id}`, {
+      // Determine if this is an apology or attendance record
+      const isApology = apologyData.some(e => e.id === updatedEntry.id);
+      const endpoint = isApology 
+        ? `${API_URL}/api/edit-apology/${updatedEntry.id}`
+        : `${API_URL}/api/edit-attendance/${updatedEntry.id}`;
+      
+      const res = await fetch(endpoint, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -502,6 +511,7 @@ export default function DashboardHome({
         toast.success('Entry updated successfully');
         setEditModal({ open: false, entry: null });
         if (refetchAttendanceData) refetchAttendanceData();
+        if (refetchApologyData) refetchApologyData();
         // Dispatch custom event to notify other components
         window.dispatchEvent(new CustomEvent('attendanceDataChanged'));
       } else {
@@ -755,7 +765,7 @@ export default function DashboardHome({
             .map((name, idx) => (
               <div
                 key={name}
-                className={`mb-6 rounded-xl shadow border border-blue-200 dark:border-blue-700 ${cardColors[idx % cardColors.length]} p-2 md:p-4`}
+                className={`w-full max-w-full mb-6 rounded-xl shadow border border-blue-200 dark:border-blue-700 ${cardColors[idx % cardColors.length]} p-2 md:p-4`}
               >
                 <table className="min-w-full text-gray-900 dark:text-gray-100">
                   <thead className={darkMode ? "bg-gray-700 text-gray-100" : "bg-gray-200 text-gray-900"}>

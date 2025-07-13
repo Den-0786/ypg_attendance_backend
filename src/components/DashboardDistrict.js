@@ -237,7 +237,10 @@ export default function DashboardDistrict({
   };
 
   const handleEditWithPIN = (entryId) => {
-    const entry = attendanceData.find(e => e.id === entryId);
+    let entry = attendanceData.find(e => e.id === entryId);
+    if (!entry) {
+      entry = apologyData.find(e => e.id === entryId);
+    }
     if (entry) {
       setEditModal({ open: true, entry });
     } else {
@@ -259,7 +262,13 @@ export default function DashboardDistrict({
   // Handler for saving edit
   const handleSaveEdit = async (updatedEntry) => {
     try {
-      const res = await fetch(`${API_URL}/api/edit-attendance/${updatedEntry.id}`, {
+      // Determine if this is an apology or attendance record
+      const isApology = apologyData.some(e => e.id === updatedEntry.id);
+      const endpoint = isApology 
+        ? `${API_URL}/api/edit-apology/${updatedEntry.id}`
+        : `${API_URL}/api/edit-attendance/${updatedEntry.id}`;
+      
+      const res = await fetch(endpoint, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -269,6 +278,7 @@ export default function DashboardDistrict({
         toast.success('Entry updated successfully');
         setEditModal({ open: false, entry: null });
         if (refetchAttendanceData) refetchAttendanceData();
+        if (refetchApologyData) refetchApologyData();
         // Dispatch custom event to notify other components
         window.dispatchEvent(new CustomEvent('attendanceDataChanged'));
       } else {
@@ -387,54 +397,14 @@ export default function DashboardDistrict({
                     (entry.position || "").toLowerCase().includes(searchLower)
                   );
                 })
-                .map((name) => (
-                  <tr key={name}>
-                    <td className="border px-2 md:px-4 py-2">
-                      {summary[name].map((entry, i) => (
-                        <div key={i} className="text-xs md:text-sm font-medium text-green-600">
-                          {entry.meeting_title || "Unknown Meeting"}
-                        </div>
-                      ))}
-                    </td>
-                    <td className="border px-2 md:px-4 py-2 text-xs md:text-sm font-semibold">
-                      {summary[name].map((entry, i) => (
-                        <div key={i}>
-                          <span className="font-semibold">{entry.name}</span>
-                          <span> ({entry.position})</span>
-                        </div>
-                      ))}
-                    </td>
-                    <td className="border px-2 md:px-4 py-2 space-y-1">
-                      {summary[name].map((entry, i) => (
-                        <div key={i} className="text-xs md:text-sm">
-                          {entry.timestamp}
-                        </div>
-                      ))}
-                    </td>
-                    <td className="border px-2 md:px-4 py-2">
-                      {summary[name].map((entry, i) => (
-                        <div key={i} className="flex items-center gap-2 mb-1">
-                          <span className="text-lg">
-                            {isApologyEntry(entry) ? (
-                              <FaTimesCircle className="text-red-500" />
-                            ) : (
-                              <FaCheckCircle className="text-green-500" />
-                            )}
-                          </span>
-                        </div>
-                      ))}
-                    </td>
-                    {hasApologies && (
-                      <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
-                        {summary[name].map((entry, i) => (
-                          <div key={i} className="text-xs md:text-sm">
-                            {isApologyEntry(entry) ? (entry.reason || 'No reason provided') : ''}
-                          </div>
-                        ))}
-                      </td>
-                    )}
-                    <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
-                      <div className="flex gap-2 items-center">
+                .map((name, idx) => (
+                  <div
+                    key={name}
+                    className={`w-full max-w-full mb-6 rounded-xl shadow border border-blue-200 dark:border-blue-700 ${idx % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700'} p-2 md:p-4`}
+                  >
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
+                      <h3 className="text-lg font-bold text-blue-700 dark:text-blue-400">{name}</h3>
+                      <div className="flex gap-2">
                         <button
                           className="text-blue-500 hover:underline text-sm"
                           onClick={() => handleEdit(summary[name][0]?.id)}
@@ -448,8 +418,23 @@ export default function DashboardDistrict({
                           Delete
                         </button>
                       </div>
-                    </td>
-                  </tr>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="text-sm text-gray-700 dark:text-gray-300">
+                        <p><span className="font-semibold">Congregation:</span> {name}</p>
+                        <p><span className="font-semibold">Submitted Time(s):</span> {summary[name].length}</p>
+                        <p><span className="font-semibold">Presence Status:</span> {summary[name].every(entry => isApologyEntry(entry)) ? 'All apologies' : summary[name].every(entry => !isApologyEntry(entry)) ? 'All attendances' : 'Mixed'}</p>
+                      </div>
+                      <div className="text-sm text-gray-700 dark:text-gray-300">
+                        <p><span className="font-semibold">Meeting(s):</span></p>
+                        <ul className="list-disc list-inside">
+                          {summary[name].map((entry, i) => (
+                            <li key={i}>{entry.meeting_title || "Unknown Meeting"}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
                 ))}
             </tbody>
           </table>
