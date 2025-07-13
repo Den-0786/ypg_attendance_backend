@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@components/store/authStore';
 import { toast } from 'react-hot-toast';
 import { useState, useEffect, useRef } from 'react';
+import { useMeetingDate } from '../MeetingDateContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -72,6 +73,7 @@ export function useAuth() {
   const setMeetingSet = store.setMeetingSet;
   const userRole = store.userRole;
   const meetingSet = store.meetingSet;
+  const { setMeetingDate, setMeetingTitle } = useMeetingDate ? useMeetingDate() : { setMeetingDate: () => {}, setMeetingTitle: () => {} };
 
   const [loading, setLoading] = useState(true);
 
@@ -153,6 +155,21 @@ export function useAuth() {
         }
         if (typeof setUserRole === 'function') {
           setUserRole(data.role);
+        }
+        // Fetch current meeting after login
+        try {
+          const meetingRes = await fetch(`${API_URL}/api/current-meeting`, { credentials: 'include' });
+          if (meetingRes.ok) {
+            const meetingData = await meetingRes.json();
+            if (meetingData && meetingData.date && meetingData.title) {
+              setMeetingDate(meetingData.date);
+              setMeetingTitle(meetingData.title);
+              localStorage.setItem('meetingDate', meetingData.date);
+              localStorage.setItem('meetingTitle', meetingData.title);
+            }
+          }
+        } catch (err) {
+          // Ignore meeting fetch errors
         }
         toast.success('Login successful');
         return data.role;

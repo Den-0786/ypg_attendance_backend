@@ -417,28 +417,27 @@ export default function DashboardLocal({
               key={name}
               className={`dashboard-card w-full max-w-full mb-6 rounded-xl shadow border border-blue-200 dark:border-blue-700 ${cardColors[idx % cardColors.length]} p-4`}
             >
-              <div className="text-xs font-medium text-blue-600 dark:text-blue-200 mb-2">
-                {summary[name][0]?.meeting_title || "Unknown Meeting"}
+              <div className="mb-2 text-xs font-medium text-blue-600 dark:text-blue-200">
+                <span className="font-semibold">Meeting:</span> {summary[name][0]?.meeting_title || "Unknown Meeting"}
               </div>
               <div className="mb-1">
+                <span className="font-semibold">Name(s):</span>
                 {summary[name].map((entry, i) => (
-                  <div key={i}>
+                  <div key={i} className="ml-2">
                     <span className="font-semibold">{entry.name}</span>
                     <span> ({entry.position})</span>
                   </div>
                 ))}
               </div>
-              <div className="mb-1">Congregation: {name}</div>
-              <div className="mb-1">
+              <div className="mb-1"><span className="font-semibold">Congregation:</span> {name}</div>
+              <div className="mb-1"><span className="font-semibold">Submitted Time(s):</span>
                 {summary[name].map((entry, i) => (
-                  <div key={i} className="text-xs md:text-sm">
-                    {entry.timestamp}
-                  </div>
+                  <div key={i} className="ml-2 text-xs md:text-sm">{entry.timestamp}</div>
                 ))}
               </div>
-              <div className="mb-1">
+              <div className="mb-1"><span className="font-semibold">Presence Status:</span>
                 {summary[name].map((entry, i) => (
-                  <span key={i} className="text-lg">
+                  <span key={i} className="ml-2 text-lg">
                     {isApologyEntry(entry) ? (
                       <FaTimesCircle className="text-red-500 inline" />
                     ) : (
@@ -448,27 +447,23 @@ export default function DashboardLocal({
                 ))}
               </div>
               {hasApologies && (
-                <div className="mb-1">
+                <div className="mb-1"><span className="font-semibold">Reason:</span>
                   {summary[name].map((entry, i) => (
-                    <div key={i} className="text-xs md:text-sm">
+                    <div key={i} className="ml-2 text-xs md:text-sm">
                       {isApologyEntry(entry) ? (entry.reason || 'No reason provided') : ''}
                     </div>
                   ))}
                 </div>
               )}
-              <div className="flex gap-2 mt-2">
-                {summary[name].map((entry, i) => (
-                  <span key={i}>
-                    <button
-                      className="text-blue-500 hover:underline text-xs"
-                      onClick={() => handleEdit(entry.id)}
-                    >Edit</button>
-                    <button
-                      className="text-red-500 hover:underline text-xs"
-                      onClick={() => handleDelete(entry.id)}
-                    >Delete</button>
-                  </span>
-                ))}
+              <div className="flex gap-4 mt-4">
+                <button
+                  className="text-blue-500 hover:underline text-xs"
+                  onClick={() => handleEdit(summary[name][0]?.id)}
+                >Edit</button>
+                <button
+                  className="text-red-500 hover:underline text-xs"
+                  onClick={() => handleDelete(summary[name][0]?.id)}
+                >Delete</button>
               </div>
             </div>
           ))

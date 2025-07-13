@@ -390,37 +390,53 @@ export default function DashboardDistrict({
               key={name}
               className={`dashboard-card w-full max-w-full mb-6 rounded-xl shadow border border-blue-200 dark:border-blue-700 ${idx % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700'} p-4`}
             >
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
-                <h3 className="text-lg font-bold text-blue-700 dark:text-blue-400">{name}</h3>
-                <div className="flex gap-2">
-                  <button
-                    className="text-blue-500 hover:underline text-sm"
-                    onClick={() => handleEdit(summary[name][0]?.id)}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    className="text-red-500 hover:underline text-sm"
-                    onClick={() => handleDelete(summary[name][0]?.id)}
-                  >
-                    Delete
-                  </button>
-                </div>
+              <div className="mb-2 text-xs font-medium text-blue-600 dark:text-blue-200">
+                <span className="font-semibold">Meeting:</span> {summary[name][0]?.meeting_title || "Unknown Meeting"}
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="text-sm text-gray-700 dark:text-gray-300">
-                  <p><span className="font-semibold">Congregation:</span> {name}</p>
-                  <p><span className="font-semibold">Submitted Time(s):</span> {summary[name].length}</p>
-                  <p><span className="font-semibold">Presence Status:</span> {summary[name].every(entry => isApologyEntry(entry)) ? 'All apologies' : summary[name].every(entry => !isApologyEntry(entry)) ? 'All attendances' : 'Mixed'}</p>
+              <div className="mb-1">
+                <span className="font-semibold">Name(s):</span>
+                {summary[name].map((entry, i) => (
+                  <div key={i} className="ml-2">
+                    <span className="font-semibold">{entry.name}</span>
+                    <span> ({entry.position})</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mb-1"><span className="font-semibold">Congregation:</span> {name}</div>
+              <div className="mb-1"><span className="font-semibold">Submitted Time(s):</span>
+                {summary[name].map((entry, i) => (
+                  <div key={i} className="ml-2 text-xs md:text-sm">{entry.timestamp}</div>
+                ))}
+              </div>
+              <div className="mb-1"><span className="font-semibold">Presence Status:</span>
+                {summary[name].map((entry, i) => (
+                  <span key={i} className="ml-2 text-lg">
+                    {isApologyEntry(entry) ? (
+                      <FaTimesCircle className="text-red-500 inline" />
+                    ) : (
+                      <FaCheckCircle className="text-green-500 inline" />
+                    )}
+                  </span>
+                ))}
+              </div>
+              {hasApologies && (
+                <div className="mb-1"><span className="font-semibold">Reason:</span>
+                  {summary[name].map((entry, i) => (
+                    <div key={i} className="ml-2 text-xs md:text-sm">
+                      {isApologyEntry(entry) ? (entry.reason || 'No reason provided') : ''}
+                    </div>
+                  ))}
                 </div>
-                <div className="text-sm text-gray-700 dark:text-gray-300">
-                  <p><span className="font-semibold">Meeting(s):</span></p>
-                  <ul className="list-disc list-inside">
-                    {summary[name].map((entry, i) => (
-                      <li key={i}>{entry.meeting_title || "Unknown Meeting"}</li>
-                    ))}
-                  </ul>
-                </div>
+              )}
+              <div className="flex gap-4 mt-4">
+                <button
+                  className="text-blue-500 hover:underline text-xs"
+                  onClick={() => handleEdit(summary[name][0]?.id)}
+                >Edit</button>
+                <button
+                  className="text-red-500 hover:underline text-xs"
+                  onClick={() => handleDelete(summary[name][0]?.id)}
+                >Delete</button>
               </div>
             </div>
           ))

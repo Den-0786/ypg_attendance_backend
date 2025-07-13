@@ -739,21 +739,24 @@ export default function DashboardHome({
       </div>
       {/* Attendance/Apology/All Buttons and Clear All Data */}
       <div className="flex flex-wrap gap-2 md:gap-4 mb-4 items-center">
-        <button
-          className={`px-4 py-2 rounded ${showType === 'attendance' ? 'bg-blue-700 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
-          onClick={() => setShowType('attendance')}
-        >Attendance</button>
-        <button
-          className={`px-4 py-2 rounded ${showType === 'apology' ? 'bg-purple-700 text-white' : 'bg-purple-600 text-white hover:bg-purple-700'}`}
-          onClick={() => setShowType('apology')}
-        >Apology</button>
-        <button
-          className={`px-4 py-2 rounded ${showType === 'all' ? 'bg-gray-700 text-white' : 'bg-gray-400 text-white hover:bg-gray-700'}`}
-          onClick={() => setShowType('all')}
-        >All</button>
+        <div className="flex flex-wrap gap-2 md:gap-4">
+          <button
+            className={`px-4 py-2 rounded ${showType === 'attendance' ? 'bg-blue-700 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+            onClick={() => setShowType('attendance')}
+          >Attendance</button>
+          <button
+            className={`px-4 py-2 rounded ${showType === 'apology' ? 'bg-purple-700 text-white' : 'bg-purple-600 text-white hover:bg-purple-700'}`}
+            onClick={() => setShowType('apology')}
+          >Apology</button>
+          <button
+            className={`px-4 py-2 rounded ${showType === 'all' ? 'bg-gray-700 text-white' : 'bg-gray-400 text-white hover:bg-gray-700'}`}
+            onClick={() => setShowType('all')}
+          >All</button>
+        </div>
+        <div className="w-full h-0" /> {/* Force new row on mobile */}
         <button
           onClick={handleClearAllData}
-          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm font-semibold ml-auto md:ml-4"
+          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm font-semibold mt-2 md:mt-0 md:ml-8"
           title="Clear all attendance and apology data"
         >
           🗑️ Clear All Data
@@ -780,28 +783,27 @@ export default function DashboardHome({
               key={name}
               className={`dashboard-card w-full max-w-full mb-6 rounded-xl shadow border border-blue-200 dark:border-blue-700 ${cardColors[idx % cardColors.length]} p-4`}
             >
-              <div className="text-xs font-medium text-blue-600 dark:text-blue-200 mb-2">
-                {filteredSummary[name][0]?.meeting_title || "Unknown Meeting"}
+              <div className="mb-2 text-xs font-medium text-blue-600 dark:text-blue-200">
+                <span className="font-semibold">Meeting:</span> {filteredSummary[name][0]?.meeting_title || "Unknown Meeting"}
               </div>
               <div className="mb-1">
+                <span className="font-semibold">Name(s):</span>
                 {filteredSummary[name].map((entry, i) => (
-                  <div key={i}>
+                  <div key={i} className="ml-2">
                     <span className="font-semibold">{entry.name}</span>
                     <span> ({entry.position})</span>
                   </div>
                 ))}
               </div>
-              <div className="mb-1">Congregation: {name}</div>
-              <div className="mb-1">
+              <div className="mb-1"><span className="font-semibold">Congregation:</span> {name}</div>
+              <div className="mb-1"><span className="font-semibold">Submitted Time(s):</span>
                 {filteredSummary[name].map((entry, i) => (
-                  <div key={i} className="text-xs md:text-sm">
-                    {entry.timestamp}
-                  </div>
+                  <div key={i} className="ml-2 text-xs md:text-sm">{entry.timestamp}</div>
                 ))}
               </div>
-              <div className="mb-1">
+              <div className="mb-1"><span className="font-semibold">Presence Status:</span>
                 {filteredSummary[name].map((entry, i) => (
-                  <span key={i} className="text-lg">
+                  <span key={i} className="ml-2 text-lg">
                     {isApologyEntry(entry) ? (
                       <FaTimesCircle className="text-red-500 inline" />
                     ) : (
@@ -810,28 +812,22 @@ export default function DashboardHome({
                   </span>
                 ))}
               </div>
-              <div className="mb-1">
+              <div className="mb-1"><span className="font-semibold">Reason:</span>
                 {filteredSummary[name].map((entry, i) => (
-                  <div key={i} className="text-xs md:text-sm">
+                  <div key={i} className="ml-2 text-xs md:text-sm">
                     {isApologyEntry(entry) ? (entry.reason || 'No reason provided') : ''}
                   </div>
                 ))}
               </div>
-              <div className="flex gap-2 mt-2">
-                {filteredSummary[name].map((entry, i) => (
-                  <>
-                    <button
-                      key={`edit-${i}`}
-                      className="text-blue-500 hover:underline text-xs"
-                      onClick={() => handleEdit(entry.id)}
-                    >Edit</button>
-                    <button
-                      key={`del-${i}`}
-                      className="text-red-500 hover:underline text-xs"
-                      onClick={() => handleDelete(entry.id)}
-                    >Delete</button>
-                  </>
-                ))}
+              <div className="flex gap-4 mt-4">
+                <button
+                  className="text-blue-500 hover:underline text-xs"
+                  onClick={() => handleEdit(filteredSummary[name][0]?.id)}
+                >Edit</button>
+                <button
+                  className="text-red-500 hover:underline text-xs"
+                  onClick={() => handleDelete(filteredSummary[name][0]?.id)}
+                >Delete</button>
               </div>
             </div>
           ))
