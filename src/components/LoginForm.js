@@ -11,8 +11,13 @@ export default function LoginForm({ onLogin }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    await onLogin(username, password); 
-    setIsLoading(false);
+    try {
+      await onLogin(username, password);
+    } catch (err) {
+      // Error is already handled by toast in useAuth, so just catch it
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
