@@ -5,6 +5,17 @@ import jsPDF from "jspdf";
 import { capitalizeFirst } from '../lib/utils';
 import PINModal from './PINModal';
 
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+  return isMobile;
+}
+
 const isAdmin = true;
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -482,6 +493,8 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
   // Determine if there are any apologies in the paginatedRecords
   const hasApologies = paginatedRecords.some(r => r.record_kind === 'apology');
 
+  const isMobile = useIsMobile();
+
   return (
     <div>
       {/* Toast container */}
@@ -591,160 +604,242 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
           </label>
         ))}
       </div>
-      {/* Table */}
-      {loading && (
-        <div className="flex justify-center items-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-        </div>
-      )}
-      <div className="overflow-x-auto custom-scrollbar mb-6 md:mb-10">
-        {loading ? (
+      {/* Records List */}
+      {isMobile ? (
+        loading ? (
           <div className="flex justify-center items-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
           </div>
         ) : (
-          <table className="min-w-full border border-gray-300 rounded-lg overflow-hidden">
-            <thead className={darkMode ? "bg-gray-700" : "bg-gray-200"}>
-              <tr>
-                <th className="px-2 md:px-4 py-2 border text-xs md:text-sm">
+          paginatedRecords.length === 0 ? (
+            <div className="text-center py-8">
+              {search ? (
+                <div className="text-gray-500">
+                  <p>No records found for &quot;<span className="font-semibold text-gray-700">{search}</span>&quot;</p>
+                  <p className="text-sm mt-1">Try searching for a different name, congregation, or position</p>
+                </div>
+              ) : (
+                "No records found."
+              )}
+            </div>
+          ) : (
+            paginatedRecords.map((record, idx) => (
+              <div
+                key={record.id}
+                className={`dashboard-card w-full max-w-full mb-6 rounded-xl shadow border border-gray-300 dark:border-gray-700 ${idx % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700'} p-4`}
+              >
+                <div className="mb-2 flex items-center gap-2">
                   <input
                     type="checkbox"
-                    checked={isAllSelected}
-                    onChange={toggleSelectAll}
-                    title="Select all"
+                    checked={selectedRecords.includes(record.id)}
+                    onChange={() => toggleSelect(record.id)}
+                    title="Select this record"
                   />
-                </th>
-                {allColumns.filter(col => showColumns[col.key]).map(col => (
-                  <th
-                    key={col.key}
-                    className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm cursor-pointer select-none"
-                    onClick={() => {
-                      setSortField(col.key);
-                      setSortAsc(sortField === col.key ? !sortAsc : true);
-                    }}
-                  >
-                    {col.label} {sortField === col.key && (sortAsc ? '▲' : '▼')}
-                  </th>
-                ))}
-                {hasApologies && (
-                  <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Reason</th>
+                  <span className="font-semibold">{record.name || record.congregation || record.position}</span>
+                  <span className="text-xs text-gray-500">({record.record_kind})</span>
+                </div>
+                <div className="mb-1">Phone: {record.phone}</div>
+                <div className="mb-1">Congregation: {record.congregation}</div>
+                <div className="mb-1">Position: {record.position}</div>
+                <div className="mb-1">Meeting: {record.meeting_title}</div>
+                <div className="mb-1">Timestamp: {record.timestamp}</div>
+                {record.record_kind === 'apology' && (
+                  <div className="mb-1 text-red-600">Reason: {record.reason || 'No reason provided'}</div>
                 )}
-                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedRecords.length === 0 && (
+                <div className="flex gap-2 mt-2">
+                  <button
+                    onClick={() => { setShowDetails(true); setDetailsRecord(record); }}
+                    className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 p-1 rounded"
+                    title="View Details"
+                  >
+                    <FaEye />
+                  </button>
+                  {isAdmin && (
+                    <>
+                      <button
+                        onClick={() => handleEdit(record)}
+                        className="text-blue-500 hover:text-blue-700 p-1 rounded"
+                        title="Edit"
+                      >
+                        <FaEdit />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(record.id, record.congregation || record.position)}
+                        className="text-red-500 hover:text-red-700 p-1 rounded"
+                        title="Delete"
+                      >
+                        <FaTrash />
+                      </button>
+                      <button
+                        onClick={() => handleDownloadPDF(record)}
+                        className="text-purple-600 hover:text-purple-800 p-1 rounded"
+                        title="Download PDF"
+                      >
+                        <FaFilePdf />
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))
+          )
+        )
+      ) : (
+        <div className="overflow-x-auto custom-scrollbar mb-6 md:mb-10">
+          {loading ? (
+            <div className="flex justify-center items-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+          ) : (
+            <table className="min-w-full border border-gray-300 rounded-lg overflow-hidden">
+              <thead className={darkMode ? "bg-gray-700" : "bg-gray-200"}>
                 <tr>
-                  <td colSpan={allColumns.length + 2} className="text-center py-4">
-                    {search ? (
-                      <div className="text-gray-500">
-                        <p>No records found for &quot;<span className="font-semibold text-gray-700">{search}</span>&quot;</p>
-                        <p className="text-sm mt-1">Try searching for a different name, congregation, or position</p>
-                      </div>
-                    ) : (
-                      "No records found."
-                    )}
-                  </td>
-                </tr>
-              )}
-              {paginatedRecords.map((record, idx) => (
-                <tr
-                  key={record.id}
-                  className={`transition-colors ${idx % 2 === 0 ? (darkMode ? 'bg-gray-800' : 'bg-gray-50') : ''}`}
-                >
-                  <td className="border px-2 md:px-4 py-2 text-center">
+                  <th className="px-2 md:px-4 py-2 border text-xs md:text-sm">
                     <input
                       type="checkbox"
-                      checked={selectedRecords.includes(record.id)}
-                      onChange={e => { e.stopPropagation(); toggleSelect(record.id); }}
-                      onClick={e => e.stopPropagation()}
-                      title="Select this record"
+                      checked={isAllSelected}
+                      onChange={toggleSelectAll}
+                      title="Select all"
                     />
-                  </td>
+                  </th>
                   {allColumns.filter(col => showColumns[col.key]).map(col => (
-                    <td key={col.key} className="border px-2 md:px-4 py-2 text-xs md:text-sm">
-                      {col.key === 'notes' && tagEditId === record.id ? (
-                        <span className="flex items-center gap-2">
-                          <input
-                            value={tagInput}
-                            onChange={e => setTagInput(e.target.value)}
-                            className="border px-2 py-1 rounded mr-2 w-32 md:w-48"
-                            placeholder="Enter notes..."
-                            autoFocus
-                            onClick={e => e.stopPropagation()}
-                            onFocus={e => e.stopPropagation()}
-                          />
-                          <button onClick={e => { e.stopPropagation(); saveTag(record.id); }} className="text-green-600" title="Save notes"><FaSave /></button>
-                          <button onClick={e => { e.stopPropagation(); setTagEditId(null); setTagInput(""); }} className="text-red-500" title="Cancel notes edit">&times;</button>
-                        </span>
-                      ) : col.key === 'notes' ? (
-                        <span 
-                          className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded"
-                          onClick={e => { 
-                            e.stopPropagation(); 
-                            setNotesRecord(record);
-                            setShowNotesModal(true);
-                          }}
-                          title="Click to view/edit notes"
-                        >
-                          {record.notes ? (
-                            <span className="truncate max-w-20 block">{record.notes}</span>
-                          ) : (
-                            <FaTags className="inline text-blue-600" />
-                          )}
-                        </span>
-                      ) : (
-                        <span>
-                          {record[col.key] || ''}
-                        </span>
-                      )}
-                    </td>
+                    <th
+                      key={col.key}
+                      className={
+                        col.key === 'name'
+                          ? 'px-2 md:px-4 py-2 border text-xs md:text-sm min-w-[220px]'
+                          : col.key === 'meeting_date' || col.key === 'meeting_title'
+                          ? 'px-2 md:px-4 py-2 border text-xs md:text-sm min-w-[120px] whitespace-nowrap'
+                          : 'px-2 md:px-4 py-2 border text-xs md:text-sm'
+                      }
+                      onClick={() => {
+                        setSortField(col.key);
+                        setSortAsc(sortField === col.key ? !sortAsc : true);
+                      }}
+                    >
+                      {col.label} {sortField === col.key && (sortAsc ? '▲' : '▼')}
+                    </th>
                   ))}
                   {hasApologies && (
-                    <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
-                      {record.record_kind === 'apology' ? (record.reason || 'No reason provided') : ''}
-                    </td>
+                    <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Reason</th>
                   )}
-                  <td className="border px-2 md:px-4 py-2 flex gap-2">
-                    <button
-                      onClick={e => { e.stopPropagation(); setShowDetails(true); setDetailsRecord(record); }}
-                      className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 p-1 rounded"
-                      title="View Details"
-                    >
-                      <FaEye />
-                    </button>
-                    {isAdmin && (
-                      <>
-                        <button
-                          onClick={e => { e.stopPropagation(); handleEdit(record); }}
-                          className="text-blue-500 hover:text-blue-700 p-1 rounded"
-                          title="Edit"
-                        >
-                          <FaEdit />
-                        </button>
-                        <button
-                          onClick={e => { e.stopPropagation(); handleDelete(record.id, record.congregation || record.position); }}
-                          className="text-red-500 hover:text-red-700 p-1 rounded"
-                          title="Delete"
-                        >
-                          <FaTrash />
-                        </button>
-                        <button
-                          onClick={e => { e.stopPropagation(); handleDownloadPDF(record); }}
-                          className="text-purple-600 hover:text-purple-800 p-1 rounded"
-                          title="Download PDF"
-                        >
-                          <FaFilePdf />
-                        </button>
-                      </>
-                    )}
-                  </td>
+                  <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+              </thead>
+              <tbody>
+                {paginatedRecords.length === 0 && (
+                  <tr>
+                    <td colSpan={allColumns.length + 2} className="text-center py-4">
+                      {search ? (
+                        <div className="text-gray-500">
+                          <p>No records found for &quot;<span className="font-semibold text-gray-700">{search}</span>&quot;</p>
+                          <p className="text-sm mt-1">Try searching for a different name, congregation, or position</p>
+                        </div>
+                      ) : (
+                        "No records found."
+                      )}
+                    </td>
+                  </tr>
+                )}
+                {paginatedRecords.map((record, idx) => (
+                  <tr
+                    key={record.id}
+                    className={`transition-colors ${idx % 2 === 0 ? (darkMode ? 'bg-gray-800' : 'bg-gray-50') : ''}`}
+                  >
+                    <td className="border px-2 md:px-4 py-2 text-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedRecords.includes(record.id)}
+                        onChange={e => { e.stopPropagation(); toggleSelect(record.id); }}
+                        onClick={e => e.stopPropagation()}
+                        title="Select this record"
+                      />
+                    </td>
+                    {allColumns.filter(col => showColumns[col.key]).map(col => (
+                      <td key={col.key} className="border px-2 md:px-4 py-2 text-xs md:text-sm">
+                        {col.key === 'notes' && tagEditId === record.id ? (
+                          <span className="flex items-center gap-2">
+                            <input
+                              value={tagInput}
+                              onChange={e => setTagInput(e.target.value)}
+                              className="border px-2 py-1 rounded mr-2 w-32 md:w-48"
+                              placeholder="Enter notes..."
+                              autoFocus
+                              onClick={e => e.stopPropagation()}
+                              onFocus={e => e.stopPropagation()}
+                            />
+                            <button onClick={e => { e.stopPropagation(); saveTag(record.id); }} className="text-green-600" title="Save notes"><FaSave /></button>
+                            <button onClick={e => { e.stopPropagation(); setTagEditId(null); setTagInput(""); }} className="text-red-500" title="Cancel notes edit">&times;</button>
+                          </span>
+                        ) : col.key === 'notes' ? (
+                          <span 
+                            className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded"
+                            onClick={e => { 
+                              e.stopPropagation(); 
+                              setNotesRecord(record);
+                              setShowNotesModal(true);
+                            }}
+                            title="Click to view/edit notes"
+                          >
+                            {record.notes ? (
+                              <span className="truncate max-w-20 block">{record.notes}</span>
+                            ) : (
+                              <FaTags className="inline text-blue-600" />
+                            )}
+                          </span>
+                        ) : (
+                          <span>
+                            {record[col.key] || ''}
+                          </span>
+                        )}
+                      </td>
+                    ))}
+                    {hasApologies && (
+                      <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
+                        {record.record_kind === 'apology' ? (record.reason || 'No reason provided') : ''}
+                      </td>
+                    )}
+                    <td className="border px-2 md:px-4 py-2 flex gap-2">
+                      <button
+                        onClick={e => { e.stopPropagation(); setShowDetails(true); setDetailsRecord(record); }}
+                        className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 p-1 rounded"
+                        title="View Details"
+                      >
+                        <FaEye />
+                      </button>
+                      {isAdmin && (
+                        <>
+                          <button
+                            onClick={e => { e.stopPropagation(); handleEdit(record); }}
+                            className="text-blue-500 hover:text-blue-700 p-1 rounded"
+                            title="Edit"
+                          >
+                            <FaEdit />
+                          </button>
+                          <button
+                            onClick={e => { e.stopPropagation(); handleDelete(record.id, record.congregation || record.position); }}
+                            className="text-red-500 hover:text-red-700 p-1 rounded"
+                            title="Delete"
+                          >
+                            <FaTrash />
+                          </button>
+                          <button
+                            onClick={e => { e.stopPropagation(); handleDownloadPDF(record); }}
+                            className="text-purple-600 hover:text-purple-800 p-1 rounded"
+                            title="Download PDF"
+                          >
+                            <FaFilePdf />
+                          </button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
       {/* Pagination */}
       <div className="flex gap-2 items-center justify-center mb-6">
         <button onClick={() => setPage(1)} disabled={page === 1} className="px-2 py-1 rounded bg-gray-200 dark:bg-gray-700 disabled:opacity-50">First</button>

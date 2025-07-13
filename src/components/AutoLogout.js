@@ -1,27 +1,30 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 export default function AutoLogout({ loggedIn, onLogout }) {
   const logoutTimerRef = useRef(null);
   const warningTimerRef = useRef(null);
-  const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 minutes in milliseconds
-  const WARNING_TIMEOUT = 1 * 60 * 1000; // 2.5 minutes (30 seconds before logout)
+  const [warningShown, setWarningShown] = useState(false);
+  const [logoutPending, setLogoutPending] = useState(false);
+  const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 minutes
+  const WARNING_TIMEOUT = 9 * 60 * 1000; // 9 minutes (1 minute before logout)
+
+  const clearTimers = () => {
+    if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
+    if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
+  };
 
   const resetInactivityTimer = () => {
-    // Clear existing timers
-    if (logoutTimerRef.current) {
-      clearTimeout(logoutTimerRef.current);
-    }
-    if (warningTimerRef.current) {
-      clearTimeout(warningTimerRef.current);
-    }
-    
-    // Set new timers only if logged in
+    clearTimers();
+    setWarningShown(false);
+    setLogoutPending(false);
     if (loggedIn) {
-      // Set warning timer (30 seconds before logout)
+      // Set warning timer (1 minute before logout)
       warningTimerRef.current = setTimeout(() => {
+        setWarningShown(true);
+        setLogoutPending(true);
         toast((t) => (
           <div className="flex items-center space-x-3">
             <div className="flex-shrink-0">
@@ -36,13 +39,13 @@ export default function AutoLogout({ loggedIn, onLogout }) {
                 Session Timeout Warning
               </p>
               <p className="text-sm text-yellow-600 dark:text-yellow-300">
-                You will be logged out in 30 seconds due to inactivity
+                You will be logged out in 1 minute due to inactivity
               </p>
             </div>
             <button
               onClick={() => {
                 toast.dismiss(t.id);
-                resetInactivityTimer(); // Reset timer when user clicks
+                handleUserActivity();
               }}
               className="flex-shrink-0 text-yellow-400 hover:text-yellow-600 dark:hover:text-yellow-300"
             >
@@ -51,55 +54,53 @@ export default function AutoLogout({ loggedIn, onLogout }) {
               </svg>
             </button>
           </div>
-        ), { 
-          duration: 60000, // i minute
+        ), {
+          duration: 60000, // 1 minute
           style: {
             background: '#fef3c7',
             border: '1px solid #f59e0b',
           }
         });
+        // Set logout timer for 1 minute after warning
+        logoutTimerRef.current = setTimeout(() => {
+          if (logoutPending) {
+            toast.error('Session expired. You have been logged out due to inactivity.');
+            onLogout();
+          }
+        }, 60 * 1000);
       }, WARNING_TIMEOUT);
-
-      // Set logout timer
-      logoutTimerRef.current = setTimeout(() => {
-        toast.error('Session expired. You have been logged out due to inactivity.');
-        onLogout();
-      }, INACTIVITY_TIMEOUT);
     }
   };
 
-  // Set up activity listeners
+  // Handles any user activity (click, keypress, etc.)
+  const handleUserActivity = () => {
+    if (warningShown) {
+      // If warning was shown and user interacts, cancel logout and reset everything
+      setWarningShown(false);
+      setLogoutPending(false);
+      clearTimers();
+      resetInactivityTimer();
+    } else {
+      // If no warning, just reset timer as usual
+      resetInactivityTimer();
+    }
+  };
+
   useEffect(() => {
     const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
-    
-    const activityHandler = () => {
-      if (loggedIn) {
-        resetInactivityTimer();
-      }
-    };
-    
     events.forEach(event => {
-      document.addEventListener(event, activityHandler, true);
+      document.addEventListener(event, handleUserActivity, true);
     });
-
-    // Start the initial timer if logged in
     if (loggedIn) {
       resetInactivityTimer();
     }
-
-    // Cleanup function
     return () => {
       events.forEach(event => {
-        document.removeEventListener(event, activityHandler, true);
+        document.removeEventListener(event, handleUserActivity, true);
       });
-      if (logoutTimerRef.current) {
-        clearTimeout(logoutTimerRef.current);
-      }
-      if (warningTimerRef.current) {
-        clearTimeout(warningTimerRef.current);
-      }
+      clearTimers();
     };
-  }, [loggedIn, onLogout]); // Dependencies
+  }, [loggedIn]);
 
   // This component doesn't render anything
   return null;

@@ -9,6 +9,17 @@ import { capitalizeFirst, toTitleCase } from '../lib/utils';
 import PINModal from './PINModal';
 import AttendanceChart from "./dashboard/AttendanceChart";
 
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+  return isMobile;
+}
+
 // Helper function to identify apology entries
 function isApologyEntry(entry) {
   // This function will be defined in the main component, but we need it here too
@@ -553,6 +564,8 @@ export default function DashboardHome({
     }
   };
 
+  const isMobile = useIsMobile();
+
   return (
     <div>
       
@@ -722,16 +735,10 @@ export default function DashboardHome({
             placeholder="Search congregation..."
             className="w-full md:max-w-xs border px-3 py-2 rounded-md dark:bg-gray-700 dark:text-white text-sm md:text-base"
           />
-          <button
-            onClick={handleClearAllData}
-            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm font-semibold"
-            title="Clear all attendance and apology data"
-          >
-            🗑️ Clear All Data
-          </button>
         </div>
       </div>
-      <div className="flex gap-4 mb-4">
+      {/* Attendance/Apology/All Buttons and Clear All Data */}
+      <div className="flex flex-wrap gap-2 md:gap-4 mb-4 items-center">
         <button
           className={`px-4 py-2 rounded ${showType === 'attendance' ? 'bg-blue-700 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
           onClick={() => setShowType('attendance')}
@@ -744,11 +751,18 @@ export default function DashboardHome({
           className={`px-4 py-2 rounded ${showType === 'all' ? 'bg-gray-700 text-white' : 'bg-gray-400 text-white hover:bg-gray-700'}`}
           onClick={() => setShowType('all')}
         >All</button>
+        <button
+          onClick={handleClearAllData}
+          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm font-semibold ml-auto md:ml-4"
+          title="Clear all attendance and apology data"
+        >
+          🗑️ Clear All Data
+        </button>
       </div>
 
       {/* Table of All Attendance/Apology Records */}
-      <div className="overflow-x-auto custom-scrollbar mb-6 md:mb-10">
-        {Object.keys(filteredSummary).length === 0 ? (
+      {isMobile ? (
+        Object.keys(filteredSummary).length === 0 ? (
           <div className="text-center py-8">
             <div className="text-gray-500 dark:text-gray-400 text-lg font-medium">
               No {showType === 'all' ? 'attendance or apology' : showType} data available
@@ -761,88 +775,165 @@ export default function DashboardHome({
             </div>
           </div>
         ) : (
-          Object.keys(filteredSummary)
-            .map((name, idx) => (
-              <div
-                key={name}
-                className={`w-full max-w-full mb-6 rounded-xl shadow border border-blue-200 dark:border-blue-700 ${cardColors[idx % cardColors.length]} p-2 md:p-4`}
-              >
-                <table className="min-w-full text-gray-900 dark:text-gray-100">
-                  <thead className={darkMode ? "bg-gray-700 text-gray-100" : "bg-gray-200 text-gray-900"}>
-                    <tr>
-                      <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm min-w-[200px] whitespace-nowrap">Meeting</th>
-                      <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Attendee(s)</th>
-                      <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Congregation</th>
-                      <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Submitted Time(s)</th>
-                      <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Presence Status</th>
-                      <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Reason</th>
-                      <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr key={name} className="text-sm md:text-base">
-                      <td className="border px-2 md:px-4 py-2 text-xs md:text-sm min-w-[200px] whitespace-nowrap">
-                        <div className="text-xs md:text-sm font-medium text-blue-600 dark:text-blue-200">
-                          {filteredSummary[name][0]?.meeting_title || "Unknown Meeting"}
-                        </div>
-                      </td>
-                      <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
-                        {filteredSummary[name].map((entry, i) => (
-                          <div key={i}>
-                            <span className="font-semibold">{entry.name}</span>
-                            <span> ({entry.position})</span>
-                          </div>
-                        ))}
-                      </td>
-                      <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">{name}</td>
-                      <td className="border px-2 md:px-4 py-2 space-y-1">
-                        {filteredSummary[name].map((entry, i) => (
-                          <div key={i} className="text-xs md:text-sm">
-                            {entry.timestamp}
-                          </div>
-                        ))}
-                      </td>
-                      <td className="border px-2 md:px-4 py-2">
-                        {filteredSummary[name].map((entry, i) => (
-                          <div key={i} className="flex items-center gap-2 mb-1">
-                            <span className="text-lg">
-                              {isApologyEntry(entry) ? (
-                                <FaTimesCircle className="text-red-500" />
-                              ) : (
-                                <FaCheckCircle className="text-green-500" />
-                              )}
-                            </span>
-                          </div>
-                        ))}
-                      </td>
-                      <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
-                        {filteredSummary[name].map((entry, i) => (
-                          <div key={i} className="text-xs md:text-sm">
-                            {isApologyEntry(entry) ? (entry.reason || 'No reason provided') : ''}
-                          </div>
-                        ))}
-                      </td>
-                      <td className="border px-2 md:px-4 py-2">
-                        {filteredSummary[name].map((entry, i) => (
-                          <div key={entry.id} className="flex gap-2 mb-1">
-                            <button
-                              className="text-blue-500 hover:underline text-xs"
-                              onClick={() => handleEdit(entry.id)}
-                            >Edit</button>
-                            <button
-                              className="text-red-500 hover:underline text-xs"
-                              onClick={() => handleDelete(entry.id)}
-                            >Delete</button>
-                          </div>
-                        ))}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+          Object.keys(filteredSummary).map((name, idx) => (
+            <div
+              key={name}
+              className={`dashboard-card w-full max-w-full mb-6 rounded-xl shadow border border-blue-200 dark:border-blue-700 ${cardColors[idx % cardColors.length]} p-4`}
+            >
+              <div className="text-xs font-medium text-blue-600 dark:text-blue-200 mb-2">
+                {filteredSummary[name][0]?.meeting_title || "Unknown Meeting"}
               </div>
-            ))
-        )}
-      </div>
+              <div className="mb-1">
+                {filteredSummary[name].map((entry, i) => (
+                  <div key={i}>
+                    <span className="font-semibold">{entry.name}</span>
+                    <span> ({entry.position})</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mb-1">Congregation: {name}</div>
+              <div className="mb-1">
+                {filteredSummary[name].map((entry, i) => (
+                  <div key={i} className="text-xs md:text-sm">
+                    {entry.timestamp}
+                  </div>
+                ))}
+              </div>
+              <div className="mb-1">
+                {filteredSummary[name].map((entry, i) => (
+                  <span key={i} className="text-lg">
+                    {isApologyEntry(entry) ? (
+                      <FaTimesCircle className="text-red-500 inline" />
+                    ) : (
+                      <FaCheckCircle className="text-green-500 inline" />
+                    )}
+                  </span>
+                ))}
+              </div>
+              <div className="mb-1">
+                {filteredSummary[name].map((entry, i) => (
+                  <div key={i} className="text-xs md:text-sm">
+                    {isApologyEntry(entry) ? (entry.reason || 'No reason provided') : ''}
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-2 mt-2">
+                {filteredSummary[name].map((entry, i) => (
+                  <>
+                    <button
+                      key={`edit-${i}`}
+                      className="text-blue-500 hover:underline text-xs"
+                      onClick={() => handleEdit(entry.id)}
+                    >Edit</button>
+                    <button
+                      key={`del-${i}`}
+                      className="text-red-500 hover:underline text-xs"
+                      onClick={() => handleDelete(entry.id)}
+                    >Delete</button>
+                  </>
+                ))}
+              </div>
+            </div>
+          ))
+        )
+      ) : (
+        <div className="overflow-x-auto custom-scrollbar mb-6 md:mb-10">
+          {Object.keys(filteredSummary).length === 0 ? (
+            <div className="text-center py-8">
+              <div className="text-gray-500 dark:text-gray-400 text-lg font-medium">
+                No {showType === 'all' ? 'attendance or apology' : showType} data available
+              </div>
+              <div className="text-gray-400 dark:text-gray-500 text-sm mt-2">
+                {showType === 'all' 
+                  ? 'No attendance or apology records found for the current filters.'
+                  : `No ${showType} records found for the current filters.`
+                }
+              </div>
+            </div>
+          ) : (
+            Object.keys(filteredSummary)
+              .map((name, idx) => (
+                <div
+                  key={name}
+                  className={`w-full max-w-full mb-6 rounded-xl shadow border border-blue-200 dark:border-blue-700 ${cardColors[idx % cardColors.length]} p-2 md:p-4`}
+                >
+                  <table className="min-w-full text-gray-900 dark:text-gray-100">
+                    <thead className={darkMode ? "bg-gray-700 text-gray-100" : "bg-gray-200 text-gray-900"}>
+                      <tr>
+                        <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm min-w-[120px] whitespace-nowrap">Meeting</th>
+                        <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm min-w-[220px]">Attendee(s)</th>
+                        <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Congregation</th>
+                        <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Submitted Time(s)</th>
+                        <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Presence Status</th>
+                        <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Reason</th>
+                        <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr key={name} className="text-sm md:text-base">
+                        <td className="border px-2 md:px-4 py-2 text-xs md:text-sm min-w-[120px] whitespace-nowrap">
+                          <div className="text-xs md:text-sm font-medium text-blue-600 dark:text-blue-200">
+                            {filteredSummary[name][0]?.meeting_title || "Unknown Meeting"}
+                          </div>
+                        </td>
+                        <td className="border px-2 md:px-4 py-2 text-xs md:text-sm min-w-[220px]">
+                          {filteredSummary[name].map((entry, i) => (
+                            <div key={i}>
+                              <span className="font-semibold">{entry.name}</span>
+                              <span> ({entry.position})</span>
+                            </div>
+                          ))}
+                        </td>
+                        <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">{name}</td>
+                        <td className="border px-2 md:px-4 py-2 space-y-1">
+                          {filteredSummary[name].map((entry, i) => (
+                            <div key={i} className="text-xs md:text-sm">
+                              {entry.timestamp}
+                            </div>
+                          ))}
+                        </td>
+                        <td className="border px-2 md:px-4 py-2">
+                          {filteredSummary[name].map((entry, i) => (
+                            <div key={i} className="flex items-center gap-2 mb-1">
+                              <span className="text-lg">
+                                {isApologyEntry(entry) ? (
+                                  <FaTimesCircle className="text-red-500" />
+                                ) : (
+                                  <FaCheckCircle className="text-green-500" />
+                                )}
+                              </span>
+                            </div>
+                          ))}
+                        </td>
+                        <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
+                          {filteredSummary[name].map((entry, i) => (
+                            <div key={i} className="text-xs md:text-sm">
+                              {isApologyEntry(entry) ? (entry.reason || 'No reason provided') : ''}
+                            </div>
+                          ))}
+                        </td>
+                        <td className="border px-2 md:px-4 py-2">
+                          {filteredSummary[name].map((entry, i) => (
+                            <div key={entry.id} className="flex gap-2 mb-1">
+                              <button
+                                className="text-blue-500 hover:underline text-xs"
+                                onClick={() => handleEdit(entry.id)}
+                              >Edit</button>
+                              <button
+                                className="text-red-500 hover:underline text-xs"
+                                onClick={() => handleDelete(entry.id)}
+                              >Delete</button>
+                            </div>
+                          ))}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              ))
+          )}
+        </div>
+      )}
 
       {/* Year-End Attendance Chart */}
       <div className="my-8 md:my-12">
