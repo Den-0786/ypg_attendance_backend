@@ -55,7 +55,7 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
       });
       const data = await res.json();
       if (res.ok) {
-        toast.success('Meeting set successfully');
+        toast.success('Meeting set successfully', { duration: 5000 });
         
         // Update context and localStorage
         setMeetingDate(dateInput);
@@ -141,18 +141,25 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
       const res = await fetch(`${API_URL}/api/deactivate-meeting`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // Ensure session is sent
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        toast.success('Current meeting deactivated');
+        toast.success('Current meeting deactivated', { duration: 5000 });
         // Clear context and localStorage
         setMeetingDate('');
         setMeetingTitle('');
         localStorage.removeItem('meetingDate');
         localStorage.removeItem('meetingTitle');
       } else {
+        if (res.status === 401 || res.status === 403) {
+          toast.error('Session expired, please log in again.');
+          // Optionally redirect to login page here
+          // router.push('/login');
+          return;
+        }
         toast.error(data.error || 'Failed to deactivate meeting');
       }
     } catch (error) {
