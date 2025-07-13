@@ -398,43 +398,46 @@ export default function DashboardDistrict({
                   );
                 })
                 .map((name, idx) => (
-                  <div
-                    key={name}
-                    className={`w-full max-w-full mb-6 rounded-xl shadow border border-blue-200 dark:border-blue-700 ${idx % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700'} p-2 md:p-4`}
-                  >
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
-                      <h3 className="text-lg font-bold text-blue-700 dark:text-blue-400">{name}</h3>
-                      <div className="flex gap-2">
-                        <button
-                          className="text-blue-500 hover:underline text-sm"
-                          onClick={() => handleEdit(summary[name][0]?.id)}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          className="text-red-500 hover:underline text-sm"
-                          onClick={() => handleDelete(summary[name][0]?.id)}
-                        >
-                          Delete
-                        </button>
+                  <tr key={name}>
+                    <td colSpan={6} className="p-0">
+                      <div
+                        className={`w-full max-w-full mb-6 rounded-xl shadow border border-blue-200 dark:border-blue-700 ${idx % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700'} p-2 md:p-4`}
+                      >
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
+                          <h3 className="text-lg font-bold text-blue-700 dark:text-blue-400">{name}</h3>
+                          <div className="flex gap-2">
+                            <button
+                              className="text-blue-500 hover:underline text-sm"
+                              onClick={() => handleEdit(summary[name][0]?.id)}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              className="text-red-500 hover:underline text-sm"
+                              onClick={() => handleDelete(summary[name][0]?.id)}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div className="text-sm text-gray-700 dark:text-gray-300">
+                            <p><span className="font-semibold">Congregation:</span> {name}</p>
+                            <p><span className="font-semibold">Submitted Time(s):</span> {summary[name].length}</p>
+                            <p><span className="font-semibold">Presence Status:</span> {summary[name].every(entry => isApologyEntry(entry)) ? 'All apologies' : summary[name].every(entry => !isApologyEntry(entry)) ? 'All attendances' : 'Mixed'}</p>
+                          </div>
+                          <div className="text-sm text-gray-700 dark:text-gray-300">
+                            <p><span className="font-semibold">Meeting(s):</span></p>
+                            <ul className="list-disc list-inside">
+                              {summary[name].map((entry, i) => (
+                                <li key={i}>{entry.meeting_title || "Unknown Meeting"}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div className="text-sm text-gray-700 dark:text-gray-300">
-                        <p><span className="font-semibold">Congregation:</span> {name}</p>
-                        <p><span className="font-semibold">Submitted Time(s):</span> {summary[name].length}</p>
-                        <p><span className="font-semibold">Presence Status:</span> {summary[name].every(entry => isApologyEntry(entry)) ? 'All apologies' : summary[name].every(entry => !isApologyEntry(entry)) ? 'All attendances' : 'Mixed'}</p>
-                      </div>
-                      <div className="text-sm text-gray-700 dark:text-gray-300">
-                        <p><span className="font-semibold">Meeting(s):</span></p>
-                        <ul className="list-disc list-inside">
-                          {summary[name].map((entry, i) => (
-                            <li key={i}>{entry.meeting_title || "Unknown Meeting"}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
+                    </td>
+                  </tr>
                 ))}
             </tbody>
           </table>
