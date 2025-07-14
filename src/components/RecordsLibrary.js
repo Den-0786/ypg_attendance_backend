@@ -524,40 +524,47 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
         ))}
       </div>
       {/* Advanced Filters */}
-      <div className="flex flex-wrap gap-4 mb-4 items-center">
-        <label className="text-sm flex items-center gap-1"><FaFilter /> Type:
-          <select value={filterType} onChange={e => setFilterType(e.target.value)} className="ml-1 px-2 py-1 border rounded">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3 md:gap-4 mb-4">
+        <label className="text-sm flex flex-col gap-1">
+          <span className="flex items-center gap-1 font-medium"><FaFilter /> Type</span>
+          <select value={filterType} onChange={e => setFilterType(e.target.value)} className="px-2 py-1.5 border rounded-md text-xs">
             <option value="">All</option>
             <option value="local">Local</option>
             <option value="district">District</option>
           </select>
         </label>
-        <label className="text-sm flex items-center gap-1">Record Kind:
-          <select value={filterRecordKind} onChange={e => setFilterRecordKind(e.target.value)} className="ml-1 px-2 py-1 border rounded">
+        <label className="text-sm flex flex-col gap-1">
+          <span className="font-medium">Record Kind</span>
+          <select value={filterRecordKind} onChange={e => setFilterRecordKind(e.target.value)} className="px-2 py-1.5 border rounded-md text-xs">
             <option value="">All</option>
             <option value="attendance">Attendance</option>
             <option value="apology">Apology</option>
           </select>
         </label>
-        <label className="text-sm flex items-center gap-1">Year:
-          <select value={filterYear} onChange={e => setFilterYear(e.target.value)} className="ml-1 px-2 py-1 border rounded">
+        <label className="text-sm flex flex-col gap-1">
+          <span className="font-medium">Year</span>
+          <select value={filterYear} onChange={e => setFilterYear(e.target.value)} className="px-2 py-1.5 border rounded-md text-xs">
             <option value="">All</option>
             {years.map(year => (
               <option key={year} value={year}>{year}</option>
             ))}
           </select>
         </label>
-        <label className="text-sm flex items-center gap-1">Cong/Exec:
-          <input value={filterCong} onChange={e => setFilterCong(e.target.value)} className="ml-1 px-2 py-1 border rounded" placeholder="Name..." />
+        <label className="text-sm flex flex-col gap-1">
+          <span className="font-medium">Cong/Exec</span>
+          <input value={filterCong} onChange={e => setFilterCong(e.target.value)} className="px-2 py-1.5 border rounded-md text-xs" placeholder="Name..." />
         </label>
-        <label className="text-sm">Start Date:
-          <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="ml-2 px-2 py-1 border rounded" />
+        <label className="text-sm flex flex-col gap-1">
+          <span className="font-medium">Start Date</span>
+          <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="px-2 py-1.5 border rounded-md text-xs" />
         </label>
-        <label className="text-sm">End Date:
-          <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="ml-2 px-2 py-1 border rounded" />
+        <label className="text-sm flex flex-col gap-1">
+          <span className="font-medium">End Date</span>
+          <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="px-2 py-1.5 border rounded-md text-xs" />
         </label>
-        <label className="text-sm">Per page:
-          <select value={perPage} onChange={e => setPerPage(Number(e.target.value))} className="ml-2 px-2 py-1 border rounded">
+        <label className="text-sm flex flex-col gap-1">
+          <span className="font-medium">Per page</span>
+          <select value={perPage} onChange={e => setPerPage(Number(e.target.value))} className="px-2 py-1.5 border rounded-md text-xs">
             {[10, 20, 50, 100].map(n => <option key={n} value={n}>{n}</option>)}
           </select>
         </label>
@@ -746,41 +753,41 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
           onClick={() => setShowDetails(false)}
         >
           <div 
-            className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-xl w-full max-w-md"
+            className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-2xl w-full max-w-sm border border-gray-200 dark:border-gray-600"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white">Record Details</h2>
+            <div className="flex justify-between items-center mb-3 pb-2 border-b border-gray-200 dark:border-gray-600">
+              <h2 className="text-base font-semibold text-gray-900 dark:text-white">Record Details</h2>
               <button
                 onClick={() => setShowDetails(false)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl font-bold w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-lg font-bold w-5 h-5 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               >
                 ×
               </button>
             </div>
-            <div className="space-y-3 max-h-96 overflow-y-auto">
+            <div className="space-y-2 max-h-80 overflow-y-auto">
               {Object.entries(detailsRecord).map(([field, value]) => (
-                <div key={field} className="flex justify-between items-start border-b border-gray-200 dark:border-gray-600 pb-2">
-                  <span className="font-semibold capitalize text-gray-700 dark:text-gray-300 text-sm">
+                <div key={field} className="flex items-center py-1.5 px-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                  <span className="font-medium capitalize text-gray-600 dark:text-gray-400 text-xs min-w-20">
                     {field.replace(/_/g, ' ')}
                   </span>
-                  <span className="text-right break-words text-gray-900 dark:text-gray-100 text-sm max-w-48">
+                  <span className="text-gray-900 dark:text-gray-100 text-xs ml-2 flex-1 break-words">
                     {String(value || 'N/A')}
                   </span>
                 </div>
               ))}
             </div>
             {/* Audit log placeholder: Backend required */}
-            <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-              <span className="font-semibold text-gray-700 dark:text-gray-300 text-sm">Audit Log:</span>
-              <span className="ml-2 text-xs text-gray-500 dark:text-gray-400 block mt-1">
+            <div className="mt-3 p-2 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-600 rounded-lg border border-blue-100 dark:border-gray-600">
+              <span className="font-medium text-blue-700 dark:text-blue-300 text-xs">Audit Log:</span>
+              <span className="text-blue-600 dark:text-blue-400 text-xs block mt-1">
                 (Show who edited/deleted this record and when. Backend support required.)
               </span>
             </div>
-            <div className="flex justify-end mt-4">
+            <div className="flex justify-end mt-3 pt-2 border-t border-gray-200 dark:border-gray-600">
               <button
                 onClick={() => setShowDetails(false)}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors text-sm"
+                className="px-3 py-1.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg transition-all duration-200 text-xs font-medium shadow-sm hover:shadow-md"
               >
                 Close
               </button>
