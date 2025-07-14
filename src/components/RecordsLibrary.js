@@ -594,6 +594,14 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
           <table className="min-w-max text-gray-900 dark:text-gray-100">
             <thead className={darkMode ? "bg-gray-700 text-gray-100" : "bg-gray-200 text-gray-900"}>
               <tr>
+                <th className="px-2 md:px-4 py-2 border text-xs md:text-sm">
+                  <input
+                    type="checkbox"
+                    checked={selectedRecords.length === paginatedRecords.length && paginatedRecords.length > 0}
+                    onChange={toggleSelectAll}
+                    className="rounded"
+                  />
+                </th>
                 {allColumns.filter(col => showColumns[col.key]).map(col => (
                   <th key={col.key} className="px-2 md:px-4 py-2 border text-xs md:text-sm min-w-[120px] whitespace-nowrap">{col.label}</th>
                 ))}
@@ -606,6 +614,14 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
             <tbody>
               {paginatedRecords.map((record, idx) => (
                 <tr key={record.id} className={`transition-colors ${idx % 2 === 0 ? (darkMode ? 'bg-gray-800' : 'bg-gray-50') : ''}`}>
+                  <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
+                    <input
+                      type="checkbox"
+                      checked={selectedRecords.includes(record.id)}
+                      onChange={() => toggleSelect(record.id)}
+                      className="rounded"
+                    />
+                  </td>
                   {allColumns.filter(col => showColumns[col.key]).map(col => (
                     <td key={col.key} className="border px-2 md:px-4 py-2 text-xs md:text-sm">
                       {col.key === 'notes' && tagEditId === record.id ? (
