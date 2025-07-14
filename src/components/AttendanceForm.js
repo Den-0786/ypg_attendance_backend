@@ -297,7 +297,9 @@ export default function AttendanceForm({ meetingInfo }) {
         // Dispatch custom event to notify dashboard components
         window.dispatchEvent(new CustomEvent('attendanceDataChanged'));
       } else {
+        // Show the real error message from backend
         toast.error(data.error || 'Failed to submit attendance');
+        console.error('Attendance submission failed:', data);
       }
     } catch (error) {
       toast.error('Network error occurred');

@@ -92,62 +92,28 @@ export default function MeetingPage() {
     if (!loggedIn) {
       router.replace('/');
     }
-    if (loggedIn && userRole === 'admin') {
-      // Admin: fetch current meeting to decide what to show
-      setLoadingMeeting(true);
-      fetch(`${API_URL}/api/current-meeting`, {
-        credentials: 'include'
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data && !data.error) {
-            setMeetingInfo(data);
-            setShowMeetingForm(false);
-          } else {
-            setMeetingInfo(null);
-            setShowMeetingForm(true);
-          }
-          setLoadingMeeting(false);
-        })
-        .catch(() => {
+    // Remove the check that only shows set meeting form for admin
+    // Always allow showing the set meeting form for both admin and user
+    setLoadingMeeting(true);
+    fetch(`${API_URL}/api/current-meeting`, {
+      credentials: 'include'
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data && !data.error) {
+          setMeetingInfo(data);
+          setShowMeetingForm(false);
+        } else {
           setMeetingInfo(null);
           setShowMeetingForm(true);
-          setLoadingMeeting(false);
-        });
-    }
-    if (loggedIn && userRole === 'user') {
-      setLoadingMeeting(true);
-      fetch(`${API_URL}/api/current-meeting`, {
-        credentials: 'include'
+        }
+        setLoadingMeeting(false);
       })
-        .then(res => res.json())
-        .then(data => {
-          if (data && !data.error) {
-            setMeetingInfo(data);
-          } else {
-            // Show no meeting notification for user
-            if (!hasShownNoMeetingToast.current) {
-              toast.custom((t) => (
-                <NoMeetingToast onClose={() => toast.dismiss(t.id)} />
-              ), { duration: 6000 });
-              hasShownNoMeetingToast.current = true;
-              localStorage.setItem('hasShownNoMeetingToast', 'true');
-            }
-          }
-          setLoadingMeeting(false);
-        })
-        .catch(() => {
-          // Show no meeting notification on error too
-          if (!hasShownNoMeetingToast.current) {
-            toast.custom((t) => (
-              <NoMeetingToast onClose={() => toast.dismiss(t.id)} />
-            ), { duration: 6000 });
-            hasShownNoMeetingToast.current = true;
-            localStorage.setItem('hasShownNoMeetingToast', 'true');
-          }
-          setLoadingMeeting(false);
-        });
-    }
+      .catch(() => {
+        setMeetingInfo(null);
+        setShowMeetingForm(true);
+        setLoadingMeeting(false);
+      });
   }, [loggedIn, userRole, router]);
 
   // Don't render anything until login state is confirmed

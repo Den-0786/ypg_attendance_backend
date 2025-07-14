@@ -165,9 +165,11 @@ export default function ApologyForm({ meetingInfo }) {
         // Dispatch custom event to notify dashboard components
         window.dispatchEvent(new CustomEvent('apologyDataChanged'));
       } else {
+        // Show the real error message from backend
         const errorMessage = data.error || 'Failed to submit apology';
         setAuthError(errorMessage);
         toast.error(errorMessage);
+        console.error('Apology submission failed:', data);
       }
     } catch (error) {
       console.error('Network error in apology submission:', error);

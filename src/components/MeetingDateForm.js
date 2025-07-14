@@ -70,17 +70,17 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
         setAdminPassword('');
         setAuthError('');
         
-        // Close modal and trigger refresh
-        onClose();
-        
-        // Force refresh for Chrome compatibility
-        setTimeout(() => {
-          onMeetingSet();
-          // Additional Chrome-specific refresh
-          if (/Chrome/.test(navigator.userAgent)) {
-            window.location.reload();
-          }
-        }, 500);
+        // Do NOT call onClose() or navigate away
+        // Optionally, you can close the modal if you use one, but do not redirect
+        // Optionally, refresh meeting info in parent if needed
+        if (typeof onMeetingSet === 'function') {
+          setTimeout(() => {
+            onMeetingSet();
+            if (/Chrome/.test(navigator.userAgent)) {
+              window.location.reload();
+            }
+          }, 500);
+        }
       } else {
         // Check if it's the duplicate meeting error
         if (data.error && data.error.includes('Cannot set two meetings same day')) {
