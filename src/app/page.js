@@ -34,33 +34,24 @@ export default function Page() {
   useEffect(() => {
     if (!hasInitialized.current) {
       hasInitialized.current = true;
-      
-      // Clear any existing session state immediately
-      if (typeof setLoggedIn === 'function') {
-        setLoggedIn(false);
-      }
-      if (typeof setUserRole === 'function') {
-        setUserRole(null);
-      }
-      if (typeof setMeetingSet === 'function') {
-        setMeetingSet(false);
-      }
-      
-      // Clear any stored session data
-      if (typeof window !== 'undefined') {
-        // Clear localStorage and sessionStorage
-        localStorage.clear();
-        sessionStorage.clear();
-        
-        // Clear server-side session
-        fetch(`${API_URL}/api/logout`, {
-          method: 'POST',
-          credentials: 'include',
-        }).catch(() => {
-          // Ignore errors - we just want to clear any existing session
-        });
-      }
-      
+      // Remove session clearing on every mount:
+      // if (typeof setLoggedIn === 'function') {
+      //   setLoggedIn(false);
+      // }
+      // if (typeof setUserRole === 'function') {
+      //   setUserRole(null);
+      // }
+      // if (typeof setMeetingSet === 'function') {
+      //   setMeetingSet(false);
+      // }
+      // if (typeof window !== 'undefined') {
+      //   localStorage.clear();
+      //   sessionStorage.clear();
+      //   fetch(`${API_URL}/api/logout`, {
+      //     method: 'POST',
+      //     credentials: 'include',
+      //   }).catch(() => {});
+      // }
       setIsLoading(false);
     }
   }, [setLoggedIn, setUserRole, setMeetingSet]);
