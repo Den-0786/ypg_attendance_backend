@@ -501,40 +501,18 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
       <div id="toast-root"></div>
       
       {/* Tabs */}
-      <div className="flex flex-col md:flex-row gap-2 md:gap-4 mb-4">
+      <div className="flex gap-2 md:gap-4 mb-4">
         <button
-          className={`px-4 py-2 rounded ${tab === "local" ? "bg-blue-600 text-white" : "bg-gray-200 dark:bg-gray-700"}`}
+          className={`px-3 md:px-4 py-2 rounded text-sm md:text-base ${tab === "local" ? "bg-blue-600 text-white" : "bg-gray-200 dark:bg-gray-700"}`}
           onClick={() => setTab("local")}
         >
           Local Congregations
         </button>
         <button
-          className={`px-4 py-2 rounded ${tab === "district" ? "bg-blue-600 text-white" : "bg-gray-200 dark:bg-gray-700"}`}
+          className={`px-3 md:px-4 py-2 rounded text-sm md:text-base ${tab === "district" ? "bg-blue-600 text-white" : "bg-gray-200 dark:bg-gray-700"}`}
           onClick={() => setTab("district")}
         >
           District Executives
-        </button>
-        <button
-          className="ml-auto px-4 py-2 bg-green-600 text-white rounded flex items-center gap-2 hover:bg-green-700 transition-colors"
-          onClick={handleExport}
-          title="Export all records as CSV"
-        >
-          <FaFileCsv /> Export CSV
-        </button>
-        <button
-          className="px-4 py-2 bg-red-600 text-white rounded flex items-center gap-2 disabled:opacity-50 hover:bg-red-700 transition-colors"
-          onClick={handleBulkDelete}
-          disabled={selectedRecords.length === 0}
-          title="Delete all selected records"
-        >
-          <FaTrash /> Delete Selected
-        </button>
-        <button
-          className="px-4 py-2 bg-gray-500 text-white rounded flex items-center gap-2 hover:bg-gray-600"
-          onClick={() => setShowColumns((prev) => ({ ...prev, show: !prev.show }))}
-          title="Customize columns"
-        >
-          <FaColumns /> Columns
         </button>
       </div>
       {/* Analytics Chart */}
@@ -711,6 +689,31 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
             </tbody>
           </table>
         )}
+      </div>
+      {/* Action Buttons */}
+      <div className="flex flex-wrap gap-2 md:gap-4 justify-center mb-4">
+        <button
+          className="px-3 md:px-4 py-2 bg-green-600 text-white rounded text-sm md:text-base flex items-center gap-2 hover:bg-green-700 transition-colors"
+          onClick={handleExport}
+          title="Export all records as CSV"
+        >
+          <FaFileCsv /> Export CSV
+        </button>
+        <button
+          className="px-3 md:px-4 py-2 bg-red-600 text-white rounded text-sm md:text-base flex items-center gap-2 disabled:opacity-50 hover:bg-red-700 transition-colors"
+          onClick={handleBulkDelete}
+          disabled={selectedRecords.length === 0}
+          title="Delete all selected records"
+        >
+          <FaTrash /> Delete Selected
+        </button>
+        <button
+          className="px-3 md:px-4 py-2 bg-gray-500 text-white rounded text-sm md:text-base flex items-center gap-2 hover:bg-gray-600"
+          onClick={() => setShowColumns((prev) => ({ ...prev, show: !prev.show }))}
+          title="Customize columns"
+        >
+          <FaColumns /> Columns
+        </button>
       </div>
       {/* Pagination */}
       <div className="flex gap-2 items-center justify-center mb-6">
