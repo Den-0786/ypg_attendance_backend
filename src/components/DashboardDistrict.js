@@ -371,172 +371,80 @@ export default function DashboardDistrict({
       </div>
       
       {/* Table of District Executives */}
-      {isMobile ? (
-        Object.keys(summary).length === 0 ? (
-          <div className="text-center py-8">
-            <div className="text-gray-500 dark:text-gray-400 text-lg font-medium">
-              No {showType === 'all' ? 'attendance or apology' : showType} data available
+      <div className="overflow-x-auto md:overflow-x-visible custom-scrollbar">
+        <div className="flex md:grid md:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6 min-w-max md:min-w-0">
+          {Object.keys(summary).length === 0 ? (
+            <div className="text-center py-8">
+              <div className="text-gray-500 dark:text-gray-400 text-lg font-medium">
+                No {showType === 'all' ? 'attendance or apology' : showType} data available
+              </div>
+              <div className="text-gray-400 dark:text-gray-500 text-sm mt-2">
+                {showType === 'all' 
+                  ? 'No attendance or apology records found for district executives.'
+                  : `No ${showType} records found for district executives.`
+                }
+              </div>
             </div>
-            <div className="text-gray-400 dark:text-gray-500 text-sm mt-2">
-              {showType === 'all' 
-                ? 'No attendance or apology records found for district executives.'
-                : `No ${showType} records found for district executives.`
-              }
-            </div>
-          </div>
-        ) : (
-          Object.keys(summary).map((name, idx) => (
-            <div
-              key={name}
-              className={`dashboard-card w-full max-w-full mb-6 rounded-xl shadow border border-blue-200 dark:border-blue-700 ${idx % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700'} p-4`}
-            >
-              <div className="mb-2 text-xs font-medium text-blue-600 dark:text-blue-200 flex flex-row flex-wrap gap-2 items-center">
-                <span className="font-semibold">Meeting:</span>
-                <span>{summary[name][0]?.meeting_title || "Unknown Meeting"}</span>
-              </div>
-              <div className="mb-1 flex flex-row flex-wrap gap-2 items-center">
-                <span className="font-semibold">Name(s):</span>
-                {summary[name].map((entry, i) => (
-                  <span key={i}>
-                    <span className="font-semibold">{entry.name}</span>
-                    <span> ({entry.position})</span>
-                  </span>
-                ))}
-              </div>
-              <div className="mb-1 flex flex-row flex-wrap gap-2 items-center"><span className="font-semibold">Congregation:</span> <span>{name}</span></div>
-              <div className="mb-1 flex flex-row flex-wrap gap-2 items-center"><span className="font-semibold">Submitted Time(s):</span>
-                {summary[name].map((entry, i) => (
-                  <span key={i} className="text-xs md:text-sm">{entry.timestamp}</span>
-                ))}
-              </div>
-              <div className="mb-1 flex flex-row flex-wrap gap-2 items-center"><span className="font-semibold">Presence Status:</span>
-                {summary[name].map((entry, i) => (
-                  <span key={i} className="text-lg">
-                    {isApologyEntry(entry) ? (
-                      <FaTimesCircle className="text-red-500 inline" />
-                    ) : (
-                      <FaCheckCircle className="text-green-500 inline" />
-                    )}
-                  </span>
-                ))}
-              </div>
-              {hasApologies && (
-                <div className="mb-1 flex flex-row flex-wrap gap-2 items-center"><span className="font-semibold">Reason:</span>
+          ) : (
+            Object.keys(summary).map((name, idx) => (
+              <div
+                key={name}
+                className={`dashboard-card w-full max-w-full mb-6 rounded-xl shadow border border-blue-200 dark:border-blue-700 ${idx % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700'} p-4`}
+              >
+                <div className="mb-2 text-xs font-medium text-blue-600 dark:text-blue-200 flex flex-row flex-wrap gap-2 items-center">
+                  <span className="font-semibold">Meeting:</span>
+                  <span>{summary[name][0]?.meeting_title || "Unknown Meeting"}</span>
+                </div>
+                <div className="mb-1 flex flex-row flex-wrap gap-2 items-center">
+                  <span className="font-semibold">Name(s):</span>
                   {summary[name].map((entry, i) => (
-                    <span key={i} className="text-xs md:text-sm">
-                      {isApologyEntry(entry) ? (entry.reason || 'No reason provided') : ''}
+                    <span key={i}>
+                      <span className="font-semibold">{entry.name}</span>
+                      <span> ({entry.position})</span>
                     </span>
                   ))}
                 </div>
-              )}
-              <div className="flex gap-4 mt-4">
-                <button
-                  className="text-blue-500 hover:underline text-xs"
-                  onClick={() => handleEdit(summary[name][0]?.id)}
-                >Edit</button>
-                <button
-                  className="text-red-500 hover:underline text-xs"
-                  onClick={() => handleDelete(summary[name][0]?.id)}
-                >Delete</button>
-              </div>
-            </div>
-          ))
-        )
-      ) : (
-        <div className="overflow-x-auto custom-scrollbar mb-6 md:mb-10">
-          <table className="min-w-full border border-gray-300">
-            <thead className={darkMode ? "bg-gray-700" : "bg-gray-200"}>
-              <tr>
-                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm min-w-[120px] whitespace-nowrap">Meeting</th>
-                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm min-w-[220px]">Attendee(s)</th>
-                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Congregation</th>
-                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Submitted Time(s)</th>
-                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Presence Status</th>
+                <div className="mb-1 flex flex-row flex-wrap gap-2 items-center"><span className="font-semibold">Congregation:</span> <span>{name}</span></div>
+                <div className="mb-1 flex flex-row flex-wrap gap-2 items-center"><span className="font-semibold">Submitted Time(s):</span>
+                  {summary[name].map((entry, i) => (
+                    <span key={i} className="text-xs md:text-sm">{entry.timestamp}</span>
+                  ))}
+                </div>
+                <div className="mb-1 flex flex-row flex-wrap gap-2 items-center"><span className="font-semibold">Presence Status:</span>
+                  {summary[name].map((entry, i) => (
+                    <span key={i} className="text-lg">
+                      {isApologyEntry(entry) ? (
+                        <FaTimesCircle className="text-red-500 inline" />
+                      ) : (
+                        <FaCheckCircle className="text-green-500 inline" />
+                      )}
+                    </span>
+                  ))}
+                </div>
                 {hasApologies && (
-                  <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Reason</th>
+                  <div className="mb-1 flex flex-row flex-wrap gap-2 items-center"><span className="font-semibold">Reason:</span>
+                    {summary[name].map((entry, i) => (
+                      <span key={i} className="text-xs md:text-sm">
+                        {isApologyEntry(entry) ? (entry.reason || 'No reason provided') : ''}
+                      </span>
+                    ))}
+                  </div>
                 )}
-                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Object.keys(summary)
-                .filter((name) => {
-                  const searchLower = search.toLowerCase();
-                  // Check congregation name
-                  if (name.toLowerCase().includes(searchLower)) return true;
-                  // Check if any executive name or position matches
-                  return summary[name].some(entry =>
-                    (entry.name || "").toLowerCase().includes(searchLower) ||
-                    (entry.position || "").toLowerCase().includes(searchLower)
-                  );
-                })
-                .map((name, idx) => (
-                  <tr key={name}>
-                    <td className="border px-2 md:px-4 py-2 text-xs md:text-sm min-w-[120px] whitespace-nowrap">
-                      <div className="text-xs md:text-sm font-medium text-blue-700 dark:text-blue-400">
-                        {summary[name][0]?.meeting_title || "Unknown Meeting"}
-                      </div>
-                    </td>
-                    <td className="border px-2 md:px-4 py-2 text-xs md:text-sm min-w-[220px]">
-                      {summary[name].map((entry, i) => (
-                        <div key={i}>
-                          <span className="font-semibold">{entry.name}</span>
-                          <span> ({entry.position})</span>
-                        </div>
-                      ))}
-                    </td>
-                    <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">{name}</td>
-                    <td className="border px-2 md:px-4 py-2 space-y-1">
-                      {summary[name].map((entry, i) => (
-                        <div key={i} className="text-xs md:text-sm">
-                          {entry.timestamp}
-                        </div>
-                      ))}
-                    </td>
-                    <td className="border px-2 md:px-4 py-2">
-                      {summary[name].map((entry, i) => (
-                        <div key={i} className="flex items-center gap-2 mb-1">
-                          <span className="text-lg">
-                            {isApologyEntry(entry) ? (
-                              <FaTimesCircle className="text-red-500" />
-                            ) : (
-                              <FaCheckCircle className="text-green-500" />
-                            )}
-                          </span>
-                        </div>
-                      ))}
-                    </td>
-                    {hasApologies && (
-                      <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
-                        {summary[name].map((entry, i) => (
-                          isApologyEntry(entry) ? (
-                            <div key={i}>{entry.reason || 'No reason provided'}</div>
-                          ) : null
-                        ))}
-                      </td>
-                    )}
-                    <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
-                      <div className="flex gap-2">
-                        <button
-                          className="text-blue-500 hover:underline text-sm"
-                          onClick={() => handleEdit(summary[name][0]?.id)}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          className="text-red-500 hover:underline text-sm"
-                          onClick={() => handleDelete(summary[name][0]?.id)}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
+                <div className="flex gap-4 mt-4">
+                  <button
+                    className="text-blue-500 hover:underline text-xs"
+                    onClick={() => handleEdit(summary[name][0]?.id)}
+                  >Edit</button>
+                  <button
+                    className="text-red-500 hover:underline text-xs"
+                    onClick={() => handleDelete(summary[name][0]?.id)}
+                  >Delete</button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
-      )}
+      </div>
 
       {/* District Executive Attendance Chart */}
       <div className="my-8 md:my-12">

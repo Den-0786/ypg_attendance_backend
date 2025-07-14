@@ -281,7 +281,8 @@ export default function AttendanceForm({ meetingInfo }) {
         meeting_date: meetingDate,
         timestamp: new Date().toTimeString().slice(0, 8),
       }));
-      const res = await fetch(`/api/submit-attendance`, {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+      const res = await fetch(`${API_URL}/api/submit-attendance`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

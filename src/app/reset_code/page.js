@@ -61,7 +61,8 @@ function ResetCodeContent() {
 
         try {
         setIsSubmitting(true);
-        const res = await fetch(`/api/reset-password-confirm`, {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+        const res = await fetch(`${API_URL}/api/reset-password-confirm`, {
             method: 'POST',
             headers: {
             'Content-Type': 'application/json',

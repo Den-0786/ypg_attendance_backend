@@ -570,13 +570,8 @@ export default function DashboardHome({
     <div>
       
       {/* Dashboard Summary Cards */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-md p-4 mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-            Dashboard Overview
-          </h2>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
+      <div className="overflow-x-auto md:overflow-x-visible custom-scrollbar">
+        <div className="flex md:grid md:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6 min-w-max md:min-w-0">
           <div className="p-3 md:p-4 bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-800 rounded-lg shadow-sm">
             <h3 className="text-xs md:text-sm font-semibold text-blue-700 dark:text-blue-300">Total Records</h3>
             <p className="text-lg md:text-xl font-bold text-blue-900 dark:text-blue-100">{filteredData.length}</p>
@@ -592,93 +587,6 @@ export default function DashboardHome({
           <div className="p-3 md:p-4 bg-amber-50 dark:bg-orange-900 border border-amber-200 dark:border-orange-800 rounded-lg shadow-sm">
             <h3 className="text-xs md:text-sm font-semibold text-amber-700 dark:text-orange-300">Grand Total Progress</h3>
             <p className="text-lg md:text-xl font-bold text-amber-900 dark:text-orange-100">{getGrandTotalProgress(filteredData, selectedYear)}%</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
-          <div className="p-4 md:p-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900 dark:to-blue-800 border border-blue-200 dark:border-blue-700 rounded-xl shadow-sm">
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <h3 className="text-sm md:text-base font-semibold text-blue-700 dark:text-blue-300 mb-2">
-                  Local Congregations Progress
-                </h3>
-                <p className="text-xs text-blue-600 dark:text-blue-400">
-                  Yearly Progress: {getLocalProgress(filteredData, selectedYear)}%
-                </p>
-                <p className="text-xs text-blue-600 dark:text-blue-400">
-                  Year: {selectedYear}
-                </p>
-              </div>
-              <div className="relative w-20 h-20 md:w-24 md:h-24">
-                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                  {/* Background circle */}
-                  <path
-                    className="text-blue-200 dark:text-blue-700"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                    fill="none"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
-                  {/* Yearly progress circle */}
-                  <path
-                    className="text-blue-500 dark:text-blue-400"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeDasharray={`${getLocalProgress(filteredData, selectedYear)} 100`}
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-sm md:text-base font-bold text-blue-700 dark:text-blue-300">
-                    {getLocalProgress(filteredData, selectedYear)}%
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-4 md:p-6 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900 dark:to-green-800 border border-green-200 dark:border-green-700 rounded-xl shadow-sm">
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <h3 className="text-sm md:text-base font-semibold text-green-700 dark:text-green-300 mb-2">
-                  District Executives Progress
-                </h3>
-                <p className="text-xs text-green-600 dark:text-green-400">
-                  Yearly Progress: {getDistrictProgress(filteredData, selectedYear)}%
-                </p>
-                <p className="text-xs text-green-600 dark:text-green-400">
-                  Year: {selectedYear}
-                </p>
-              </div>
-              <div className="relative w-20 h-20 md:w-24 md:h-24">
-                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                  {/* Background circle */}
-                  <path
-                    className="text-green-200 dark:text-green-700"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                    fill="none"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
-                  {/* Yearly progress circle */}
-                  <path
-                    className="text-green-500 dark:text-green-400"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeDasharray={`${getDistrictProgress(filteredData, selectedYear)} 100`}
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-sm md:text-base font-bold text-green-700 dark:text-green-300">
-                    {getDistrictProgress(filteredData, selectedYear)}%
-                  </span>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>

@@ -24,7 +24,8 @@ export default function ChangePasswordForm() {
         }
 
         try {
-        const res = await fetch(`/api/change-password`, {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+        const res = await fetch(`${API_URL}/api/change-password`, {
             method: 'POST',
             headers: {
             'Content-Type': 'application/json'

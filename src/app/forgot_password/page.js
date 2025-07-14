@@ -19,7 +19,8 @@ export default function ForgotPassword() {
         if (!identifier) return toast.error('Username or email is required');
 
         try {
-            const res = await fetch(`/api/request-password-reset`, {
+            const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+            const res = await fetch(`${API_URL}/api/request-password-reset`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
