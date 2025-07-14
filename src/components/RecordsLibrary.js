@@ -741,26 +741,46 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
       </div>
       {/* Details Modal */}
       {showDetails && detailsRecord && (
-        <div className="fixed inset-0 bg-black text-white bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded shadow-lg w-full max-w-lg">
-            <h2 className="text-lg font-bold mb-4">Record Details</h2>
-            <div className="space-y-2">
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowDetails(false)}
+        >
+          <div 
+            className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-xl w-full max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">Record Details</h2>
+              <button
+                onClick={() => setShowDetails(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl font-bold w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                ×
+              </button>
+            </div>
+            <div className="space-y-3 max-h-96 overflow-y-auto">
               {Object.entries(detailsRecord).map(([field, value]) => (
-                <div key={field} className="flex justify-between border-b pb-1">
-                  <span className="font-semibold capitalize">{field.replace(/_/g, ' ')}</span>
-                  <span className="text-right break-all">{String(value)}</span>
+                <div key={field} className="flex justify-between items-start border-b border-gray-200 dark:border-gray-600 pb-2">
+                  <span className="font-semibold capitalize text-gray-700 dark:text-gray-300 text-sm">
+                    {field.replace(/_/g, ' ')}
+                  </span>
+                  <span className="text-right break-words text-gray-900 dark:text-gray-100 text-sm max-w-48">
+                    {String(value || 'N/A')}
+                  </span>
                 </div>
               ))}
             </div>
             {/* Audit log placeholder: Backend required */}
-            <div className="mt-4 p-2 bg-gray-100 dark:bg-gray-900 rounded">
-              <span className="font-semibold">Audit Log:</span>
-              <span className="ml-2 text-xs text-gray-500">(Show who edited/deleted this record and when. Backend support required.)</span>
+            <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <span className="font-semibold text-gray-700 dark:text-gray-300 text-sm">Audit Log:</span>
+              <span className="ml-2 text-xs text-gray-500 dark:text-gray-400 block mt-1">
+                (Show who edited/deleted this record and when. Backend support required.)
+              </span>
             </div>
-            <div className="flex justify-end gap-3 mt-4">
+            <div className="flex justify-end mt-4">
               <button
                 onClick={() => setShowDetails(false)}
-                className="px-4 py-2 bg-gray-400 rounded text-white"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors text-sm"
               >
                 Close
               </button>
