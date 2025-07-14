@@ -105,7 +105,7 @@ export function useAuth() {
         if (typeof setUserRole === 'function') {
           setUserRole(data.role);
         }
-        console.log('Session check successful:', data);
+
       } else {
         if (typeof setLoggedIn === 'function') {
           setLoggedIn(false);
@@ -113,7 +113,7 @@ export function useAuth() {
         if (typeof setUserRole === 'function') {
           setUserRole(null);
         }
-        console.log('Session check: not logged in');
+
       }
     } catch (err) {
       console.error('Session check failed:', err);

@@ -153,6 +153,13 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
         setMeetingTitle('');
         localStorage.removeItem('meetingDate');
         localStorage.removeItem('meetingTitle');
+        
+        // Call onMeetingSet to refresh the parent component's meeting state
+        if (typeof onMeetingSet === 'function') {
+          setTimeout(() => {
+            onMeetingSet();
+          }, 500);
+        }
       } else {
         if (res.status === 401 || res.status === 403) {
           toast.error('Session expired, please log in again.');

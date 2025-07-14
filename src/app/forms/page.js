@@ -144,8 +144,8 @@ export default function MeetingPage() {
             const res = await fetch(`${API_URL}/api/current-meeting`, { credentials: 'include' });
             if (res.ok) {
               const data = await res.json();
-              if (data.meeting) {
-                setMeetingInfo(data.meeting);
+              if (data && !data.error) {
+                setMeetingInfo(data);
                 setLoadingMeeting(false);
               } else {
                 setMeetingInfo(null);
@@ -158,13 +158,8 @@ export default function MeetingPage() {
             if (attempt < 3) {
               setTimeout(() => fetchMeetingInfo(attempt + 1), 1000);
             } else {
-              console.error('Error fetching meeting:', error);
+              setMeetingInfo(null);
               setLoadingMeeting(false);
-              
-              // Chrome-specific fix for meeting info issues
-              if (navigator.userAgent.includes('Chrome')) {
-                window.location.reload();
-              }
             }
           }
         };
