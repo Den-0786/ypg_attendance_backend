@@ -85,29 +85,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'ypg_backend.wsgi.application'
 
-
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-
-
-# # Use PostgreSQL in production
-# if not DEBUG:
-    
-#     database_url = config('DATABASE_URL', default='')
-#     if database_url:
-#         DATABASES['default'] = dj_database_url.config(
-#             default=database_url,
-#             conn_max_age=600,
-#             conn_health_checks=True,
-#         )
-
 DATABASES = {}
 
 database_url = os.environ.get('DATABASE_URL')
@@ -236,15 +213,29 @@ if DEBUG:
     CORS_ORIGIN_ALLOW_ALL = True
 
 # Session settings
-SESSION_COOKIE_SAMESITE = "None"  # Allows cross-site cookies for local dev and production
-SESSION_COOKIE_SECURE = True     # Set to True in production (HTTPS only)
+# SESSION_COOKIE_SAMESITE = "None"  # Allows cross-site cookies for local dev and production
+# SESSION_COOKIE_SECURE = True     # Set to True in production (HTTPS only)
+# SESSION_COOKIE_HTTPONLY = True
+# SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+# SESSION_COOKIE_AGE = 86400  # 24 hours
+
+# # CSRF cookie settings for cross-origin authentication (important for mobile)
+# CSRF_COOKIE_SAMESITE = "None"
+# CSRF_COOKIE_SECURE = True
+
+# Session and CSRF cookie settings
+SESSION_COOKIE_SAMESITE = "None"
+CSRF_COOKIE_SAMESITE = "None"
 SESSION_COOKIE_HTTPONLY = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_AGE = 86400  # 24 hours
 
-# CSRF cookie settings for cross-origin authentication (important for mobile)
-CSRF_COOKIE_SAMESITE = "None"
-CSRF_COOKIE_SECURE = True
+if DEBUG:
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+else:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 # Security settings
 if not DEBUG:
