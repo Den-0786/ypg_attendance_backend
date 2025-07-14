@@ -255,9 +255,9 @@ export default function YearEndChart({ attendanceData, darkMode }) {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 md:p-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 md:mb-6">
-        <h2 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-3 sm:p-4 md:p-6 lg:p-8">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-3 sm:mb-4 md:mb-6">
+        <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
           Year-End Attendance Summary
         </h2>
         
@@ -265,7 +265,7 @@ export default function YearEndChart({ attendanceData, darkMode }) {
           {chartData.length > 0 && (
             <button
               onClick={exportData}
-              className={`px-3 py-1 text-sm border rounded-md transition-colors ${
+              className={`px-2 sm:px-3 py-1 text-xs sm:text-sm border rounded-md transition-colors ${
                 darkMode 
                   ? 'bg-gray-700 border-gray-600 text-white hover:bg-gray-600' 
                   : 'bg-white border-gray-300 text-gray-900 hover:bg-gray-50'
@@ -279,37 +279,37 @@ export default function YearEndChart({ attendanceData, darkMode }) {
       </div>
       
       <div className="w-full overflow-x-auto flex items-center justify-center">
-        <div className="min-w-[700px]"> 
-          <ResponsiveContainer width="100%" height={400}>
+        <div className="min-w-[600px] sm:min-w-[700px] lg:min-w-[900px] xl:min-w-[1100px]"> 
+          <ResponsiveContainer width="100%" height={300} className="sm:h-[350px] md:h-[400px] lg:h-[500px] xl:h-[600px]">
             <BarChart
               data={chartData}
               layout="horizontal"
               margin={{ 
                 top: 20, 
                 right: 20, 
-                left: 100, 
-                bottom: chartData.length > 5 ? 120 : 80 // Dynamic bottom margin
+                left: 80, 
+                bottom: chartData.length > 5 ? 100 : 60 // Dynamic bottom margin
               }}
               barGap={4}
-              barCategoryGap={16}
+              barCategoryGap={12}
             >
               <XAxis 
                 type="category" 
                 dataKey="congregation" 
                 stroke={darkMode ? "white" : "black"}
-                fontSize={10} 
+                fontSize={8} 
                 angle={-45}
                 textAnchor="end"
-                height={chartData.length > 5 ? 140 : 100} 
+                height={chartData.length > 5 ? 120 : 80} 
                 interval={0} 
-                tick={{ fontSize: window.innerWidth < 768 ? 10 : 8 }}
+                tick={{ fontSize: 8 }}
                 axisLine={true}
                 tickLine={true}
               />
               <YAxis 
                 type="number" 
                 stroke={darkMode ? "white" : "black"}
-                fontSize={window.innerWidth < 768 ? 14 : 12} 
+                fontSize={10} 
                 allowDecimals={false}
                 domain={[0, 12]}
                 ticks={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}
@@ -319,7 +319,7 @@ export default function YearEndChart({ attendanceData, darkMode }) {
                   position: 'insideLeft',
                   style: { 
                     textAnchor: 'middle',
-                    fontSize: window.innerWidth < 768 ? 12 : 10 // Responsive label size
+                    fontSize: 10
                   }
                 }}
                 axisLine={true}
@@ -334,7 +334,7 @@ export default function YearEndChart({ attendanceData, darkMode }) {
                   <Bar
                     key={month}
                     dataKey={monthKey}
-                    barSize={window.innerWidth < 768 ? 14 : 10} 
+                    barSize={8} 
                     radius={[2, 2, 2, 2]}
                     stackId="a"
                   >
@@ -357,90 +357,87 @@ export default function YearEndChart({ attendanceData, darkMode }) {
       </div>
 
       {/* Enhanced Legend */}
-      <div className="mt-4 md:-mt-16 space-y-3">
-        <div className="flex flex-wrap items-center justify-center gap-3 md:gap-6 text-xs md:text-sm">
-          <div className="flex items-center gap-1 md:gap-2">
-            <div className="w-3 h-3 bg-green-500 border border-green-600 rounded-sm"></div>
+      <div className="mt-3 sm:mt-4 md:-mt-16 space-y-2 sm:space-y-3">
+        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 md:gap-6 text-xs">
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 sm:w-3 sm:h-3 bg-green-500 border border-green-600 rounded-sm"></div>
             <span className="text-gray-700 dark:text-gray-300">Present</span>
           </div>
-          <div className="flex items-center gap-1 md:gap-2">
-            <div className="w-3 h-3 bg-gray-300 border border-gray-400 rounded-sm"></div>
-            <span className="text-gray-700 dark:text-gray-300">Absent/No Meeting</span>
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 sm:w-3 sm:h-3 bg-gray-300 border border-gray-400 rounded-sm"></div>
+            <span className="text-gray-700 dark:text-gray-300">Absent</span>
           </div>
           {selectedYear === new Date().getFullYear() && (
             <>
-              <div className="flex items-center gap-1 md:gap-2">
-                <div className="w-3 h-3 bg-gray-300 dark:bg-gray-600 border border-gray-400 dark:border-gray-500 rounded-sm"></div>
-                <span className="text-gray-700 dark:text-gray-300">Future Months</span>
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 sm:w-3 sm:h-3 bg-gray-300 dark:bg-gray-600 border border-gray-400 dark:border-gray-500 rounded-sm"></div>
+                <span className="text-gray-700 dark:text-gray-300">Future</span>
               </div>
-              <div className="flex items-center gap-1 md:gap-2">
-                <div className="w-3 h-3 bg-blue-500 border border-blue-600 rounded-sm"></div>
-                <span className="text-gray-700 dark:text-gray-300">Current Month</span>
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 sm:w-3 sm:h-3 bg-blue-500 border border-blue-600 rounded-sm"></div>
+                <span className="text-gray-700 dark:text-gray-300">Current</span>
               </div>
             </>
           )}
         </div>
         
-        <div className="text-center text-xs text-gray-500 dark:text-gray-400 space-y-1">
-          <p>• Each bar represents a congregation&apos;s attendance throughout {selectedYear}</p>
-          <p>• All 9 system congregations are displayed with monthly attendance segments</p>
-          <p>• Bars fill up to current month ({months[new Date().getMonth()]}) with modern rounded design</p>
-          {selectedYear === new Date().getFullYear() && (
-            <p>• Current year progress is highlighted with special indicators</p>
-          )}
+        <div className="text-center text-xs text-gray-500 dark:text-gray-400 space-y-1 px-2">
+          <p>• Each bar shows congregation attendance for {selectedYear}</p>
+          <p>• All 9 congregations displayed with monthly segments</p>
+          <p>• Current month: {months[new Date().getMonth()]} with special indicators</p>
         </div>
         
         {/* Summary Statistics */}
         {chartData.length > 0 && (
-          <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center text-xs">
+          <div className="mt-3 sm:mt-4 p-2 sm:p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 text-center text-xs">
               <div>
-                <p className="font-semibold text-gray-900 dark:text-white">
+                <p className="font-semibold text-gray-900 dark:text-white text-sm">
                   {chartData.length}
                 </p>
-                <p className="text-gray-600 dark:text-gray-400">Total Congregations</p>
+                <p className="text-gray-600 dark:text-gray-400 text-xs">Congregations</p>
               </div>
               <div>
-                <p className="font-semibold text-gray-900 dark:text-white">
+                <p className="font-semibold text-gray-900 dark:text-white text-sm">
                   {chartData.reduce((sum, data) => sum + data.totalMeetings, 0)}
                 </p>
-                <p className="text-gray-600 dark:text-gray-400">Total Meetings</p>
+                <p className="text-gray-600 dark:text-gray-400 text-xs">Meetings</p>
               </div>
               <div>
-                <p className="font-semibold text-gray-900 dark:text-white">
+                <p className="font-semibold text-gray-900 dark:text-white text-sm">
                   {(chartData.reduce((sum, data) => sum + parseFloat(data.attendanceRate), 0) / chartData.length).toFixed(1)}%
                 </p>
-                <p className="text-gray-600 dark:text-gray-400">Avg Attendance Rate</p>
+                <p className="text-gray-600 dark:text-gray-400 text-xs">Avg Rate</p>
               </div>
               <div>
-                <p className="font-semibold text-gray-900 dark:text-white">
+                <p className="font-semibold text-gray-900 dark:text-white text-sm">
                   {chartData.filter(data => parseFloat(data.attendanceRate) === 100).length}
                 </p>
-                <p className="text-gray-600 dark:text-gray-400">Perfect Attendance</p>
+                <p className="text-gray-600 dark:text-gray-400 text-xs">Perfect</p>
               </div>
             </div>
             
             {/* Attendance Progress Indicators */}
-            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-              <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 text-center">
-                Attendance Performance Categories
+            <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-200 dark:border-gray-600">
+              <h4 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white mb-2 sm:mb-3 text-center">
+                Performance Categories
               </h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-                <div className="flex items-center justify-between p-2 bg-green-50 dark:bg-green-900/20 rounded">
-                  <span className="text-green-700 dark:text-green-300">Excellent (90-100%)</span>
-                  <span className="font-semibold text-green-700 dark:text-green-300">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 text-xs">
+                <div className="flex items-center justify-between p-1 sm:p-2 bg-green-50 dark:bg-green-900/20 rounded">
+                  <span className="text-green-700 dark:text-green-300 text-xs">Excellent (90-100%)</span>
+                  <span className="font-semibold text-green-700 dark:text-green-300 text-xs">
                     {chartData.filter(data => parseFloat(data.attendanceRate) >= 90).length}
                   </span>
                 </div>
-                <div className="flex items-center justify-between p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded">
-                  <span className="text-yellow-700 dark:text-yellow-300">Good (70-89%)</span>
-                  <span className="font-semibold text-yellow-700 dark:text-yellow-300">
+                <div className="flex items-center justify-between p-1 sm:p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded">
+                  <span className="text-yellow-700 dark:text-yellow-300 text-xs">Good (70-89%)</span>
+                  <span className="font-semibold text-yellow-700 dark:text-yellow-300 text-xs">
                     {chartData.filter(data => parseFloat(data.attendanceRate) >= 70 && parseFloat(data.attendanceRate) < 90).length}
                   </span>
                 </div>
-                <div className="flex items-center justify-between p-2 bg-red-50 dark:bg-red-900/20 rounded">
-                  <span className="text-red-700 dark:text-red-300">Needs Improvement (&lt; 69%)</span>
-                  <span className="font-semibold text-red-700 dark:text-red-300">
+                <div className="flex items-center justify-between p-1 sm:p-2 bg-red-50 dark:bg-red-900/20 rounded">
+                  <span className="text-red-700 dark:text-red-300 text-xs">Needs Improvement (&lt; 69%)</span>
+                  <span className="font-semibold text-red-700 dark:text-red-300 text-xs">
                     {chartData.filter(data => parseFloat(data.attendanceRate) < 70).length}
                   </span>
                 </div>
