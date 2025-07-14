@@ -278,9 +278,9 @@ export default function YearEndChart({ attendanceData, darkMode }) {
         </div>
       </div>
       
-      <div className="w-full overflow-x-auto flex items-center justify-center">
+      <div className="w-full overflow-x-auto flex items-center justify-center pb-4">
         <div className="min-w-[600px] sm:min-w-[700px] lg:min-w-[900px] xl:min-w-[1100px]"> 
-          <ResponsiveContainer width="100%" height={300} className="sm:h-[350px] md:h-[400px] lg:h-[500px] xl:h-[600px]">
+          <ResponsiveContainer width="100%" height={400} className="sm:h-[450px] md:h-[500px] lg:h-[600px] xl:h-[700px]">
             <BarChart
               data={chartData}
               layout="horizontal"
@@ -288,7 +288,7 @@ export default function YearEndChart({ attendanceData, darkMode }) {
                 top: 20, 
                 right: 20, 
                 left: 80, 
-                bottom: chartData.length > 5 ? 100 : 60 // Dynamic bottom margin
+                bottom: chartData.length > 5 ? 120 : 80 // Increased bottom margin
               }}
               barGap={4}
               barCategoryGap={12}
@@ -300,7 +300,7 @@ export default function YearEndChart({ attendanceData, darkMode }) {
                 fontSize={8} 
                 angle={-45}
                 textAnchor="end"
-                height={chartData.length > 5 ? 120 : 80} 
+                height={chartData.length > 5 ? 140 : 100} 
                 interval={0} 
                 tick={{ fontSize: 8 }}
                 axisLine={true}
@@ -357,7 +357,7 @@ export default function YearEndChart({ attendanceData, darkMode }) {
       </div>
 
       {/* Enhanced Legend */}
-      <div className="mt-3 sm:mt-4 md:-mt-16 space-y-2 sm:space-y-3">
+      <div className="mt-6 sm:mt-4 md:-mt-16 space-y-2 sm:space-y-3">
         <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 md:gap-6 text-xs">
           <div className="flex items-center gap-1">
             <div className="w-2 h-2 sm:w-3 sm:h-3 bg-green-500 border border-green-600 rounded-sm"></div>
