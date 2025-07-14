@@ -21,8 +21,10 @@ export default function AutoLogout({ loggedIn, onLogout }) {
     setWarningShown(false);
     setLogoutPending(false);
     if (loggedIn) {
+      console.log('AutoLogout: Starting inactivity timer for', INACTIVITY_TIMEOUT / 1000 / 60, 'minutes');
       // Set warning timer (1 minute before logout)
       warningTimerRef.current = setTimeout(() => {
+        console.log('AutoLogout: Showing warning toast');
         setWarningShown(true);
         setLogoutPending(true);
         toast((t) => (
@@ -64,11 +66,14 @@ export default function AutoLogout({ loggedIn, onLogout }) {
         // Set logout timer for 1 minute after warning
         logoutTimerRef.current = setTimeout(() => {
           if (logoutPending) {
+            console.log('AutoLogout: Executing logout due to inactivity');
             toast.error('Session expired. You have been logged out due to inactivity.');
             onLogout();
           }
         }, 60 * 1000);
       }, WARNING_TIMEOUT);
+    } else {
+      console.log('AutoLogout: User not logged in, not starting timer');
     }
   };
 
@@ -76,6 +81,7 @@ export default function AutoLogout({ loggedIn, onLogout }) {
   const handleUserActivity = () => {
     if (warningShown) {
       // If warning was shown and user interacts, cancel logout and reset everything
+      console.log('AutoLogout: User activity detected, canceling logout and resetting timer');
       setWarningShown(false);
       setLogoutPending(false);
       clearTimers();
@@ -87,6 +93,7 @@ export default function AutoLogout({ loggedIn, onLogout }) {
   };
 
   useEffect(() => {
+    console.log('AutoLogout: Component mounted, loggedIn:', loggedIn);
     const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
     events.forEach(event => {
       document.addEventListener(event, handleUserActivity, true);
@@ -95,6 +102,7 @@ export default function AutoLogout({ loggedIn, onLogout }) {
       resetInactivityTimer();
     }
     return () => {
+      console.log('AutoLogout: Component unmounting, clearing timers');
       events.forEach(event => {
         document.removeEventListener(event, handleUserActivity, true);
       });

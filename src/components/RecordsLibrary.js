@@ -311,10 +311,20 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
     toast.success("Notes updated");
   };
 
-  // Filtering - only handle remaining frontend filters since search is now backend-based
+  // Filtering - handle all frontend filters including search
   const years = getUniqueYears(records);
   let filteredRecords = records.filter(r => {
     let match = true;
+    
+    // Search filter - search across name, congregation, and position
+    if (search) {
+      const searchLower = search.toLowerCase();
+      const nameMatch = (r.name || "").toLowerCase().includes(searchLower);
+      const congregationMatch = (r.congregation || "").toLowerCase().includes(searchLower);
+      const positionMatch = (r.position || "").toLowerCase().includes(searchLower);
+      match = match && (nameMatch || congregationMatch || positionMatch);
+    }
+    
     // Year filter
     if (filterYear) {
       const entryYear = new Date(r.meeting_date).getFullYear();

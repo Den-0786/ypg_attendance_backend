@@ -131,8 +131,12 @@ export default function AdminPage() {
   useEffect(() => {
     if (!hasCheckedSession.current) {
       hasCheckedSession.current = true;
+      console.log('Dashboard: Checking session...');
       // Always check session to ensure we have valid credentials
-      checkSession().finally(() => setCheckingSession(false));
+      checkSession().finally(() => {
+        console.log('Dashboard: Session check completed');
+        setCheckingSession(false);
+      });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -140,13 +144,17 @@ export default function AdminPage() {
   // 2. Redirect based on role
   useEffect(() => {
     if (!checkingSession) {
+      console.log('Dashboard: Session check complete, loggedIn:', loggedIn, 'userRole:', userRole);
       if (!loggedIn) {
+        console.log('Dashboard: Not logged in, redirecting to login page');
         router.replace('/');
       } else if (userRole && !executiveRoles.includes(userRole) && !pinVerified) {
         // Only redirect to forms if not admin AND not PIN verified
+        console.log('Dashboard: User not admin and not PIN verified, redirecting to forms');
         router.replace('/forms');
       } else {
         // Allow access if admin OR PIN verified
+        console.log('Dashboard: User authorized, checking active meeting');
         checkActiveMeeting();
       }
     }

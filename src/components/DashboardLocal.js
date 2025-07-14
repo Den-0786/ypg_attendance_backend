@@ -114,7 +114,7 @@ export default function DashboardLocal({
     }
   });
 
-  // Restore previous summary logic
+  // Restore previous summary logic with search filtering
   const summary = {};
   filteredData.forEach((entry) => {
     if (showType === 'attendance' && isApologyEntry(entry)) return;
@@ -124,6 +124,23 @@ export default function DashboardLocal({
         summary[entry.congregation] = [];
       }
       summary[entry.congregation].push(entry);
+    }
+  });
+
+  // Apply search filter to summary
+  const filteredSummary = {};
+  Object.keys(summary).forEach((congregation) => {
+    const searchLower = search.toLowerCase();
+    const congregationMatch = congregation.toLowerCase().includes(searchLower);
+    const nameMatch = summary[congregation].some(entry => 
+      (entry.name || "").toLowerCase().includes(searchLower)
+    );
+    const positionMatch = summary[congregation].some(entry => 
+      (entry.position || "").toLowerCase().includes(searchLower)
+    );
+    
+    if (congregationMatch || nameMatch || positionMatch) {
+      filteredSummary[congregation] = summary[congregation];
     }
   });
 
@@ -399,20 +416,23 @@ export default function DashboardLocal({
       
       {/* Table of Local Congregations */}
       <div className="overflow-x-auto custom-scrollbar mb-6 md:mb-10">
-        {Object.keys(summary).length === 0 ? (
+        {Object.keys(filteredSummary).length === 0 ? (
           <div className="text-center py-8">
             <div className="text-gray-500 dark:text-gray-400 text-lg font-medium">
-              No {showType === 'all' ? 'attendance or apology' : showType} data available
+              {search ? 'No results found for your search.' : `No ${showType === 'all' ? 'attendance or apology' : showType} data available`}
             </div>
             <div className="text-gray-400 dark:text-gray-500 text-sm mt-2">
-              {showType === 'all' 
-                ? 'No attendance or apology records found for local congregations.'
-                : `No ${showType} records found for local congregations.`
+              {search 
+                ? 'Try adjusting your search terms.'
+                : (showType === 'all' 
+                  ? 'No attendance or apology records found for local congregations.'
+                  : `No ${showType} records found for local congregations.`
+                )
               }
             </div>
           </div>
         ) : (
-          Object.keys(summary).map((name, idx) => (
+          Object.keys(filteredSummary).map((name, idx) => (
             <div
               key={name}
               className={`w-full max-w-full mb-6 rounded-xl shadow border border-blue-200 dark:border-blue-700 ${cardColors[idx % cardColors.length]} p-2 md:p-4`}
@@ -434,11 +454,11 @@ export default function DashboardLocal({
                     <tr key={name} className="text-sm md:text-base">
                       <td className="border px-2 md:px-4 py-2 text-xs md:text-sm min-w-[120px] whitespace-nowrap">
                         <div className="text-xs md:text-sm font-medium text-blue-600 dark:text-blue-200">
-                          {summary[name][0]?.meeting_title || "Unknown Meeting"}
+                          {filteredSummary[name][0]?.meeting_title || "Unknown Meeting"}
                         </div>
                       </td>
                       <td className="border px-2 md:px-4 py-2 text-xs md:text-sm min-w-[220px]">
-                        {summary[name].map((entry, i) => (
+                        {filteredSummary[name].map((entry, i) => (
                           <div key={i}>
                             <span className="font-semibold">{entry.name}</span>
                             <span> ({entry.position})</span>
@@ -447,14 +467,14 @@ export default function DashboardLocal({
                       </td>
                       <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">{name}</td>
                       <td className="border px-2 md:px-4 py-2 space-y-1">
-                        {summary[name].map((entry, i) => (
+                        {filteredSummary[name].map((entry, i) => (
                           <div key={i} className="text-xs md:text-sm">
                             {entry.timestamp}
                           </div>
                         ))}
                       </td>
                       <td className="border px-2 md:px-4 py-2">
-                        {summary[name].map((entry, i) => (
+                        {filteredSummary[name].map((entry, i) => (
                           <div key={i} className="flex items-center gap-2 mb-1">
                             <span className="text-lg">
                               {isApologyEntry(entry) ? (
@@ -467,14 +487,14 @@ export default function DashboardLocal({
                         ))}
                       </td>
                       <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
-                        {summary[name].map((entry, i) => (
+                        {filteredSummary[name].map((entry, i) => (
                           <div key={i} className="text-xs md:text-sm">
                             {isApologyEntry(entry) ? (entry.reason || 'No reason provided') : ''}
                           </div>
                         ))}
                       </td>
                       <td className="border px-2 md:px-4 py-2">
-                        {summary[name].map((entry, i) => (
+                        {filteredSummary[name].map((entry, i) => (
                           <div key={i} className="flex items-center gap-2 mb-1">
                             <button
                               className="text-blue-500 hover:underline text-xs"

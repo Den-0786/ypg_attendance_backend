@@ -79,7 +79,23 @@ export function useAuth() {
 
   const checkSession = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/session-status`, { credentials: 'include' });
+      // Check if API_URL is set
+      if (!API_URL) {
+        console.error('API_URL is not set. Please check your environment variables.');
+        throw new Error('API_URL not configured');
+      }
+
+      const res = await fetch(`${API_URL}/api/session-status`, { 
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+        }
+      });
+      
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      }
+      
       const data = await res.json();
       
       if (data.loggedIn) {
@@ -89,6 +105,7 @@ export function useAuth() {
         if (typeof setUserRole === 'function') {
           setUserRole(data.role);
         }
+        console.log('Session check successful:', data);
       } else {
         if (typeof setLoggedIn === 'function') {
           setLoggedIn(false);
@@ -96,14 +113,19 @@ export function useAuth() {
         if (typeof setUserRole === 'function') {
           setUserRole(null);
         }
+        console.log('Session check: not logged in');
       }
     } catch (err) {
       console.error('Session check failed:', err);
-      if (typeof setLoggedIn === 'function') {
-        setLoggedIn(false);
-      }
-      if (typeof setUserRole === 'function') {
-        setUserRole(null);
+      // Don't automatically set loggedIn to false on network errors
+      // Only set to false if we get a clear response that user is not logged in
+      if (err.message.includes('401') || err.message.includes('403')) {
+        if (typeof setLoggedIn === 'function') {
+          setLoggedIn(false);
+        }
+        if (typeof setUserRole === 'function') {
+          setUserRole(null);
+        }
       }
     } finally {
       setLoading(false);
