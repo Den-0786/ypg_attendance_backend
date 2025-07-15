@@ -141,51 +141,50 @@ body {
 .animate-fadeIn {
   animation: fadeIn 0.2s ease-out;
 }
-
-/* Custom horizontal scrollbar styles */
-.custom-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: #2563eb #e5e7eb; /* thumb color, track color */
+// Add this CSS to your global styles (globals.css or styles.css)
+.chart-container {
+  position: relative;
+  width: 100%;
 }
-.custom-scrollbar::-webkit-scrollbar {
+
+.sticky-y-axis {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 60px;
+  z-index: 10;
+  background-color: inherit;
+  border-right: 1px solid #e5e7eb;
+}
+
+.dark .sticky-y-axis {
+  border-right-color: #374151;
+}
+
+.scrollable-chart {
+  margin-left: 60px;
+  overflow-x: auto;
+}
+
+.scrollable-chart::-webkit-scrollbar {
   height: 8px;
 }
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #2563eb;
-  border-radius: 4px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: #e5e7eb;
-  border-radius: 4px;
-}
 
-/* Custom scrollbar for the chart */
-.chart-scroll-container::-webkit-scrollbar {
-  height: 8px;
-}
-
-.chart-scroll-container::-webkit-scrollbar-track {
+.scrollable-chart::-webkit-scrollbar-track {
   background: #f1f1f1;
   border-radius: 4px;
 }
 
-.chart-scroll-container::-webkit-scrollbar-thumb {
+.scrollable-chart::-webkit-scrollbar-thumb {
   background: #888;
   border-radius: 4px;
 }
 
-.chart-scroll-container::-webkit-scrollbar-thumb:hover {
-  background: #555;
-}
-
-.dark .chart-scroll-container::-webkit-scrollbar-track {
+.dark .scrollable-chart::-webkit-scrollbar-track {
   background: #374151;
 }
 
-.dark .chart-scroll-container::-webkit-scrollbar-thumb {
+.dark .scrollable-chart::-webkit-scrollbar-thumb {
   background: #6b7280;
-}
-
-.dark .chart-scroll-container::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
 }

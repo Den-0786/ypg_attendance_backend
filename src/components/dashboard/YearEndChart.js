@@ -564,6 +564,20 @@ export default function YearEndChart({ attendanceData, darkMode }) {
     }
   };
 
+  const getBarColor = (monthIndex, data) => {
+    const hasAttendance = data.monthlyAttendance && data.monthlyAttendance[monthIndex] > 0;
+    
+    if (hasAttendance) {
+      const attendanceColors = [
+        '#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EF4444', '#06B6D4',
+        '#84CC16', '#F97316', '#EC4899', '#6366F1', '#14B8A6', '#F43F5E'
+      ];
+      return attendanceColors[monthIndex];
+    } else {
+      return '#D1D5DB';
+    }
+  };
+
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
@@ -677,9 +691,9 @@ export default function YearEndChart({ attendanceData, darkMode }) {
         </div>
       </div>
       
-      <div className="relative w-full">
+      <div className="relative">
         {/* Sticky Y-axis */}
-        <div className="absolute left-0 top-0 bottom-0 w-20 z-10 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
+        <div className="absolute left-0 top-0 bottom-0 w-16 z-10 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
           <div className="h-full flex items-center justify-end pr-2">
             <YAxis 
               type="number" 
@@ -688,6 +702,7 @@ export default function YearEndChart({ attendanceData, darkMode }) {
               allowDecimals={false}
               domain={[0, 12]}
               ticks={[0, 2, 4, 6, 8, 10, 12]}
+              width={60}
               axisLine={true}
               tickLine={true}
             />
@@ -695,7 +710,7 @@ export default function YearEndChart({ attendanceData, darkMode }) {
         </div>
         
         {/* Scrollable chart area */}
-        <div className="overflow-x-auto ml-20 chart-scroll-container">
+        <div className="overflow-x-auto ml-16">
           <div className="min-w-[600px] sm:min-w-[700px] lg:min-w-[900px] xl:min-w-[1100px]">
             <ResponsiveContainer width="100%" height={500}>
               <BarChart
@@ -725,36 +740,28 @@ export default function YearEndChart({ attendanceData, darkMode }) {
                 />
                 <Tooltip content={<CustomTooltip />} />
                 
-                {months.map((month, monthIndex) => {
-                  const monthKey = month.toLowerCase();
-                  return (
-                    <Bar
-                      key={month}
-                      dataKey={monthKey}
-                      barSize={8} 
-                      radius={[2, 2, 2, 2]}
-                      stackId="a"
-                    >
-                      {chartData.map((entry, index) => {
-                        const hasAttendance = entry.monthlyAttendance && entry.monthlyAttendance[monthIndex] > 0;
-                        const color = hasAttendance ? 
-                          ['#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EF4444', '#06B6D4', 
-                          '#84CC16', '#F97316', '#EC4899', '#6366F1', '#14B8A6', '#F43F5E'][monthIndex] : 
-                          '#D1D5DB';
-                        return (
-                          <Cell key={`cell-${index}`} fill={color} />
-                        );
-                      })}
-                    </Bar>
-                  );
-                })}
+                {months.map((month, monthIndex) => (
+                  <Bar
+                    key={month}
+                    dataKey={month.toLowerCase()}
+                    barSize={8}
+                    radius={[2, 2, 2, 2]}
+                    stackId="a"
+                  >
+                    {chartData.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={getBarColor(monthIndex, entry)} 
+                      />
+                    ))}
+                  </Bar>
+                ))}
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
       </div>
 
-      {/* Legend and summary */}
       <div className="mt-12 sm:mt-10 md:-mt-16 space-y-2 sm:space-y-3">
         <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 md:gap-6 text-xs">
           <div className="flex items-center gap-1">
