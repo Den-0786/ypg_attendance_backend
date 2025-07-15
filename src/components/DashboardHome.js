@@ -177,6 +177,12 @@ export default function DashboardHome({
   const [pendingEntry, setPendingEntry] = useState(null);
   const [lastDeleted, setLastDeleted] = useState(null);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear()); // Default to current year
+  // Add state for admin credentials modal
+  const [showAdminModal, setShowAdminModal] = useState(false);
+  const [adminUsername, setAdminUsername] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [pendingUndoApology, setPendingUndoApology] = useState(null);
+  const [pendingEditApology, setPendingEditApology] = useState(null);
 
   // Get unique years from attendance data
   const getUniqueYears = (data) => {
@@ -371,7 +377,7 @@ export default function DashboardHome({
     setShowPINModal(true);
   };
 
-  const handleDeleteWithPIN = (entryId) => {
+  const handleDeleteWithPIN = async (entryId) => {
     const deletedRecord = attendanceData.find(e => e.id === entryId);
     
     toast.custom((t) => (
@@ -439,38 +445,36 @@ export default function DashboardHome({
       const undoData = JSON.parse(pendingUndo);
       if (undoData.component !== 'records') return;
       const record = undoData.record;
-      if (isApologyEntry(record)) {
-        // Prompt for admin credentials (show modal, similar to RecordsLibrary)
-        // You may need to add a modal state for admin credentials here
-        // For now, show a toast to indicate admin credentials are needed
-        toast.error('Undo for apologies requires admin credentials. Please use the Records view for now.');
+      const isApology = isApologyEntry(record);
+      if (isApology) {
+        setPendingUndoApology(record);
+        setShowAdminModal(true);
         return;
+      }
+      // Restore attendance record
+      const attendanceData = {
+        name: record.name,
+        phone: record.phone || '',
+        congregation: record.congregation,
+        type: record.type || 'local',
+        position: record.position,
+        meeting_date: record.meeting_date,
+        timestamp: record.timestamp
+      };
+      const res = await fetch(`${API_URL}/api/submit-attendance`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify([attendanceData]),
+      });
+      if (res.ok) {
+        localStorage.removeItem('pendingUndo');
+        setLastDeleted(null);
+        if (refetchAttendanceData) refetchAttendanceData();
+        window.dispatchEvent(new CustomEvent('attendanceDataChanged'));
+        toast.success('Entry restored successfully');
       } else {
-        // Restore attendance record
-        const attendanceData = {
-          name: record.name,
-          phone: record.phone || '',
-          congregation: record.congregation,
-          type: record.type || 'local',
-          position: record.position,
-          meeting_date: record.meeting_date,
-          timestamp: record.timestamp
-        };
-        const res = await fetch(`${API_URL}/api/submit-attendance`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify([attendanceData]),
-        });
-        if (res.ok) {
-          localStorage.removeItem('pendingUndo');
-          setLastDeleted(null);
-          if (refetchAttendanceData) refetchAttendanceData();
-          window.dispatchEvent(new CustomEvent('attendanceDataChanged'));
-          toast.success('Entry restored successfully');
-        } else {
-          toast.error('Failed to restore entry');
-        }
+        toast.error('Failed to restore entry');
       }
     } catch (err) {
       toast.error('Failed to restore entry');
@@ -484,7 +488,7 @@ export default function DashboardHome({
     setShowPINModal(true);
   };
 
-  const handleEditWithPIN = (entryId) => {
+  const handleEditWithPIN = async (entryId) => {
     let entry = attendanceData.find(e => e.id === entryId);
     if (!entry) {
       entry = apologyData.find(e => e.id === entryId);
@@ -515,6 +519,11 @@ export default function DashboardHome({
 
   // Handler for saving edit
   const handleSaveEdit = async (updatedEntry) => {
+    if (isApologyEntry(updatedEntry)) {
+      setPendingEditApology(updatedEntry);
+      setShowAdminModal(true);
+      return;
+    }
     try {
       // Determine if this is an apology or attendance record
       const isApology = apologyData.some(e => e.id === updatedEntry.id);
@@ -954,6 +963,81 @@ export default function DashboardHome({
         title={pendingAction === 'edit' ? 'Enter PIN to Edit' : pendingAction === 'delete' ? 'Enter PIN to Delete' : 'Enter PIN to Clear All Data'}
         message={pendingAction === 'edit' ? 'Please enter the 4-digit PIN to edit this record' : pendingAction === 'delete' ? 'Please enter the 4-digit PIN to delete this record' : 'Please enter the 4-digit PIN to clear all data'}
       />
+
+      {/* Admin Credentials Modal */}
+      {showAdminModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-xs">
+            <h3 className="font-bold mb-2 text-center">Admin Credentials Required</h3>
+            <input type="text" className="w-full mb-2 p-2 rounded border" placeholder="Admin Username" value={adminUsername} onChange={e => setAdminUsername(e.target.value)} />
+            <input type="password" className="w-full mb-4 p-2 rounded border" placeholder="Admin Password" value={adminPassword} onChange={e => setAdminPassword(e.target.value)} />
+            <div className="flex gap-2">
+              <button className="bg-blue-600 text-white px-4 py-1 rounded" onClick={async () => {
+                if (pendingUndoApology) {
+                  // Restore apology
+                  const res = await fetch(`${API_URL}/api/submit-apologies`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                      apologies: [pendingUndoApology],
+                      admin_username: adminUsername,
+                      admin_password: adminPassword
+                    })
+                  });
+                  if (res.ok) {
+                    localStorage.removeItem('pendingUndo');
+                    setLastDeleted(null);
+                    setShowAdminModal(false);
+                    setPendingUndoApology(null);
+                    setAdminUsername('');
+                    setAdminPassword('');
+                    if (refetchApologyData) refetchApologyData();
+                    window.dispatchEvent(new CustomEvent('apologyDataChanged'));
+                    toast.success('Apology restored!');
+                  } else {
+                    toast.error('Failed to restore apology');
+                  }
+                } else if (pendingEditApology) {
+                  // Edit apology
+                  const res = await fetch(`${API_URL}/api/edit-apology/${pendingEditApology.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                      ...pendingEditApology,
+                      admin_username: adminUsername,
+                      admin_password: adminPassword
+                    })
+                  });
+                  if (res.ok) {
+                    setShowAdminModal(false);
+                    setPendingEditApology(null);
+                    setAdminUsername('');
+                    setAdminPassword('');
+                    if (refetchApologyData) refetchApologyData();
+                    window.dispatchEvent(new CustomEvent('apologyDataChanged'));
+                    toast.success('Apology updated!');
+                  } else {
+                    toast.error('Failed to update apology');
+                  }
+                }
+              }}>
+                Submit
+              </button>
+              <button className="bg-gray-400 text-white px-4 py-1 rounded" onClick={() => {
+                setShowAdminModal(false);
+                setPendingUndoApology(null);
+                setPendingEditApology(null);
+                setAdminUsername('');
+                setAdminPassword('');
+              }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

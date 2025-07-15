@@ -45,6 +45,13 @@ export default function DashboardDistrict({
   const [pendingAction, setPendingAction] = useState(null);
   const [pendingEntry, setPendingEntry] = useState(null);
 
+  // Add state for admin credentials modal
+  const [showAdminModal, setShowAdminModal] = useState(false);
+  const [adminUsername, setAdminUsername] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [pendingUndoApology, setPendingUndoApology] = useState(null);
+  const [pendingEditApology, setPendingEditApology] = useState(null);
+
   // Get unique years from attendance data
   const getUniqueYears = (data) => {
     if (!Array.isArray(data)) return [];
@@ -156,8 +163,12 @@ export default function DashboardDistrict({
     setShowPINModal(true);
   };
 
-  const handleDeleteWithPIN = (entryId) => {
-    const deletedRecord = attendanceData.find(e => e.id === entryId);
+  const handleDeleteWithPIN = async (entryId) => {
+    const isApology = isApologyEntry(attendanceData.find(e => e.id === entryId));
+    const endpoint = isApology 
+      ? `${API_URL}/api/delete-apology/${entryId}`
+      : `${API_URL}/api/delete-attendance/${entryId}`;
+    
     toast.custom((t) => (
       <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-lg border border-red-400 max-w-xs mx-auto flex flex-col items-center">
         <div className="text-lg font-bold text-red-600 mb-2">Confirm Delete</div>
@@ -168,7 +179,7 @@ export default function DashboardDistrict({
             onClick={async () => {
               toast.dismiss(t.id);
               try {
-                const res = await fetch(`${API_URL}/api/delete-attendance/${entryId}`, {
+                const res = await fetch(endpoint, {
                   method: 'DELETE',
                   credentials: 'include',
                 });
@@ -224,8 +235,11 @@ export default function DashboardDistrict({
       if (undoData.component !== 'records') return;
       
       const record = undoData.record;
-      if (isApologyEntry(record)) {
-        toast.error('Undo for apologies requires admin credentials. Please use the Records view for now.');
+      const isApology = isApologyEntry(record);
+
+      if (isApology) {
+        setPendingUndoApology(record);
+        setShowAdminModal(true);
         return;
       } else {
         // Restore attendance record
@@ -268,7 +282,7 @@ export default function DashboardDistrict({
     setShowPINModal(true);
   };
 
-  const handleEditWithPIN = (entryId) => {
+  const handleEditWithPIN = async (entryId) => {
     let entry = attendanceData.find(e => e.id === entryId);
     if (!entry) {
       entry = apologyData.find(e => e.id === entryId);
@@ -281,11 +295,11 @@ export default function DashboardDistrict({
   };
 
   // PIN success handler
-  const handlePINSuccess = () => {
+  const handlePINSuccess = async () => {
     if (pendingAction === 'edit' && pendingEntry) {
-      handleEditWithPIN(pendingEntry);
+      await handleEditWithPIN(pendingEntry);
     } else if (pendingAction === 'delete' && pendingEntry) {
-      handleDeleteWithPIN(pendingEntry);
+      await handleDeleteWithPIN(pendingEntry);
     }
     setPendingAction(null);
     setPendingEntry(null);
@@ -293,6 +307,11 @@ export default function DashboardDistrict({
 
   // Handler for saving edit
   const handleSaveEdit = async (updatedEntry) => {
+    if (isApologyEntry(updatedEntry)) {
+      setPendingEditApology(updatedEntry);
+      setShowAdminModal(true);
+      return;
+    }
     try {
       // Determine if this is an apology or attendance record
       const isApology = apologyData.some(e => e.id === updatedEntry.id);
@@ -582,6 +601,80 @@ export default function DashboardDistrict({
         title={pendingAction === 'edit' ? 'Enter PIN to Edit' : 'Enter PIN to Delete'}
         message={pendingAction === 'edit' ? 'Please enter the 4-digit PIN to edit this record' : 'Please enter the 4-digit PIN to delete this record'}
       />
+
+      {showAdminModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-xs">
+            <h3 className="font-bold mb-2 text-center">Admin Credentials Required</h3>
+            <input type="text" className="w-full mb-2 p-2 rounded border" placeholder="Admin Username" value={adminUsername} onChange={e => setAdminUsername(e.target.value)} />
+            <input type="password" className="w-full mb-4 p-2 rounded border" placeholder="Admin Password" value={adminPassword} onChange={e => setAdminPassword(e.target.value)} />
+            <div className="flex gap-2">
+              <button className="bg-blue-600 text-white px-4 py-1 rounded" onClick={async () => {
+                if (pendingUndoApology) {
+                  // Restore apology
+                  const res = await fetch(`${API_URL}/api/submit-apologies`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                      apologies: [pendingUndoApology],
+                      admin_username: adminUsername,
+                      admin_password: adminPassword
+                    })
+                  });
+                  if (res.ok) {
+                    localStorage.removeItem('pendingUndo');
+                    setLastDeleted(null);
+                    setShowAdminModal(false);
+                    setPendingUndoApology(null);
+                    setAdminUsername('');
+                    setAdminPassword('');
+                    if (refetchApologyData) refetchApologyData();
+                    window.dispatchEvent(new CustomEvent('apologyDataChanged'));
+                    toast.success('Apology restored!');
+                  } else {
+                    toast.error('Failed to restore apology');
+                  }
+                } else if (pendingEditApology) {
+                  // Edit apology
+                  const res = await fetch(`${API_URL}/api/edit-apology/${pendingEditApology.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                      ...pendingEditApology,
+                      admin_username: adminUsername,
+                      admin_password: adminPassword
+                    })
+                  });
+                  if (res.ok) {
+                    setShowAdminModal(false);
+                    setPendingEditApology(null);
+                    setAdminUsername('');
+                    setAdminPassword('');
+                    if (refetchApologyData) refetchApologyData();
+                    window.dispatchEvent(new CustomEvent('apologyDataChanged'));
+                    toast.success('Apology updated!');
+                  } else {
+                    toast.error('Failed to update apology');
+                  }
+                }
+              }}>
+                Submit
+              </button>
+              <button className="bg-gray-400 text-white px-4 py-1 rounded" onClick={() => {
+                setShowAdminModal(false);
+                setPendingUndoApology(null);
+                setPendingEditApology(null);
+                setAdminUsername('');
+                setAdminPassword('');
+              }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 
