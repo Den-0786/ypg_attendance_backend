@@ -279,21 +279,29 @@ export default function YearEndChart({ attendanceData, darkMode }) {
       </div>
       
       <div className="w-full flex flex-col">
-        <div className="relative overflow-x-auto mb-12">
-          <div className="min-w-[600px] sm:min-w-[700px] lg:min-w-[900px] xl:min-w-[1100px]"> 
-            <ResponsiveContainer width="100%" height={500} className="sm:h-[550px] md:h-[600px] lg:h-[700px] xl:h-[800px]">
-              <BarChart
-                data={chartData}
-                layout="horizontal"
-                margin={{ 
-                  top: 20, 
-                  right: 20, 
-                  left: 80, 
-                  bottom: chartData.length > 5 ? 120 : 80 // Increased bottom margin
-                }}
-                barGap={4}
-                barCategoryGap={12}
-              >
+        <div className="relative mb-16">
+          {/* Sticky Y-axis container */}
+          <div className="absolute left-0 top-0 z-10 bg-white dark:bg-gray-800 w-20 h-full flex items-center justify-center">
+            <div className="transform -rotate-90 text-xs font-medium text-gray-600 dark:text-gray-400">
+              Months with Attendance
+            </div>
+          </div>
+          
+          <div className="overflow-x-auto">
+            <div className="min-w-[600px] sm:min-w-[700px] lg:min-w-[900px] xl:min-w-[1100px] pl-20"> 
+              <ResponsiveContainer width="100%" height={500} className="sm:h-[550px] md:h-[600px] lg:h-[700px] xl:h-[800px]">
+                <BarChart
+                  data={chartData}
+                  layout="horizontal"
+                  margin={{ 
+                    top: 20, 
+                    right: 20, 
+                    left: 0, 
+                    bottom: chartData.length > 5 ? 100 : 60 // Reduced bottom margin
+                  }}
+                  barGap={4}
+                  barCategoryGap={12}
+                >
               <XAxis 
                 type="category" 
                 dataKey="congregation" 
@@ -356,10 +364,11 @@ export default function YearEndChart({ attendanceData, darkMode }) {
           </ResponsiveContainer>
         </div>
         </div>
+        </div>
       </div>
 
       {/* Enhanced Legend */}
-      <div className="mt-10 sm:mt-8 md:-mt-16 space-y-2 sm:space-y-3">
+      <div className="mt-12 sm:mt-10 md:-mt-16 space-y-2 sm:space-y-3">
         <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 md:gap-6 text-xs">
           <div className="flex items-center gap-1">
             <div className="w-2 h-2 sm:w-3 sm:h-3 bg-green-500 border border-green-600 rounded-sm"></div>
