@@ -282,11 +282,18 @@ export default function YearEndChart({ attendanceData, darkMode }) {
         <div className="relative mb-16">
           {/* Sticky Y-axis overlay */}
           <div className="absolute left-0 top-0 z-10 bg-white dark:bg-gray-800 w-20 h-full flex flex-col justify-between py-20">
-            {[12, 10, 8, 6, 4, 2, 0].map((num) => (
+            {[0, 2, 4, 6, 8, 10, 12].map((num) => (
               <div key={num} className="text-xs font-medium text-gray-600 dark:text-gray-400 text-center">
                 {num}
               </div>
             ))}
+          </div>
+          
+          {/* Sticky Y-axis label */}
+          <div className="absolute left-0 top-0 z-10 bg-white dark:bg-gray-800 w-20 h-16 flex items-center justify-center">
+            <div className="transform -rotate-90 text-xs font-medium text-gray-600 dark:text-gray-400">
+              Months with Attendance
+            </div>
           </div>
           
           <div className="overflow-x-auto">
