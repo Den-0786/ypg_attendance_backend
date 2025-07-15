@@ -177,6 +177,13 @@ CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS',
 
 CORS_ALLOW_CREDENTIALS = True
 
+# CSRF trusted origins
+CSRF_TRUSTED_ORIGINS = config(
+    'CSRF_TRUSTED_ORIGINS',
+    default='https://ypg-markify.vercel.app',
+    cast=lambda v: [s.strip() for s in v.split(',')]
+)
+
 # Additional CORS settings for development
 if DEBUG:
     CORS_ALLOW_ALL_ORIGINS = True
