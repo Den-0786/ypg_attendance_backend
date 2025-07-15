@@ -430,7 +430,7 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
           timestamp: record.timestamp
         };
         
-        const res = await fetch(`${API_URL}/submit-apologies`, {
+        const res = await fetch(`${API_URL}/api/submit-apologies`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
