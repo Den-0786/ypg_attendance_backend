@@ -278,21 +278,22 @@ export default function YearEndChart({ attendanceData, darkMode }) {
         </div>
       </div>
       
-      <div className="w-full overflow-x-auto flex items-center justify-center pb-4">
-        <div className="min-w-[600px] sm:min-w-[700px] lg:min-w-[900px] xl:min-w-[1100px]"> 
-          <ResponsiveContainer width="100%" height={400} className="sm:h-[450px] md:h-[500px] lg:h-[600px] xl:h-[700px]">
-            <BarChart
-              data={chartData}
-              layout="horizontal"
-              margin={{ 
-                top: 20, 
-                right: 20, 
-                left: 80, 
-                bottom: chartData.length > 5 ? 120 : 80 // Increased bottom margin
-              }}
-              barGap={4}
-              barCategoryGap={12}
-            >
+      <div className="w-full flex flex-col">
+        <div className="overflow-x-auto">
+          <div className="min-w-[600px] sm:min-w-[700px] lg:min-w-[900px] xl:min-w-[1100px]"> 
+            <ResponsiveContainer width="100%" height={500} className="sm:h-[550px] md:h-[600px] lg:h-[700px] xl:h-[800px]">
+              <BarChart
+                data={chartData}
+                layout="horizontal"
+                margin={{ 
+                  top: 20, 
+                  right: 20, 
+                  left: 80, 
+                  bottom: chartData.length > 5 ? 120 : 80 // Increased bottom margin
+                }}
+                barGap={4}
+                barCategoryGap={12}
+              >
               <XAxis 
                 type="category" 
                 dataKey="congregation" 
@@ -353,6 +354,7 @@ export default function YearEndChart({ attendanceData, darkMode }) {
               })}
             </BarChart>
           </ResponsiveContainer>
+        </div>
         </div>
       </div>
 
