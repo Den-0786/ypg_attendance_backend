@@ -280,24 +280,10 @@ export default function YearEndChart({ attendanceData, darkMode }) {
       
       <div className="w-full flex flex-col">
         <div className="relative mb-16">
-          {/* Sticky Y-axis overlay */}
-          <div className="absolute left-0 top-0 z-10 bg-white dark:bg-gray-800 w-20 h-full flex flex-col justify-between py-20">
-            {[0, 2, 4, 6, 8, 10, 12].map((num) => (
-              <div key={num} className="text-xs font-medium text-gray-600 dark:text-gray-400 text-center">
-                {num}
-              </div>
-            ))}
-          </div>
-          
-          {/* Sticky Y-axis label */}
-          <div className="absolute left-0 top-0 z-10 bg-white dark:bg-gray-800 w-20 h-16 flex items-center justify-center">
-            <div className="transform -rotate-90 text-xs font-medium text-gray-600 dark:text-gray-400">
-              Months with Attendance
-            </div>
-          </div>
+
           
           <div className="overflow-x-auto">
-            <div className="min-w-[600px] sm:min-w-[700px] lg:min-w-[900px] xl:min-w-[1100px] pl-20"> 
+            <div className="min-w-[600px] sm:min-w-[700px] lg:min-w-[900px] xl:min-w-[1100px]"> 
               <ResponsiveContainer width="100%" height={500} className="sm:h-[550px] md:h-[600px] lg:h-[700px] xl:h-[800px]">
                 <BarChart
                   data={chartData}
@@ -305,7 +291,7 @@ export default function YearEndChart({ attendanceData, darkMode }) {
                   margin={{ 
                     top: 20, 
                     right: 20, 
-                    left: 0, 
+                    left: 80, 
                     bottom: chartData.length > 5 ? 100 : 60 // Reduced bottom margin
                   }}
                   barGap={4}
@@ -326,14 +312,22 @@ export default function YearEndChart({ attendanceData, darkMode }) {
               />
               <YAxis 
                 type="number" 
-                stroke="transparent"
+                stroke={darkMode ? "white" : "black"}
                 fontSize={10} 
                 allowDecimals={false}
                 domain={[0, 12]}
                 ticks={[0, 2, 4, 6, 8, 10, 12]}
-                axisLine={false}
-                tickLine={false}
-                tick={false}
+                label={{ 
+                  value: 'Months with Attendance', 
+                  angle: -90, 
+                  position: 'insideLeft',
+                  style: { 
+                    textAnchor: 'middle',
+                    fontSize: 10
+                  }
+                }}
+                axisLine={true}
+                tickLine={true}
               />
               <Tooltip content={<CustomTooltip />} />
               
