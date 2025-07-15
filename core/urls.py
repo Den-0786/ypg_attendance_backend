@@ -9,7 +9,7 @@ from .views import (
     update_notes_tags, export_record_pdf, advanced_records_list, advanced_combined_records_list, audit_log_list,
     local_attendance, district_attendance, attendance_by_meeting_title,
     change_password, login_view_django, change_pin, get_pin_status, setup_initial_pin,
-    current_user_info, get_all_users
+    current_user_info, get_all_users, get_csrf_token
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -81,5 +81,6 @@ urlpatterns = [
     path('pin/status', get_pin_status, name='get_pin_status_no_slash'),
     path('pin/setup/', setup_initial_pin, name='setup_initial_pin'),
     path('pin/setup', setup_initial_pin, name='setup_initial_pin_no_slash'),
+    path('csrf/', get_csrf_token, name='get_csrf_token'),
 ]
 

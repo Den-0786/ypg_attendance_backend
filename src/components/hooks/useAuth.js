@@ -64,6 +64,22 @@ const NoMeetingToast = ({ onClose }) => {
   );
 };
 
+// Utility to get cookie value by name
+function getCookie(name) {
+  let cookieValue = null;
+  if (typeof document !== 'undefined' && document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
 export function useAuth() {
   const router = useRouter(); 
   const store = useAuthStore();
@@ -160,10 +176,18 @@ export function useAuth() {
 
   const handleLogin = async (username, password) => {
     try {
+      // 1. Fetch CSRF token first
+      await fetch(`${API_URL}/api/csrf/`, {
+        credentials: 'include',
+      });
+      // 2. Get CSRF token from cookie
+      const csrftoken = getCookie('csrftoken');
+      // 3. Make login request with CSRF token
       const res = await fetch(`${API_URL}/api/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-CSRFToken': csrftoken,
         },
         credentials: 'include',
         body: JSON.stringify({ username, password }),

@@ -33,6 +33,7 @@ except ImportError:
     canvas = None  
 from django.utils.deprecation import MiddlewareMixin
 from .validators import validate_password_custom
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -1348,3 +1349,9 @@ def get_all_users(request):
         'users': list(users),
         'total_users': len(users)
     })
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+@ensure_csrf_cookie
+def get_csrf_token(request):
+    return Response({'detail': 'CSRF cookie set'})
