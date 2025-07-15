@@ -328,9 +328,10 @@ export default function ApologyForm({ meetingInfo }) {
 
         <form onSubmit={handleSubmit} className="space-y-4 text-gray-700">
           {/* Name Field */}
-          <label className="block text-sm font-medium mb-2">
+          <label htmlFor="apology-name" className="block text-sm font-medium mb-2">
             Name <span className="text-red-500">*</span>
             <input
+              id="apology-name"
               name="name"
               required
               placeholder="Name"
@@ -347,9 +348,10 @@ export default function ApologyForm({ meetingInfo }) {
           </label>
 
           {/* Phone Field */}
-          <label className="block text-sm font-medium mb-2">
+          <label htmlFor="apology-phone" className="block text-sm font-medium mb-2">
             Phone Number <span className="text-red-500">*</span>
             <input
+              id="apology-phone"
               name="phone"
               required
               placeholder="Phone Number"
@@ -366,9 +368,10 @@ export default function ApologyForm({ meetingInfo }) {
           </label>
 
           {/* Email Field (optional) */}
-          <label className="block text-sm font-medium mb-2">
+          <label htmlFor="apology-email" className="block text-sm font-medium mb-2">
             Email Address (optional)
             <input
+              id="apology-email"
               name="email"
               placeholder="Email Address"
               value={form.email}
@@ -384,9 +387,10 @@ export default function ApologyForm({ meetingInfo }) {
           </label>
 
           {/* Congregation Select */}
-          <label className="block text-sm font-medium">
+          <label htmlFor="apology-congregation" className="block text-sm font-medium">
             Congregation <span className="text-red-500">*</span>
             <select
+              id="apology-congregation"
               name="congregation"
               required
               value={form.congregation}
@@ -399,9 +403,10 @@ export default function ApologyForm({ meetingInfo }) {
           </label>
 
           {/* Position Select */}
-          <label className="block text-sm font-medium">
+          <label htmlFor="apology-position" className="block text-sm font-medium">
             Position <span className="text-red-500">*</span>
             <select
+              id="apology-position"
               name="position"
               required
               value={form.position}
@@ -414,9 +419,10 @@ export default function ApologyForm({ meetingInfo }) {
           </label>
 
           {/* Reason Textarea */}
-          <label className="block text-sm font-medium">
+          <label htmlFor="apology-reason" className="block text-sm font-medium">
             Reason <span className="text-red-500">*</span>
             <textarea
+              id="apology-reason"
               name="reason"
               required
               placeholder="Reason"
@@ -495,9 +501,10 @@ export default function ApologyForm({ meetingInfo }) {
                       Please enter admin credentials to submit apologies. This is different from PIN verification.
                     </p>
                   </div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400">
+                  <label htmlFor="admin-username" className="block text-xs font-medium text-gray-600 dark:text-gray-400">
                     Admin Username <span className="text-red-500">*</span>
                     <input
+                      id="admin-username"
                       type="text"
                       value={adminUsername}
                       onChange={e => setAdminUsername(e.target.value)}
@@ -505,9 +512,10 @@ export default function ApologyForm({ meetingInfo }) {
                       required
                     />
                   </label>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400">
+                  <label htmlFor="admin-password" className="block text-xs font-medium text-gray-600 dark:text-gray-400">
                     Admin Password <span className="text-red-500">*</span>
                     <input
+                      id="admin-password"
                       type="password"
                       value={adminPassword}
                       onChange={e => setAdminPassword(e.target.value)}

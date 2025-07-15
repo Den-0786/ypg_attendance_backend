@@ -728,6 +728,7 @@ export default function DashboardHome({
                             <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm min-w-[220px]">Attendee(s)</th>
                             <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Submitted Time(s)</th>
                             <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Presence Status</th>
+                            <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Reason</th>
                             <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Actions</th>
                           </tr>
                         </thead>
@@ -757,6 +758,11 @@ export default function DashboardHome({
                                   </span>
                                 </div>
                               </td>
+                              {isApologyEntry(entry) ? (
+                                <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
+                                  {entry.reason || 'No reason provided'}
+                                </td>
+                              ) : null}
                               <td className="border px-2 md:px-4 py-2">
                                 {/* Actions (edit/delete) - keep as before */}
                                 <button onClick={() => onEdit(entry)} className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-2">Edit</button>

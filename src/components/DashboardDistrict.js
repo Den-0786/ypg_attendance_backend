@@ -452,6 +452,7 @@ export default function DashboardDistrict({
                             <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm min-w-[220px]">Attendee(s)</th>
                             <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Submitted Time(s)</th>
                             <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Presence Status</th>
+                            <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Reason</th>
                             <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Actions</th>
                           </tr>
                         </thead>
@@ -481,6 +482,11 @@ export default function DashboardDistrict({
                                   </span>
                                 </div>
                               </td>
+                              {isApologyEntry(entry) ? (
+                                <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
+                                  {entry.reason || 'No reason provided'}
+                                </td>
+                              ) : null}
                               <td className="border px-2 md:px-4 py-2">
                                 <button onClick={() => onEdit(entry)} className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-2">Edit</button>
                                 <button onClick={() => onDelete(entry)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">Delete</button>

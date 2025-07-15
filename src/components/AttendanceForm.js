@@ -333,9 +333,10 @@ export default function AttendanceForm({ meetingInfo }) {
           <div className="flex flex-col gap-2">
             {/* 🎯 Styled Radios */}
             <div className="flex gap-6 text-green-700 bg-green-50 px-4 py-2 rounded-full shadow-sm">
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label htmlFor="attendance-type-local" className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="radio"
+                  id="attendance-type-local"
                   value="local"
                   checked={type === 'local'}
                   onChange={() => setType('local')}
@@ -343,9 +344,10 @@ export default function AttendanceForm({ meetingInfo }) {
                 />
                 <span className="text-sm">Local</span>
               </label>
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label htmlFor="attendance-type-district" className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="radio"
+                  id="attendance-type-district"
                   value="district"
                   checked={type === 'district'}
                   onChange={() => setType('district')}
@@ -377,9 +379,10 @@ export default function AttendanceForm({ meetingInfo }) {
             { label: 'Phone Number', name: 'phone', required: true },
             { label: 'Email Address (optional)', name: 'email', required: false }
           ].map(({ label, name, required }) => (
-            <label key={name} className="block text-sm font-medium mb-2">
+            <label htmlFor={`attendance-${name}`} key={name} className="block text-sm font-medium mb-2">
               {label} {required && <span className="text-red-600">*</span>}
               <input
+                id={`attendance-${name}`}
                 name={name}
                 value={form[name]}
                 required={required}
@@ -395,9 +398,10 @@ export default function AttendanceForm({ meetingInfo }) {
             </label>
           ))}
 
-          <label className="block text-sm font-medium">
+          <label htmlFor="attendance-congregation" className="block text-sm font-medium">
             Congregation <span className="text-red-600">*</span>
             <select
+              id="attendance-congregation"
               name="congregation"
               required
               value={form.congregation}
@@ -409,9 +413,10 @@ export default function AttendanceForm({ meetingInfo }) {
             </select>
           </label>
 
-          <label className="block text-sm font-medium">
+          <label htmlFor="attendance-position" className="block text-sm font-medium">
             Position <span className="text-red-600">*</span>
             <select
+              id="attendance-position"
               name="position"
               required
               value={form.position}

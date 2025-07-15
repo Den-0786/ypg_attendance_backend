@@ -39,7 +39,8 @@ export default function AutoLogout({ loggedIn, onLogout }) {
                 Session Timeout Warning
               </p>
               <p className="text-sm text-yellow-600 dark:text-yellow-300">
-                You will be logged out in 1 minute due to inactivity
+                You will be logged out in 1 minute due to inactivity.<br />
+                <span className="font-semibold">Please click on the screen or press any key to stay logged in, or you will be logged out.</span>
               </p>
             </div>
             <button
