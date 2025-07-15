@@ -141,7 +141,8 @@ body {
 .animate-fadeIn {
   animation: fadeIn 0.2s ease-out;
 }
-// Add this CSS to your global styles (globals.css or styles.css)
+
+
 .chart-container {
   position: relative;
   width: 100%;
