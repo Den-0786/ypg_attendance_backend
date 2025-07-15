@@ -279,18 +279,9 @@ export default function YearEndChart({ attendanceData, darkMode }) {
       </div>
       
       <div className="w-full flex flex-col">
-        <div className="relative mb-8">
-          {/* Sticky Y-axis numbers */}
-          <div className="absolute left-0 top-0 z-10 bg-white dark:bg-gray-800 w-16 h-full flex flex-col justify-between py-20">
-            {[12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0].map((num) => (
-              <div key={num} className="text-xs font-medium text-gray-600 dark:text-gray-400 text-center">
-                {num}
-              </div>
-            ))}
-          </div>
-          
+        <div className="relative mb-12">
           <div className="overflow-x-auto">
-            <div className="min-w-[600px] sm:min-w-[700px] lg:min-w-[900px] xl:min-w-[1100px] pl-16"> 
+            <div className="min-w-[600px] sm:min-w-[700px] lg:min-w-[900px] xl:min-w-[1100px]"> 
               <ResponsiveContainer width="100%" height={500} className="sm:h-[550px] md:h-[600px] lg:h-[700px] xl:h-[800px]">
                 <BarChart
                   data={chartData}
@@ -298,7 +289,7 @@ export default function YearEndChart({ attendanceData, darkMode }) {
                   margin={{ 
                     top: 20, 
                     right: 20, 
-                    left: 0, 
+                    left: 80, 
                     bottom: chartData.length > 5 ? 100 : 60 // Reduced bottom margin
                   }}
                   barGap={4}
@@ -319,14 +310,22 @@ export default function YearEndChart({ attendanceData, darkMode }) {
               />
               <YAxis 
                 type="number" 
-                stroke="transparent"
+                stroke={darkMode ? "white" : "black"}
                 fontSize={10} 
                 allowDecimals={false}
                 domain={[0, 12]}
                 ticks={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}
-                axisLine={false}
-                tickLine={false}
-                tick={false}
+                label={{ 
+                  value: 'Months with Attendance', 
+                  angle: -90, 
+                  position: 'insideLeft',
+                  style: { 
+                    textAnchor: 'middle',
+                    fontSize: 10
+                  }
+                }}
+                axisLine={true}
+                tickLine={true}
               />
               <Tooltip content={<CustomTooltip />} />
               
@@ -362,7 +361,7 @@ export default function YearEndChart({ attendanceData, darkMode }) {
       </div>
 
       {/* Enhanced Legend */}
-      <div className="mt-8 sm:mt-6 md:-mt-16 space-y-2 sm:space-y-3">
+      <div className="mt-10 sm:mt-8 md:-mt-16 space-y-2 sm:space-y-3">
         <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 md:gap-6 text-xs">
           <div className="flex items-center gap-1">
             <div className="w-2 h-2 sm:w-3 sm:h-3 bg-green-500 border border-green-600 rounded-sm"></div>
