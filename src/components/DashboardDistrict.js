@@ -85,10 +85,8 @@ export default function DashboardDistrict({
     return entryYear === selectedYear;
   });
 
-  // Add a helper function to identify apology entries
-  const isApologyEntry = (entry) => {
-    return apologyData.some(apology => apology.id === entry.id);
-  };
+  // Add a helper to determine if a record is an apology
+  const isApologyEntry = (entry) => apologyData.some(apology => apology.id === entry.id);
 
   // Combine attendance and apology data for processing
   const combinedData = [...attendanceData, ...apologyData];
@@ -176,14 +174,14 @@ export default function DashboardDistrict({
                 });
                 if (res.ok) {
                   // Store deleted record in localStorage for undo
+                  const deletedRecord = attendanceData.find(e => e.id === entryId) || apologyData.find(e => e.id === entryId);
                   const undoData = {
-                    component: 'district',
+                    component: 'records',
                     record: deletedRecord,
                     timestamp: Date.now()
                   };
                   localStorage.setItem('pendingUndo', JSON.stringify(undoData));
                   setLastDeleted(deletedRecord);
-                  
                   // Show undo toast
                   toast.custom((undoToast) => (
                     <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg border border-blue-400 max-w-xs mx-auto flex items-center justify-between">
@@ -192,10 +190,9 @@ export default function DashboardDistrict({
                         className="ml-3 text-blue-600 hover:text-blue-800 underline"
                         onClick={() => {
                           handleUndo();
+                          toast.dismiss(undoToast.id);
                         }}
-                      >
-                        Undo
-                      </button>
+                      >Undo</button>
                     </div>
                   ), { duration: 5000 });
                   if (refetchAttendanceData) refetchAttendanceData();
@@ -224,33 +221,40 @@ export default function DashboardDistrict({
     
     try {
       const undoData = JSON.parse(pendingUndo);
-      if (undoData.component !== 'district') return;
+      if (undoData.component !== 'records') return;
       
-      const attendanceData = {
-        name: undoData.record.name,
-        phone: undoData.record.phone || '',
-        congregation: undoData.record.congregation,
-        type: undoData.record.type || 'district',
-        position: undoData.record.position,
-        meeting_date: undoData.record.meeting_date,
-        timestamp: undoData.record.timestamp
-      };
-      
-      const res = await fetch(`${API_URL}/api/submit-attendance`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify([attendanceData]),
-      });
-      
-      if (res.ok) {
-        localStorage.removeItem('pendingUndo');
-        setLastDeleted(null);
-        if (refetchAttendanceData) refetchAttendanceData();
-        window.dispatchEvent(new CustomEvent('attendanceDataChanged'));
-        toast.success('Entry restored successfully');
+      const record = undoData.record;
+      if (isApologyEntry(record)) {
+        toast.error('Undo for apologies requires admin credentials. Please use the Records view for now.');
+        return;
       } else {
-        toast.error('Failed to restore entry');
+        // Restore attendance record
+        const attendanceData = {
+          name: record.name,
+          phone: record.phone || '',
+          congregation: record.congregation,
+          type: record.type || 'district',
+          position: record.position,
+          meeting_date: record.meeting_date,
+          timestamp: record.timestamp
+        };
+        
+        const res = await fetch(`${API_URL}/api/submit-attendance`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify([attendanceData]),
+        });
+        
+        if (res.ok) {
+          localStorage.removeItem('pendingUndo');
+          setLastDeleted(null);
+          if (refetchAttendanceData) refetchAttendanceData();
+          window.dispatchEvent(new CustomEvent('attendanceDataChanged'));
+          toast.success('Entry restored successfully');
+        } else {
+          toast.error('Failed to restore entry');
+        }
       }
     } catch (err) {
       toast.error('Failed to restore entry');

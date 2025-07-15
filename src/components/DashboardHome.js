@@ -263,7 +263,7 @@ export default function DashboardHome({
     if (pendingUndo) {
       try {
         const undoData = JSON.parse(pendingUndo);
-        if (undoData.component === 'home') {
+        if (undoData.component === 'records') {
           setLastDeleted(undoData.record);
         }
       } catch (err) {
@@ -390,33 +390,25 @@ export default function DashboardHome({
                 });
                 
                 if (res.ok) {
+                  const deletedRecord = attendanceData.find(e => e.id === entryId) || apologyData.find(e => e.id === entryId);
+                  const undoData = {
+                    component: 'records',
+                    record: deletedRecord,
+                    timestamp: Date.now()
+                  };
+                  localStorage.setItem('pendingUndo', JSON.stringify(undoData));
                   setLastDeleted(deletedRecord);
-                  // Store in localStorage for persistence across re-renders
-                  localStorage.setItem('lastDeletedRecord', JSON.stringify(deletedRecord));
-                  // Clear pending states AFTER setting lastDeleted
-                  setTimeout(() => {
-                    setPendingEntry(null);
-                    setPendingAction(null);
-                  }, 100);
-                  // Show undo toast with proper implementation
+                  // Show undo toast
                   toast.custom((undoToast) => (
                     <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg border border-blue-400 max-w-xs mx-auto flex items-center justify-between">
                       <span className="text-gray-700 dark:text-gray-200">Entry deleted</span>
                       <button 
                         className="ml-3 text-blue-600 hover:text-blue-800 underline"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
+                        onClick={() => {
                           handleUndo();
                           toast.dismiss(undoToast.id);
                         }}
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                        }}
-                      >
-                        Undo
-                      </button>
+                      >Undo</button>
                     </div>
                   ), { duration: 5000 });
                   if (refetchAttendanceData) refetchAttendanceData();
@@ -441,46 +433,44 @@ export default function DashboardHome({
 
   // Add handleUndo function
   const handleUndo = async () => {
-    let deletedRecord = lastDeleted;
-    if (!deletedRecord) {
-      const storedRecord = localStorage.getItem('lastDeletedRecord');
-      if (storedRecord) {
-        deletedRecord = JSON.parse(storedRecord);
-      }
-    }
-    
-    if (!deletedRecord) {
-      return;
-    }
-    
+    const pendingUndo = localStorage.getItem('pendingUndo');
+    if (!pendingUndo) return;
     try {
-      const attendanceData = {
-        name: deletedRecord.name,
-        phone: deletedRecord.phone || '',
-        congregation: deletedRecord.congregation,
-        type: deletedRecord.type || 'local',
-        position: deletedRecord.position,
-        meeting_date: deletedRecord.meeting_date,
-        timestamp: deletedRecord.timestamp
-      };
-      
-      const res = await fetch(`${API_URL}/api/submit-attendance`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify([attendanceData]),
-      });
-      
-      if (res.ok) {
-        setLastDeleted(null);
-        // Clear localStorage after successful restore
-        localStorage.removeItem('lastDeletedRecord');
-        if (refetchAttendanceData) refetchAttendanceData();
-        window.dispatchEvent(new CustomEvent('attendanceDataChanged'));
-        toast.success('Entry restored successfully');
+      const undoData = JSON.parse(pendingUndo);
+      if (undoData.component !== 'records') return;
+      const record = undoData.record;
+      if (isApologyEntry(record)) {
+        // Prompt for admin credentials (show modal, similar to RecordsLibrary)
+        // You may need to add a modal state for admin credentials here
+        // For now, show a toast to indicate admin credentials are needed
+        toast.error('Undo for apologies requires admin credentials. Please use the Records view for now.');
+        return;
       } else {
-        const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
-        toast.error(`Failed to restore entry: ${errorData.error || res.statusText}`);
+        // Restore attendance record
+        const attendanceData = {
+          name: record.name,
+          phone: record.phone || '',
+          congregation: record.congregation,
+          type: record.type || 'local',
+          position: record.position,
+          meeting_date: record.meeting_date,
+          timestamp: record.timestamp
+        };
+        const res = await fetch(`${API_URL}/api/submit-attendance`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify([attendanceData]),
+        });
+        if (res.ok) {
+          localStorage.removeItem('pendingUndo');
+          setLastDeleted(null);
+          if (refetchAttendanceData) refetchAttendanceData();
+          window.dispatchEvent(new CustomEvent('attendanceDataChanged'));
+          toast.success('Entry restored successfully');
+        } else {
+          toast.error('Failed to restore entry');
+        }
       }
     } catch (err) {
       toast.error('Failed to restore entry');
