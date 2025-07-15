@@ -180,8 +180,11 @@ export function useAuth() {
       await fetch(`${API_URL}/api/csrf/`, {
         credentials: 'include',
       });
+      // Add a small delay to ensure the cookie is set
+      await new Promise(resolve => setTimeout(resolve, 100)); // 100ms delay
       // 2. Get CSRF token from cookie
       const csrftoken = getCookie('csrftoken');
+      console.log('CSRF token:', csrftoken); // Debug log
       // 3. Make login request with CSRF token
       const res = await fetch(`${API_URL}/api/login`, {
         method: 'POST',
