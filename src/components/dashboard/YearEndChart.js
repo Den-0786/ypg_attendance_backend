@@ -279,7 +279,7 @@ export default function YearEndChart({ attendanceData, darkMode }) {
       </div>
       
       <div className="w-full flex flex-col">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto mb-6">
           <div className="min-w-[600px] sm:min-w-[700px] lg:min-w-[900px] xl:min-w-[1100px]"> 
             <ResponsiveContainer width="100%" height={500} className="sm:h-[550px] md:h-[600px] lg:h-[700px] xl:h-[800px]">
               <BarChart
