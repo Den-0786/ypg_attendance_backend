@@ -260,109 +260,90 @@ export default function YearEndChart({ attendanceData, darkMode }) {
         <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
           Year-End Attendance Summary
         </h2>
-        
         <div className="flex items-center gap-2 mt-2 md:mt-0">
-          {chartData.length > 0 && (
-            <button
-              onClick={exportData}
-              className={`px-2 sm:px-3 py-1 text-xs sm:text-sm border rounded-md transition-colors ${
-                darkMode 
-                  ? 'bg-gray-700 border-gray-600 text-white hover:bg-gray-600' 
-                  : 'bg-white border-gray-300 text-gray-900 hover:bg-gray-50'
-              }`}
-              title="Export to CSV"
+          <button
+            onClick={exportData}
+            className={`px-2 sm:px-3 py-1 text-xs sm:text-sm border rounded-md transition-colors ${
+              darkMode 
+                ? 'bg-gray-700 border-gray-600 text-white hover:bg-gray-600' 
+                : 'bg-white border-gray-300 text-gray-900 hover:bg-gray-50'
+            }`}
+            title="Export to CSV"
+          >
+            📊 Export
+          </button>
+        </div>
+      </div>
+      {/* Chart with horizontal scroll */}
+      <div className="w-full overflow-x-auto">
+        <div className="min-w-[700px]">
+          <ResponsiveContainer width="100%" height={500}>
+            <BarChart
+              data={chartData}
+              layout="horizontal"
+              margin={{ 
+                top: 20, 
+                right: 20, 
+                left: 80, 
+                bottom: chartData.length > 5 ? 100 : 60
+              }}
+              barGap={4}
+              barCategoryGap={12}
             >
-              📊 Export
-            </button>
-          )}
-        </div>
-      </div>
-      
-      <div className="w-full flex flex-col">
-        <div className="relative mb-16">
-
-          
-          <div className="overflow-x-auto ml-16">
-            <div className="min-w-[600px] sm:min-w-[700px] lg:min-w-[900px] xl:min-w-[1100px]"> 
-              <ResponsiveContainer width="100%" height={500} className="sm:h-[550px] md:h-[600px] lg:h-[700px] xl:h-[800px]">
-                <BarChart
-                  data={chartData}
-                  layout="horizontal"
-                  margin={{ 
-                    top: 20, 
-                    right: 20, 
-                    left: 80, 
-                    bottom: chartData.length > 5 ? 100 : 60 // Reduced bottom margin
-                  }}
-                  barGap={4}
-                  barCategoryGap={12}
+              <XAxis 
+                type="category" 
+                dataKey="congregation" 
+                stroke={darkMode ? "white" : "black"}
+                fontSize={8} 
+                angle={-45}
+                textAnchor="end"
+                height={chartData.length > 5 ? 140 : 100} 
+                interval={0} 
+                tick={{ fontSize: 8 }}
+                axisLine={true}
+                tickLine={true}
+              />
+              <YAxis 
+                type="number" 
+                stroke={darkMode ? "white" : "black"}
+                fontSize={10} 
+                allowDecimals={false}
+                domain={[0, 12]}
+                ticks={[0, 2, 4, 6, 8, 10, 12]}
+                label={{ 
+                  value: 'Months with Attendance', 
+                  angle: -90, 
+                  position: 'insideLeft',
+                  style: { 
+                    textAnchor: 'middle',
+                    fontSize: 10
+                  }
+                }}
+                axisLine={true}
+                tickLine={true}
+              />
+              <Tooltip content={<CustomTooltip />} />
+              {months.map((month, monthIndex) => (
+                <Bar
+                  key={month}
+                  dataKey={month.toLowerCase()}
+                  barSize={8}
+                  radius={[2, 2, 2, 2]}
+                  stackId="a"
                 >
-                <XAxis 
-                  type="category" 
-                  dataKey="congregation" 
-                  stroke={darkMode ? "white" : "black"}
-                  fontSize={8} 
-                  angle={-45}
-                  textAnchor="end"
-                  height={chartData.length > 5 ? 140 : 100} 
-                  interval={0} 
-                  tick={{ fontSize: 8 }}
-                  axisLine={true}
-                  tickLine={true}
-                />
-                <YAxis 
-                  type="number" 
-                  stroke={darkMode ? "white" : "black"}
-                  fontSize={10} 
-                  allowDecimals={false}
-                  domain={[0, 12]}
-                  ticks={[0, 2, 4, 6, 8, 10, 12]}
-                  label={{ 
-                    value: 'Months with Attendance', 
-                    angle: -90, 
-                    position: 'insideLeft',
-                    style: { 
-                      textAnchor: 'middle',
-                      fontSize: 10
-                    }
-                  }}
-                  axisLine={true}
-                  tickLine={true}
-                />
-                <Tooltip content={<CustomTooltip />} />
-                
-                {/* Create bars for each month */}
-                {months.map((month, monthIndex) => {
-                  const monthKey = month.toLowerCase();
-                  return (
-                    <Bar
-                      key={month}
-                      dataKey={monthKey}
-                      barSize={8} 
-                      radius={[2, 2, 2, 2]}
-                      stackId="a"
-                    >
-                      {chartData.map((entry, index) => {
-                        const hasAttendance = entry.monthlyAttendance && entry.monthlyAttendance[monthIndex] > 0;
-                        const color = hasAttendance ? 
-                          ['#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EF4444', '#06B6D4', 
-                          '#84CC16', '#F97316', '#EC4899', '#6366F1', '#14B8A6', '#F43F5E'][monthIndex] : 
-                          '#D1D5DB';
-                        return (
-                          <Cell key={`cell-${index}`} fill={color} />
-                        );
-                      })}
-                    </Bar>
-                  );
-                })}
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+                  {chartData.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={getBarColor(monthIndex, entry)} 
+                    />
+                  ))}
+                </Bar>
+              ))}
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
-
-      {/* Enhanced Legend */}
+      {/* Legend and summary below the chart and scrollbar */}
       <div className="mt-12 sm:mt-10 md:-mt-16 space-y-2 sm:space-y-3">
         <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 md:gap-6 text-xs">
           <div className="flex items-center gap-1">
@@ -386,14 +367,10 @@ export default function YearEndChart({ attendanceData, darkMode }) {
             </>
           )}
         </div>
-        
         <div className="text-center text-xs text-gray-500 dark:text-gray-400 space-y-1 px-2">
           <p>• Each bar shows congregation attendance for {selectedYear}</p>
           <p>• All 9 congregations displayed with monthly segments</p>
-          <p>• Current month: {months[new Date().getMonth()]} with special indicators</p>
         </div>
-        
-        {/* Summary Statistics */}
         {chartData.length > 0 && (
           <div className="mt-3 sm:mt-4 p-2 sm:p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 text-center text-xs">
@@ -420,33 +397,6 @@ export default function YearEndChart({ attendanceData, darkMode }) {
                   {chartData.filter(data => parseFloat(data.attendanceRate) === 100).length}
                 </p>
                 <p className="text-gray-600 dark:text-gray-400 text-xs">Perfect</p>
-              </div>
-            </div>
-            
-            {/* Attendance Progress Indicators */}
-            <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-200 dark:border-gray-600">
-              <h4 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white mb-2 sm:mb-3 text-center">
-                Performance Categories
-              </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 text-xs">
-                <div className="flex items-center justify-between p-1 sm:p-2 bg-green-50 dark:bg-green-900/20 rounded">
-                  <span className="text-green-700 dark:text-green-300 text-xs">Excellent (90-100%)</span>
-                  <span className="font-semibold text-green-700 dark:text-green-300 text-xs">
-                    {chartData.filter(data => parseFloat(data.attendanceRate) >= 90).length}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between p-1 sm:p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded">
-                  <span className="text-yellow-700 dark:text-yellow-300 text-xs">Good (70-89%)</span>
-                  <span className="font-semibold text-yellow-700 dark:text-yellow-300 text-xs">
-                    {chartData.filter(data => parseFloat(data.attendanceRate) >= 70 && parseFloat(data.attendanceRate) < 90).length}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between p-1 sm:p-2 bg-red-50 dark:bg-red-900/20 rounded">
-                  <span className="text-red-700 dark:text-red-300 text-xs">Needs Improvement (&lt; 69%)</span>
-                  <span className="font-semibold text-red-700 dark:text-red-300 text-xs">
-                    {chartData.filter(data => parseFloat(data.attendanceRate) < 70).length}
-                  </span>
-                </div>
               </div>
             </div>
           </div>
