@@ -158,3 +158,34 @@ body {
   background: #e5e7eb;
   border-radius: 4px;
 }
+
+/* Custom scrollbar for the chart */
+.chart-scroll-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.chart-scroll-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.chart-scroll-container::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.chart-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.dark .chart-scroll-container::-webkit-scrollbar-track {
+  background: #374151;
+}
+
+.dark .chart-scroll-container::-webkit-scrollbar-thumb {
+  background: #6b7280;
+}
+
+.dark .chart-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
