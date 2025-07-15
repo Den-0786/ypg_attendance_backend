@@ -254,44 +254,6 @@ export default function YearEndChart({ attendanceData, darkMode }) {
     );
   }
 
-  // Sticky congregation names for left side
-  const stickyCongregationList = (
-    <div
-      className="hidden md:flex flex-col items-end pr-2 sticky left-0 z-20 bg-white dark:bg-gray-800 rounded-xl shadow-lg"
-      style={{ top: 120, minWidth: 160, height: 500 }}
-    >
-      <div className="h-8" /> {/* Spacer for chart top margin */}
-      {chartData.map((data, idx) => (
-        <div
-          key={data.congregation}
-          className="h-8 flex items-center justify-end text-xs md:text-sm font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap px-2 border-b border-gray-100 dark:border-gray-700"
-          style={{ minHeight: 32 }}
-        >
-          {data.congregation.length > 18 ? data.congregation.slice(0, 18) + '…' : data.congregation}
-        </div>
-      ))}
-    </div>
-  );
-
-  // Sticky months for left side (vertical)
-  const stickyMonthsList = (
-    <div
-      className="hidden md:flex flex-col items-end pr-2 sticky left-0 z-20 bg-white dark:bg-gray-800 rounded-xl shadow-lg"
-      style={{ top: 120, minWidth: 80, height: 500 }}
-    >
-      <div className="h-8" /> {/* Spacer for chart top margin */}
-      {months.map((month, idx) => (
-        <div
-          key={month}
-          className="h-8 flex items-center justify-end text-xs md:text-sm font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap px-2 border-b border-gray-100 dark:border-gray-700"
-          style={{ minHeight: 32 }}
-        >
-          {month.length > 12 ? month.slice(0, 12) + '…' : month}
-        </div>
-      ))}
-    </div>
-  );
-
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-3 sm:p-4 md:p-6 lg:p-8">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-3 sm:mb-4 md:mb-6">
@@ -312,12 +274,9 @@ export default function YearEndChart({ attendanceData, darkMode }) {
           </button>
         </div>
       </div>
-      {/* Chart with horizontal scroll and sticky months */}
-      <div className="w-full overflow-x-auto flex relative">
-        {/* Sticky months (left) */}
-        {stickyMonthsList}
-        {/* Chart (right) */}
-        <div className="min-w-[700px] pl-0 md:pl-24" style={{ flex: 1 }}>
+      {/* Chart with horizontal scroll */}
+      <div className="w-full overflow-x-auto">
+        <div className="min-w-[700px]">
           <ResponsiveContainer width="100%" height={500}>
             <BarChart
               data={chartData}
@@ -325,7 +284,7 @@ export default function YearEndChart({ attendanceData, darkMode }) {
               margin={{ 
                 top: 20, 
                 right: 20, 
-                left: 0, // margin handled by pl-24
+                left: 80, 
                 bottom: chartData.length > 5 ? 100 : 60
               }}
               barGap={4}
@@ -351,8 +310,15 @@ export default function YearEndChart({ attendanceData, darkMode }) {
                 allowDecimals={false}
                 domain={[0, 12]}
                 ticks={[0, 2, 4, 6, 8, 10, 12]}
-                // Hide label since months are now sticky
-                label={false}
+                label={{ 
+                  value: 'Months with Attendance', 
+                  angle: -90, 
+                  position: 'insideLeft',
+                  style: { 
+                    textAnchor: 'middle',
+                    fontSize: 10
+                  }
+                }}
                 axisLine={true}
                 tickLine={true}
               />
@@ -361,17 +327,14 @@ export default function YearEndChart({ attendanceData, darkMode }) {
                 <Bar
                   key={month}
                   dataKey={month.toLowerCase()}
-                  barSize={10}
-                  radius={[6, 6, 6, 6]} // More rounded bars
+                  barSize={8}
+                  radius={[2, 2, 2, 2]}
                   stackId="a"
-                  style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.10))' }} // Subtle shadow
                 >
                   {chartData.map((entry, index) => (
                     <Cell 
                       key={`cell-${index}`} 
                       fill={getBarColor(monthIndex, entry)} 
-                      stroke="#fff"
-                      strokeWidth={0.5}
                     />
                   ))}
                 </Bar>
