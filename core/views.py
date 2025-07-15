@@ -130,54 +130,38 @@ def submit_apologies(request):
         try:
             user = Credential.objects.get(id=user_id)
             
-            # Check if this is a bulk submission with admin credentials
+            # Require admin credentials and apologies array for all submissions
             admin_username = request.data.get('admin_username')
             admin_password = request.data.get('admin_password')
             apologies_data = request.data.get('apologies', [])
-            
-            if admin_username and admin_password and apologies_data:
-                # Verify admin credentials
-                try:
-                    admin_user = Credential.objects.get(username=admin_username, role='admin')
-                    if not admin_user.check_password(admin_password):
-                        return Response({'error': 'Invalid admin credentials'}, status=401)
-                except Credential.DoesNotExist:
+
+            # Require admin credentials and apologies array for all submissions
+            if not (admin_username and admin_password):
+                return Response({'error': 'Admin credentials required'}, status=401)
+            if not isinstance(apologies_data, list) or len(apologies_data) == 0:
+                return Response({'error': 'Apologies must be a non-empty array'}, status=400)
+            try:
+                admin_user = Credential.objects.get(username=admin_username, role='admin')
+                if not admin_user.check_password(admin_password):
                     return Response({'error': 'Invalid admin credentials'}, status=401)
-                
-                # Process multiple apologies
-                created_apologies = []
-                for apology_data in apologies_data:
-                    # Add user info to each apology
-                    apology_data['submitted_by'] = user_id
-                    
-                    serializer = ApologyEntrySerializer(data=apology_data)
-                    if serializer.is_valid():
-                        serializer.save()
-                        created_apologies.append(serializer.data)
-                    else:
-                        return Response({'error': f'Invalid apology data: {serializer.errors}'}, status=400)
-                
-                return Response({
-                    'message': f'Successfully submitted {len(created_apologies)} apologies',
-                    'apologies': created_apologies
-                }, status=201)
-            
-            else:
-                # Single apology submission (existing logic)
-                # Only executives can submit apologies
-                if user.role not in ['admin', 'President', "President's Rep", 'Secretary', 'Assistant Secretary', 'Financial Secretary', 'Treasurer', 'Bible Studies Coordinator', 'Organizer']:
-                    return Response({'error': 'Only executives can submit apologies'}, status=403)
-                
-                # Add user info to request data
-                data = request.data.copy()
-                data['submitted_by'] = user_id
-                
-                serializer = ApologyEntrySerializer(data=data)
+            except Credential.DoesNotExist:
+                return Response({'error': 'Invalid admin credentials'}, status=401)
+
+            # Process all apologies
+            created_apologies = []
+            for apology_data in apologies_data:
+                apology_data['submitted_by'] = user_id
+                serializer = ApologyEntrySerializer(data=apology_data)
                 if serializer.is_valid():
                     serializer.save()
-                    return Response(serializer.data, status=201)
+                    created_apologies.append(serializer.data)
                 else:
-                    return Response(serializer.errors, status=400)
+                    return Response({'error': f'Invalid apology data: {serializer.errors}'}, status=400)
+            return Response({
+                'success': True,
+                'message': f'Successfully submitted {len(created_apologies)} apologies',
+                'apologies': created_apologies
+            }, status=201)
                     
         except Credential.DoesNotExist:
             return Response({'error': 'User not found'}, status=404)

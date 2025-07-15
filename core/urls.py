@@ -20,7 +20,9 @@ from core import views as core_views
 urlpatterns = [
     # Attendance & Apology
     path('submit-attendance', submit_attendance, name='submit_attendance'),
+    path('api/submit-attendance', submit_attendance, name='api_submit_attendance'),
     path('submit-apologies', submit_apologies, name='submit_apologies'),
+    path('api/submit-apologies', submit_apologies, name='api_submit_apologies'),
     path('attendance-summary', get_attendance_summary, name='attendance_summary'),
     path('apology-summary', get_apology_summary, name='apology_summary'),
     path('local-attendance', local_attendance, name='local_attendance'),
