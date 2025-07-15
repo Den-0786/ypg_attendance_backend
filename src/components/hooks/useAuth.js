@@ -68,15 +68,19 @@ const NoMeetingToast = ({ onClose }) => {
 function getCookie(name) {
   let cookieValue = null;
   if (typeof document !== 'undefined' && document.cookie && document.cookie !== '') {
+    console.log('All cookies:', document.cookie); // Debug: show all cookies
     const cookies = document.cookie.split(';');
     for (let i = 0; i < cookies.length; i++) {
       const cookie = cookies[i].trim();
+      console.log(`Checking cookie: ${cookie}`); // Debug: show each cookie
       if (cookie.substring(0, name.length + 1) === (name + '=')) {
         cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        console.log(`Found ${name} cookie:`, cookieValue); // Debug: show found cookie
         break;
       }
     }
   }
+  console.log(`getCookie('${name}') returned:`, cookieValue); // Debug: show final result
   return cookieValue;
 }
 
@@ -185,13 +189,16 @@ export function useAuth() {
       // 2. Get CSRF token from cookie
       const csrftoken = getCookie('csrftoken');
       console.log('CSRF token:', csrftoken); // Debug log
+      console.log('CSRF token length:', csrftoken ? csrftoken.length : 'undefined'); // Debug: check length
       // 3. Make login request with CSRF token
+      const headers = {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrftoken,
+      };
+      console.log('Request headers:', headers); // Debug: show headers being sent
       const res = await fetch(`${API_URL}/api/login`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': csrftoken,
-        },
+        headers,
         credentials: 'include',
         body: JSON.stringify({ username, password }),
       });
