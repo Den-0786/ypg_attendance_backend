@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useMeetingDate } from './MeetingDateContext';
 import { MdMoreVert, MdEdit, MdDelete } from 'react-icons/md';
 import toast from 'react-hot-toast';
-import { FaExclamationCircle } from 'react-icons/fa';
+import { FaExclamationCircle, FaShoppingCart, FaTrash, FaTimes } from 'react-icons/fa';
+import PINModal from './PINModal';
 import { capitalizeFirst } from '../lib/utils';
 
 const congregations = [
@@ -81,6 +82,10 @@ export default function ApologyForm({ meetingInfo }) {
   const [menuOpenIndex, setMenuOpenIndex] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [confirmIndex, setConfirmIndex] = useState(null);
+  const [apologyCart, setApologyCart] = useState([]); // Cart for bulk apologies
+  const [showCartModal, setShowCartModal] = useState(false);
+  const [showAdminModal, setShowAdminModal] = useState(false);
+  const [pendingSubmit, setPendingSubmit] = useState(null); // single or bulk
   const [adminUsername, setAdminUsername] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [authError, setAuthError] = useState('');
@@ -126,46 +131,95 @@ export default function ApologyForm({ meetingInfo }) {
     setErrors(prev => ({ ...prev, [name]: error }));
   };
 
-  const handleSubmit = async (e) => {
+  // Add apology to cart
+  const handleAddToCart = (e) => {
     e.preventDefault();
+    const apology = {
+      name: form.name,
+      phone: form.phone,
+      congregation: form.congregation,
+      type,
+      position: form.position,
+      meeting_date: meetingDate,
+      reason: form.reason,
+      timestamp: new Date().toTimeString().slice(0, 8),
+    };
+    setApologyCart((prev) => [...prev, apology]);
+    setForm({ name: '', phone: '', email: '', congregation: '', position: '', reason: '' });
+    toast.success('Apology added to cart');
+  };
+
+  // Remove apology from cart
+  const handleRemoveFromCart = (index) => {
+    setApologyCart((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // Open cart modal
+  const handleOpenCart = () => {
+    setShowCartModal(true);
+  };
+
+  // Close cart modal
+  const handleCloseCart = () => {
+    setShowCartModal(false);
+  };
+
+  // Submit all apologies in cart
+  const handleSubmitAll = () => {
+    if (apologyCart.length === 0) {
+      toast.error('No apologies in cart');
+      return;
+    }
+    setPendingSubmit([...apologyCart]);
+    setShowAdminModal(true);
+  };
+
+  // When user clicks submit (single), show admin modal for just that apology
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setPendingSubmit({
+      name: form.name,
+      phone: form.phone,
+      congregation: form.congregation,
+      type,
+      position: form.position,
+      meeting_date: meetingDate,
+      reason: form.reason,
+      timestamp: new Date().toTimeString().slice(0, 8),
+    });
+    setShowAdminModal(true);
+  };
+
+  // Called after admin credentials are entered and confirmed (bulk or single)
+  const handleAdminConfirm = async () => {
     setIsSubmitting(true);
     setError('');
-
     try {
       const payload = {
-        apologies: [{
-          name: form.name,
-          phone: form.phone,
-          congregation: form.congregation,
-          type,
-          position: form.position,
-          meeting_date: meetingDate,
-          reason: form.reason
-        }],
+        apologies: Array.isArray(pendingSubmit) ? pendingSubmit : [pendingSubmit],
         admin_username: adminUsername,
         admin_password: adminPassword
       };
-
       const response = await fetch(`${API_URL}/api/submit-apologies`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify(payload),
       });
-
       const data = await response.json();
-
       if (response.ok && data.success) {
-        toast.success('Apology submitted successfully');
+        toast.success('Apology(s) submitted successfully');
         setApologies([]);
         setShowModal(false);
         setAdminUsername('');
         setAdminPassword('');
         setAuthError('');
+        setForm({ name: '', phone: '', email: '', congregation: '', position: '', reason: '' });
+        setApologyCart([]);
+        setShowCartModal(false);
         // Dispatch custom event to notify dashboard components
         window.dispatchEvent(new CustomEvent('apologyDataChanged'));
       } else {
-        // Show the real error message from backend
         const errorMessage = data.error || 'Failed to submit apology';
         setAuthError(errorMessage);
         toast.error(errorMessage);
@@ -177,6 +231,8 @@ export default function ApologyForm({ meetingInfo }) {
       toast.error('Network error. Please try again.');
     } finally {
       setIsSubmitting(false);
+      setShowAdminModal(false);
+      setPendingSubmit(null);
     }
   };
 
@@ -442,12 +498,120 @@ export default function ApologyForm({ meetingInfo }) {
           >
             {editingIndex !== null ? 'Update Apology' : 'Submit Apology'}
           </button>
+          <button
+            type="button"
+            onClick={handleAddToCart}
+            disabled={!meetingDate}
+            className={`w-full py-2 rounded-lg transition border border-yellow-500 text-yellow-700 bg-white hover:bg-yellow-50 mt-2 ${!meetingDate ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            Add to Cart
+          </button>
           {!meetingDate && (
             <p className="text-xs text-red-600 text-center mt-2">
               ⚠️ Cannot submit apologies without an active meeting
             </p>
           )}
         </form>
+
+        {/* Apology Cart Modal */}
+        {showCartModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-2xl relative">
+              <button
+                className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
+                onClick={handleCloseCart}
+                title="Close"
+              >
+                <FaTimes size={20} />
+              </button>
+              <h3 className="text-lg font-bold text-yellow-600 mb-4 flex items-center gap-2">
+                <FaShoppingCart /> Apology Cart
+              </h3>
+              {apologyCart.length === 0 ? (
+                <p className="text-gray-500">No apologies in cart.</p>
+              ) : (
+                <>
+                  <ul className="space-y-3 max-h-72 overflow-y-auto mb-4">
+                    {apologyCart.map((entry, index) => (
+                      <li key={index} className="p-3 bg-gray-100 rounded shadow flex justify-between items-start relative">
+                        <div className="text-sm text-gray-800 space-y-1">
+                          <p><strong>Name:</strong> {entry.name}</p>
+                          <p><strong>Congregation:</strong> {entry.congregation}</p>
+                          <p><strong>Position:</strong> {entry.position}</p>
+                          <p><strong>Reason:</strong> {entry.reason}</p>
+                          <p className="text-xs text-gray-500"><strong>Date:</strong> {entry.meeting_date}</p>
+                          <p className="text-xs text-gray-500"><strong>Time:</strong> {entry.timestamp}</p>
+                        </div>
+                        <button
+                          className="ml-4 text-red-500 hover:text-red-700"
+                          onClick={() => handleRemoveFromCart(index)}
+                          title="Remove from cart"
+                        >
+                          <FaTrash />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="flex justify-end">
+                    <button
+                      onClick={handleSubmitAll}
+                      className="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 font-semibold"
+                      disabled={apologyCart.length === 0}
+                    >
+                      Submit All
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+        {/* Admin Credentials Modal */}
+        {showAdminModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm">
+              <h3 className="text-lg font-bold text-yellow-600 mb-4">Admin Verification Required</h3>
+              <div className="space-y-2">
+                <label htmlFor="admin-username" className="block text-xs font-medium text-gray-600">
+                  Admin Username <span className="text-red-500">*</span>
+                  <input
+                    id="admin-username"
+                    type="text"
+                    value={adminUsername}
+                    onChange={e => setAdminUsername(e.target.value)}
+                    className="w-full mt-1 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400 text-xs"
+                    required
+                  />
+                </label>
+                <label htmlFor="admin-password" className="block text-xs font-medium text-gray-600">
+                  Admin Password <span className="text-red-500">*</span>
+                  <input
+                    id="admin-password"
+                    type="password"
+                    value={adminPassword}
+                    onChange={e => setAdminPassword(e.target.value)}
+                    className="w-full mt-1 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400 text-xs"
+                    required
+                  />
+                </label>
+                {authError && <p className="text-red-500 text-xs mt-1">{authError}</p>}
+              </div>
+              <div className="flex justify-end gap-2 mt-4">
+                <button
+                  onClick={() => { setShowAdminModal(false); setPendingSubmit(null); }}
+                  className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
+                >Cancel</button>
+                <button
+                  onClick={handleAdminConfirm}
+                  className="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700"
+                  disabled={isSubmitting || !adminUsername || !adminPassword}
+                >
+                  {isSubmitting ? 'Submitting...' : 'Confirm & Submit'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Modal */}
