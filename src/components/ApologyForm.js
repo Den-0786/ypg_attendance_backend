@@ -146,7 +146,7 @@ export default function ApologyForm({ meetingInfo }) {
         admin_password: adminPassword
       };
 
-      const response = await fetch('/api/submit-apologies', {
+      const response = await fetch(`${API_URL}/submit-apologies`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -222,7 +222,7 @@ export default function ApologyForm({ meetingInfo }) {
         admin_password: adminPassword,
       };
       
-      const response = await fetch(`${API_URL}/api/submit-apologies`, {
+      const response = await fetch(`${API_URL}/submit-apologies`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

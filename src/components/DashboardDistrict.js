@@ -342,6 +342,37 @@ export default function DashboardDistrict({
 
   const isMobile = useIsMobile();
 
+  // Group summary by congregation, then by month, then by day
+  const groupedSummary = {};
+  if (Array.isArray(filteredData)) {
+    filteredData.forEach((entry) => {
+      if (showType === 'attendance' && isApologyEntry(entry)) return;
+      if (showType === 'apology' && !isApologyEntry(entry)) return;
+      if (entry.type === 'district') {
+        const cong = entry.congregation;
+        const dateObj = new Date(entry.meeting_date);
+        const monthKey = dateObj.toLocaleString('default', { month: 'long', year: 'numeric' });
+        const dayKey = dateObj.toLocaleDateString();
+        if (!groupedSummary[cong]) groupedSummary[cong] = {};
+        if (!groupedSummary[cong][monthKey]) groupedSummary[cong][monthKey] = {};
+        if (!groupedSummary[cong][monthKey][dayKey]) groupedSummary[cong][monthKey][dayKey] = [];
+        groupedSummary[cong][monthKey][dayKey].push(entry);
+      }
+    });
+  }
+
+  const congregationColors = {
+    "Emmanuel Congregation Ahinsan": "bg-blue-100 border-blue-300 dark:bg-blue-900 dark:border-blue-700",
+    "Peniel Congregation Esreso No 1": "bg-green-100 border-green-300 dark:bg-green-900 dark:border-green-700",
+    "Favour Congregation Esreso No 2": "bg-yellow-100 border-yellow-300 dark:bg-yellow-900 dark:border-yellow-700",
+    "Christ Congregation Ahinsan Estate": "bg-purple-100 border-purple-300 dark:bg-purple-900 dark:border-purple-700",
+    "Ebenezer Congregation Aprabo": "bg-pink-100 border-pink-300 dark:bg-pink-900 dark:border-pink-700",
+    "Mizpah Congregation Odagya No 1": "bg-orange-100 border-orange-300 dark:bg-orange-900 dark:border-orange-700",
+    "Odagya No 2": "bg-teal-100 border-teal-300 dark:bg-teal-900 dark:border-teal-700",
+    "Liberty Congregation High Tension": "bg-red-100 border-red-300 dark:bg-red-900 dark:border-red-700",
+    "NOM": "bg-gray-100 border-gray-300 dark:bg-gray-900 dark:border-gray-700"
+  };
+
   return (
     <div>
       {/* Search Bar */}
@@ -389,7 +420,7 @@ export default function DashboardDistrict({
       
       {/* Table of District Executives */}
       <div className="overflow-x-auto custom-scrollbar mb-6 md:mb-10">
-        {Object.keys(filteredSummary).length === 0 ? (
+        {Object.keys(groupedSummary).length === 0 ? (
           <div className="text-center py-8">
             <div className="text-gray-500 dark:text-gray-400 text-lg font-medium">
               {search ? 'No results found for your search.' : `No ${showType === 'all' ? 'attendance or apology' : showType} data available`}
@@ -405,85 +436,63 @@ export default function DashboardDistrict({
             </div>
           </div>
         ) : (
-          Object.keys(filteredSummary).map((name, idx) => (
-            <div
-              key={name}
-              className={`w-full max-w-full mb-6 rounded-xl shadow border border-blue-200 dark:border-blue-700 ${idx % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700'} p-2 md:p-4`}
-            >
-              <div className="overflow-x-auto">
-                <table className="min-w-max text-gray-900 dark:text-gray-100">
-                  <thead className={darkMode ? "bg-gray-700 text-gray-100" : "bg-gray-200 text-gray-900"}>
-                    <tr>
-                      <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm min-w-[120px] whitespace-nowrap">Meeting</th>
-                      <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm min-w-[220px]">Attendee(s)</th>
-                      <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Congregation</th>
-                      <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Submitted Time(s)</th>
-                      <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Presence Status</th>
-                      <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Reason</th>
-                      <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr key={name} className="text-sm md:text-base">
-                      <td className="border px-2 md:px-4 py-2 text-xs md:text-sm min-w-[120px] whitespace-nowrap">
-                        <div className="text-xs md:text-sm font-medium text-blue-600 dark:text-blue-200">
-                          {filteredSummary[name][0]?.meeting_title || "Unknown Meeting"}
-                        </div>
-                      </td>
-                      <td className="border px-2 md:px-4 py-2 text-xs md:text-sm min-w-[220px]">
-                        {filteredSummary[name].map((entry, i) => (
-                          <div key={i}>
-                            <span className="font-semibold">{entry.name}</span>
-                            <span> ({entry.position})</span>
-                          </div>
-                        ))}
-                      </td>
-                      <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">{name}</td>
-                      <td className="border px-2 md:px-4 py-2 space-y-1">
-                        {filteredSummary[name].map((entry, i) => (
-                          <div key={i} className="text-xs md:text-sm">
-                            {entry.timestamp}
-                          </div>
-                        ))}
-                      </td>
-                      <td className="border px-2 md:px-4 py-2">
-                        {filteredSummary[name].map((entry, i) => (
-                          <div key={i} className="flex items-center gap-2 mb-1">
-                            <span className="text-lg">
-                              {isApologyEntry(entry) ? (
-                                <FaTimesCircle className="text-red-500" />
-                              ) : (
-                                <FaCheckCircle className="text-green-500" />
-                              )}
-                            </span>
-                          </div>
-                        ))}
-                      </td>
-                      <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
-                        {filteredSummary[name].map((entry, i) => (
-                          <div key={i} className="text-xs md:text-sm">
-                            {isApologyEntry(entry) ? (entry.reason || 'No reason provided') : ''}
-                          </div>
-                        ))}
-                      </td>
-                      <td className="border px-2 md:px-4 py-2">
-                        {filteredSummary[name].map((entry, i) => (
-                          <div key={i} className="flex items-center gap-2 mb-1">
-                            <button
-                              className="text-blue-500 hover:underline text-xs"
-                              onClick={() => handleEdit(entry.id)}
-                            >Edit</button>
-                            <button
-                              className="text-red-500 hover:underline text-xs"
-                              onClick={() => handleDelete(entry.id)}
-                            >Delete</button>
-                          </div>
-                        ))}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+          Object.keys(groupedSummary).map((cong, idx) => (
+            <div key={cong} className={`w-full max-w-full mb-6 rounded-xl shadow border p-2 md:p-4 ${congregationColors[cong] || 'bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700'}`}>
+              <h3 className="text-lg font-bold mb-2">{cong}</h3>
+              {Object.keys(groupedSummary[cong]).map(month => (
+                <div key={month} className="mb-4">
+                  <h4 className="text-base font-semibold text-blue-700 dark:text-blue-300 mb-1">{month}</h4>
+                  {Object.keys(groupedSummary[cong][month]).map(day => (
+                    <div key={day} className="mb-2 pl-2 border-l-2 border-blue-300 dark:border-blue-600">
+                      <div className="font-medium text-sm text-gray-700 dark:text-gray-200 mb-1">{day}</div>
+                      <table className="min-w-max text-gray-900 dark:text-gray-100 mb-2">
+                        <thead className={darkMode ? "bg-gray-700 text-gray-100" : "bg-gray-200 text-gray-900"}>
+                          <tr>
+                            <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm min-w-[120px] whitespace-nowrap">Meeting</th>
+                            <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm min-w-[220px]">Attendee(s)</th>
+                            <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Submitted Time(s)</th>
+                            <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Presence Status</th>
+                            <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {groupedSummary[cong][month][day].map((entry, i) => (
+                            <tr key={entry.id || i} className="text-sm md:text-base">
+                              <td className="border px-2 md:px-4 py-2 text-xs md:text-sm min-w-[120px] whitespace-nowrap">
+                                <div className="text-xs md:text-sm font-medium text-blue-600 dark:text-blue-200">
+                                  {entry.meeting_title || "Unknown Meeting"}
+                                </div>
+                              </td>
+                              <td className="border px-2 md:px-4 py-2 text-xs md:text-sm min-w-[220px]">
+                                <span className="font-semibold">{entry.name}</span>
+                                <span> ({entry.position})</span>
+                              </td>
+                              <td className="border px-2 md:px-4 py-2 space-y-1">
+                                <div className="text-xs md:text-sm">{entry.timestamp}</div>
+                              </td>
+                              <td className="border px-2 md:px-4 py-2">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="text-lg">
+                                    {isApologyEntry(entry) ? (
+                                      <FaTimesCircle className="text-red-500" />
+                                    ) : (
+                                      <FaCheckCircle className="text-green-500" />
+                                    )}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="border px-2 md:px-4 py-2">
+                                <button onClick={() => onEdit(entry)} className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-2">Edit</button>
+                                <button onClick={() => onDelete(entry)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">Delete</button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ))}
+                </div>
+              ))}
             </div>
           ))
         )}

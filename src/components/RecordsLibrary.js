@@ -430,7 +430,7 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
           timestamp: record.timestamp
         };
         
-        const res = await fetch(`${API_URL}/api/submit-apologies`, {
+        const res = await fetch(`${API_URL}/submit-apologies`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
@@ -504,6 +504,31 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
   const hasApologies = paginatedRecords.some(r => r.record_kind === 'apology');
 
   const isMobile = useIsMobile();
+
+  // Group records by congregation, then by month, then by day
+  const groupedRecords = {};
+  filteredRecords.forEach((record) => {
+    const cong = record.congregation || 'Unknown';
+    const dateObj = new Date(record.meeting_date);
+    const monthKey = dateObj.toLocaleString('default', { month: 'long', year: 'numeric' });
+    const dayKey = dateObj.toLocaleDateString();
+    if (!groupedRecords[cong]) groupedRecords[cong] = {};
+    if (!groupedRecords[cong][monthKey]) groupedRecords[cong][monthKey] = {};
+    if (!groupedRecords[cong][monthKey][dayKey]) groupedRecords[cong][monthKey][dayKey] = [];
+    groupedRecords[cong][monthKey][dayKey].push(record);
+  });
+
+  const congregationColors = {
+    "Emmanuel Congregation Ahinsan": "bg-blue-100 border-blue-300 dark:bg-blue-900 dark:border-blue-700",
+    "Peniel Congregation Esreso No 1": "bg-green-100 border-green-300 dark:bg-green-900 dark:border-green-700",
+    "Favour Congregation Esreso No 2": "bg-yellow-100 border-yellow-300 dark:bg-yellow-900 dark:border-yellow-700",
+    "Christ Congregation Ahinsan Estate": "bg-purple-100 border-purple-300 dark:bg-purple-900 dark:border-purple-700",
+    "Ebenezer Congregation Aprabo": "bg-pink-100 border-pink-300 dark:bg-pink-900 dark:border-pink-700",
+    "Mizpah Congregation Odagya No 1": "bg-orange-100 border-orange-300 dark:bg-orange-900 dark:border-orange-700",
+    "Odagya No 2": "bg-teal-100 border-teal-300 dark:bg-teal-900 dark:border-teal-700",
+    "Liberty Congregation High Tension": "bg-red-100 border-red-300 dark:bg-red-900 dark:border-red-700",
+    "NOM": "bg-gray-100 border-gray-300 dark:bg-gray-900 dark:border-gray-700"
+  };
 
   return (
     <div>
@@ -601,127 +626,65 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
       </div>
       {/* Records Table (if present) */}
       <div className="overflow-x-auto custom-scrollbar mb-6 md:mb-10">
-        {paginatedRecords.length === 0 ? (
-          <div className="text-center py-8">
-            <div className="text-gray-500 dark:text-gray-400 text-lg font-medium">
-              No records found.
-            </div>
-          </div>
-        ) : (
-          <table className="min-w-max text-gray-900 dark:text-gray-100">
-            <thead className={darkMode ? "bg-gray-700 text-gray-100" : "bg-gray-200 text-gray-900"}>
-              <tr>
-                <th className="px-2 md:px-4 py-2 border text-xs md:text-sm">
-                  <input
-                    type="checkbox"
-                    checked={selectedRecords.length === paginatedRecords.length && paginatedRecords.length > 0}
-                    onChange={toggleSelectAll}
-                    className="rounded"
-                  />
-                </th>
-                {allColumns.filter(col => showColumns[col.key]).map(col => (
-                  <th key={col.key} className="px-2 md:px-4 py-2 border text-xs md:text-sm min-w-[120px] whitespace-nowrap">{col.label}</th>
+        {Object.keys(groupedRecords).map((cong, idx) => (
+          <div key={cong} className={`w-full max-w-full mb-6 rounded-xl shadow border p-2 md:p-4 ${congregationColors[cong] || 'bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700'}`}>
+            <h3 className="text-lg font-bold mb-2">{cong}</h3>
+            {Object.keys(groupedRecords[cong]).map(month => (
+              <div key={month} className="mb-4">
+                <h4 className="text-base font-semibold text-blue-700 dark:text-blue-300 mb-1">{month}</h4>
+                {Object.keys(groupedRecords[cong][month]).map(day => (
+                  <div key={day} className="mb-2 pl-2 border-l-2 border-blue-300 dark:border-blue-600">
+                    <div className="font-medium text-sm text-gray-700 dark:text-gray-200 mb-1">{day}</div>
+                    <table className="min-w-max text-gray-900 dark:text-gray-100 mb-2">
+                      <thead className={darkMode ? "bg-gray-700 text-gray-100" : "bg-gray-200 text-gray-900"}>
+                        <tr>
+                          <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm min-w-[120px] whitespace-nowrap">Meeting</th>
+                          <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm min-w-[220px]">Attendee(s)</th>
+                          <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Submitted Time(s)</th>
+                          <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Presence Status</th>
+                          <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {groupedRecords[cong][month][day].map((record, i) => (
+                          <tr key={record.id || i} className="text-sm md:text-base">
+                            <td className="border px-2 md:px-4 py-2 text-xs md:text-sm min-w-[120px] whitespace-nowrap">
+                              <div className="text-xs md:text-sm font-medium text-blue-600 dark:text-blue-200">
+                                {record.meeting_title || "Unknown Meeting"}
+                              </div>
+                            </td>
+                            <td className="border px-2 md:px-4 py-2 text-xs md:text-sm min-w-[220px]">
+                              <span className="font-semibold">{record.name}</span>
+                              <span> ({record.position})</span>
+                            </td>
+                            <td className="border px-2 md:px-4 py-2 space-y-1">
+                              <div className="text-xs md:text-sm">{record.timestamp}</div>
+                            </td>
+                            <td className="border px-2 md:px-4 py-2">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-lg">
+                                  {record.record_kind === 'apology' ? (
+                                    <FaTimesCircle className="text-red-500" />
+                                  ) : (
+                                    <FaCheckCircle className="text-green-500" />
+                                  )}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="border px-2 md:px-4 py-2">
+                              <button onClick={() => handleEdit(record)} className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-2">Edit</button>
+                              <button onClick={() => handleDelete(record.id, record.name)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">Delete</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 ))}
-                {hasApologies && (
-                  <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Reason</th>
-                )}
-                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedRecords.map((record, idx) => (
-                <tr key={record.id} className={`transition-colors ${idx % 2 === 0 ? (darkMode ? 'bg-gray-800' : 'bg-gray-50') : ''}`}>
-                  <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
-                    <input
-                      type="checkbox"
-                      checked={selectedRecords.includes(record.id)}
-                      onChange={() => toggleSelect(record.id)}
-                      className="rounded"
-                    />
-                  </td>
-                  {allColumns.filter(col => showColumns[col.key]).map(col => (
-                    <td key={col.key} className="border px-2 md:px-4 py-2 text-xs md:text-sm">
-                      {col.key === 'notes' && tagEditId === record.id ? (
-                        <span className="flex items-center gap-2">
-                          <input
-                            value={tagInput}
-                            onChange={e => setTagInput(e.target.value)}
-                            className="border px-2 py-1 rounded mr-2 w-32 md:w-48"
-                            placeholder="Enter notes..."
-                            autoFocus
-                            onClick={e => e.stopPropagation()}
-                            onFocus={e => e.stopPropagation()}
-                          />
-                          <button onClick={e => { e.stopPropagation(); saveTag(record.id); }} className="text-green-600" title="Save notes"><FaSave /></button>
-                          <button onClick={e => { e.stopPropagation(); setTagEditId(null); setTagInput(""); }} className="text-red-500" title="Cancel notes edit">&times;</button>
-                        </span>
-                      ) : col.key === 'notes' ? (
-                        <span 
-                          className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded"
-                          onClick={e => { 
-                            e.stopPropagation(); 
-                            setNotesRecord(record);
-                            setShowNotesModal(true);
-                          }}
-                          title="Click to view/edit notes"
-                        >
-                          {record.notes ? (
-                            <span className="truncate max-w-20 block">{record.notes}</span>
-                          ) : (
-                            <FaTags className="inline text-blue-600" />
-                          )}
-                        </span>
-                      ) : (
-                        <span>
-                          {record[col.key] || ''}
-                        </span>
-                      )}
-                    </td>
-                  ))}
-                  {hasApologies && (
-                    <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
-                      {record.record_kind === 'apology' ? (record.reason || 'No reason provided') : ''}
-                    </td>
-                  )}
-                  <td className="border px-2 md:px-4 py-2 flex gap-2">
-                    <button
-                      onClick={e => { e.stopPropagation(); setShowDetails(true); setDetailsRecord(record); }}
-                      className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 p-1 rounded"
-                      title="View Details"
-                    >
-                      <FaEye />
-                    </button>
-                    {isAdmin && (
-                      <>
-                        <button
-                          onClick={e => { e.stopPropagation(); handleEdit(record); }}
-                          className="text-blue-500 hover:text-blue-700 p-1 rounded"
-                          title="Edit"
-                        >
-                          <FaEdit />
-                        </button>
-                        <button
-                          onClick={e => { e.stopPropagation(); handleDelete(record.id, record.congregation || record.position); }}
-                          className="text-red-500 hover:text-red-700 p-1 rounded"
-                          title="Delete"
-                        >
-                          <FaTrash />
-                        </button>
-                        <button
-                          onClick={e => { e.stopPropagation(); handleDownloadPDF(record); }}
-                          className="text-purple-600 hover:text-purple-800 p-1 rounded"
-                          title="Download PDF"
-                        >
-                          <FaFilePdf />
-                        </button>
-                      </>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+              </div>
+            ))}
+          </div>
+        ))}
       </div>
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-2 md:gap-4 justify-center mb-4">

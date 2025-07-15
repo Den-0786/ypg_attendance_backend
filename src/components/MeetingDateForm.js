@@ -76,9 +76,7 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
         if (typeof onMeetingSet === 'function') {
           setTimeout(() => {
             onMeetingSet();
-            if (/Chrome/.test(navigator.userAgent)) {
-              window.location.reload();
-            }
+            // Removed window.location.reload() for Chrome to prevent unnecessary reload
           }, 500);
         }
       } else {

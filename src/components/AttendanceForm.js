@@ -116,7 +116,7 @@ export default function AttendanceForm({ meetingInfo }) {
     const { name, value } = e.target;
     validateField(name, value);
     let newValue = value;
-    if (["name", "congregation", "position", "reason"].includes(name)) {
+    if (["name", "congregation", "position"].includes(name)) {
       newValue = capitalizeWords(value);
     }
     setForm(prev => ({ ...prev, [name]: newValue }));
