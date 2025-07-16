@@ -339,10 +339,14 @@ def delete_attendance(request, pk):
             'Financial Secretary', 'Treasurer', 'Bible Studies Coordinator', 'Organizer'
         ]
         if user.role in executive_roles:
+            # Require PIN for executive actions
+            pin = request.query_params.get('pin')
+            from .models import SecurityPIN
+            if not pin or not SecurityPIN.verify_pin(pin):
+                return Response({'error': 'Valid PIN required for this action.'}, status=403)
             entry = AttendanceEntry.objects.get(pk=pk)
         else:
             entry = AttendanceEntry.objects.get(pk=pk, submitted_by_id=user_id)
-        
         entry.delete()
         return Response({'message': 'Attendance record deleted successfully.'})
     except Credential.DoesNotExist:
@@ -365,10 +369,14 @@ def edit_attendance(request, pk):
             'Financial Secretary', 'Treasurer', 'Bible Studies Coordinator', 'Organizer'
         ]
         if user.role in executive_roles:
+            # Require PIN for executive actions
+            pin = request.data.get('pin')
+            from .models import SecurityPIN
+            if not pin or not SecurityPIN.verify_pin(pin):
+                return Response({'error': 'Valid PIN required for this action.'}, status=403)
             entry = AttendanceEntry.objects.get(pk=pk)
         else:
             entry = AttendanceEntry.objects.get(pk=pk, submitted_by_id=user_id)
-        
         # Update fields if provided
         if 'name' in request.data:
             entry.name = request.data['name']
@@ -384,7 +392,6 @@ def edit_attendance(request, pk):
             entry.type = request.data['type']
         if 'meeting_date' in request.data:
             entry.meeting_date = request.data['meeting_date']
-            
         entry.save()
         return Response({'message': 'Attendance updated successfully', 'data': AttendanceEntrySerializer(entry).data})
     except Credential.DoesNotExist:
@@ -469,6 +476,12 @@ def change_credentials(request):
     
     if not user_id:
         return Response({'error': 'Authentication required'}, status=401)
+    
+    # --- PIN check here ---
+    pin = request.data.get('pin')
+    from .models import SecurityPIN
+    if not pin or not SecurityPIN.verify_pin(pin):
+        return Response({'error': 'Valid PIN required to change credentials.'}, status=403)
     
     try:
         current_user = Credential.objects.get(id=user_id)  # type: ignore
@@ -801,10 +814,14 @@ def delete_apology(request, pk):
             'Financial Secretary', 'Treasurer', 'Bible Studies Coordinator', 'Organizer'
         ]
         if user.role in executive_roles:
+            # Require PIN for executive actions
+            pin = request.query_params.get('pin')
+            from .models import SecurityPIN
+            if not pin or not SecurityPIN.verify_pin(pin):
+                return Response({'error': 'Valid PIN required for this action.'}, status=403)
             entry = ApologyEntry.objects.get(pk=pk)
         else:
             entry = ApologyEntry.objects.get(pk=pk, submitted_by_id=user_id)
-        
         entry.delete()
         return Response({'message': 'Apology record deleted successfully.'})
     except Credential.DoesNotExist:
@@ -827,10 +844,14 @@ def edit_apology(request, pk):
             'Financial Secretary', 'Treasurer', 'Bible Studies Coordinator', 'Organizer'
         ]
         if user.role in executive_roles:
+            # Require PIN for executive actions
+            pin = request.data.get('pin')
+            from .models import SecurityPIN
+            if not pin or not SecurityPIN.verify_pin(pin):
+                return Response({'error': 'Valid PIN required for this action.'}, status=403)
             entry = ApologyEntry.objects.get(pk=pk)
         else:
             entry = ApologyEntry.objects.get(pk=pk, submitted_by_id=user_id)
-        
         # Update fields if provided
         if 'name' in request.data:
             entry.name = request.data['name']
@@ -844,7 +865,6 @@ def edit_apology(request, pk):
             entry.type = request.data['type']
         if 'meeting_date' in request.data:
             entry.meeting_date = request.data['meeting_date']
-            
         entry.save()
         return Response({'message': 'Apology updated successfully', 'data': ApologyEntrySerializer(entry).data})
     except Credential.DoesNotExist:
