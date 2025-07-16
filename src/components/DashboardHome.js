@@ -372,9 +372,15 @@ export default function DashboardHome({
 
   // Handler for deleting an entry (custom confirmation)
   const handleDelete = (entryId) => {
-    setPendingAction('delete');
-    setPendingEntry(entryId);
-    setShowPINModal(true);
+    // Find the entry object from the combined data
+    const entry = [...attendanceData, ...apologyData].find(e => e.id === entryId);
+    if (entry) {
+      setPendingAction('delete');
+      setPendingEntry(entry);
+      setShowPINModal(true);
+    } else {
+      toast.error('Entry not found');
+    }
   };
 
   const handleDeleteWithPIN = async (entry, pin) => {
@@ -495,9 +501,15 @@ export default function DashboardHome({
 
   // Handler for editing an entry (show modal)
   const handleEdit = (entryId) => {
-    setPendingAction('edit');
-    setPendingEntry(entryId);
-    setShowPINModal(true);
+    // Find the entry object from the combined data
+    const entry = [...attendanceData, ...apologyData].find(e => e.id === entryId);
+    if (entry) {
+      setPendingAction('edit');
+      setPendingEntry(entry);
+      setShowPINModal(true);
+    } else {
+      toast.error('Entry not found');
+    }
   };
 
   const handleEditWithPIN = async (entry, pin) => {

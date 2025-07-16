@@ -6,7 +6,6 @@ import { HiEye, HiEyeOff } from 'react-icons/hi';
 import { useRouter } from 'next/navigation';
 import { capitalizeFirst, toTitleCase } from '../lib/utils';
 import PINModal from './PINModal';
-import { fetchWithAuth } from '@components/hooks/useAuth';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -144,17 +143,15 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
         return;
       }
       
-      const res = await fetchWithAuth(
-        `${API_URL}/api/deactivate-meeting`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ pin }),
+      const token = localStorage.getItem('access_token');
+      const res = await fetch(`${API_URL}/api/deactivate-meeting`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : undefined,
         },
-        handleLogout // optional: pass logout callback if you want to log out on refresh failure
-      );
+        body: JSON.stringify({ pin }),
+      });
       const data = await res.json();
       if (res.ok) {
         toast.success('Current meeting deactivated', { duration: 5000 });
@@ -170,8 +167,6 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
       } else {
         if (res.status === 401 || res.status === 403) {
           toast.error('Session expired, please log in again.');
-          // Optionally redirect to login page here
-          // router.push('/login');
           return;
         }
         toast.error(data.error || 'Failed to deactivate meeting');
