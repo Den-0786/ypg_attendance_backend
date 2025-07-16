@@ -514,7 +514,7 @@ export default function DashboardHome({
 
   const handleEditWithPIN = async (entry, pin) => {
     if (entry) {
-      setEditModal({ open: true, entry });
+      setEditModal({ open: true, entry: { ...entry, pin } });
     } else {
       toast.error('Entry not found');
     }
@@ -555,7 +555,10 @@ export default function DashboardHome({
           'Content-Type': 'application/json',
           'Authorization': token ? `Bearer ${token}` : undefined,
         },
-        body: JSON.stringify(updatedEntry),
+        body: JSON.stringify({
+          ...updatedEntry,
+          pin: pendingEntry?.pin // Include the PIN that was used for verification
+        }),
       });
       
       if (res.ok) {

@@ -305,7 +305,7 @@ export default function DashboardDistrict({
 
   const handleEditWithPIN = async (entry, pin) => {
     if (entry) {
-      setEditModal({ open: true, entry });
+      setEditModal({ open: true, entry: { ...entry, pin } });
     } else {
       toast.error('Entry not found');
     }
@@ -344,8 +344,12 @@ export default function DashboardDistrict({
           'Content-Type': 'application/json',
           'Authorization': token ? `Bearer ${token}` : undefined,
         },
-        body: JSON.stringify(updatedEntry),
+        body: JSON.stringify({
+          ...updatedEntry,
+          pin: updatedEntry.pin // Include the PIN that was used for verification
+        }),
       });
+      
       if (res.ok) {
         toast.success('Entry updated successfully');
         setEditModal({ open: false, entry: null });
@@ -355,11 +359,10 @@ export default function DashboardDistrict({
         window.dispatchEvent(new CustomEvent('attendanceDataChanged'));
       } else {
         const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
-        console.error('Edit failed:', res.status, errorData);
         toast.error(`Failed to update entry: ${errorData.error || res.statusText}`);
       }
     } catch (err) {
-      toast.error('Network error');
+      toast.error('Network error - please check your connection');
     }
   };
 

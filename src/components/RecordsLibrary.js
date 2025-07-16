@@ -652,6 +652,21 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
                     <table className="min-w-max text-gray-900 dark:text-gray-100 mb-2">
                       <thead className={darkMode ? "bg-gray-700 text-gray-100" : "bg-gray-200 text-gray-900"}>
                         <tr>
+                          <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">
+                            <input
+                              type="checkbox"
+                              checked={selectedRecords.length === groupedRecords[cong][month][day].length && groupedRecords[cong][month][day].length > 0}
+                              onChange={() => {
+                                const recordIds = groupedRecords[cong][month][day].map(r => r.id);
+                                if (selectedRecords.length === recordIds.length) {
+                                  setSelectedRecords(selectedRecords.filter(id => !recordIds.includes(id)));
+                                } else {
+                                  setSelectedRecords([...new Set([...selectedRecords, ...recordIds])]);
+                                }
+                              }}
+                              className="w-4 h-4"
+                            />
+                          </th>
                           <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm min-w-[120px] whitespace-nowrap">Meeting</th>
                           <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm min-w-[220px]">Attendee(s)</th>
                           <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Submitted Time(s)</th>
@@ -663,6 +678,14 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
                       <tbody>
                         {groupedRecords[cong][month][day].map((record, i) => (
                           <tr key={record.id || i} className="text-sm md:text-base">
+                            <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
+                              <input
+                                type="checkbox"
+                                checked={selectedRecords.includes(record.id)}
+                                onChange={() => toggleSelect(record.id)}
+                                className="w-4 h-4"
+                              />
+                            </td>
                             <td className="border px-2 md:px-4 py-2 text-xs md:text-sm min-w-[120px] whitespace-nowrap">
                               <div className="text-xs md:text-sm font-medium text-blue-600 dark:text-blue-200">
                                 {record.meeting_title || "Unknown Meeting"}
