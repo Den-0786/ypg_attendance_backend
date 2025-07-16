@@ -327,13 +327,14 @@ export default function Dashboard({ onLogout }) {
   const fetchAttendance = async () => {
     try {
       const token = localStorage.getItem('access_token');
-      const res = await fetch(`${API_URL}/api/attendance-summary`, {
+      const response = await fetch(`${API_URL}/api/attendance-summary`, {
         headers: {
+          'Accept': 'application/json',
           'Authorization': token ? `Bearer ${token}` : undefined,
         },
       });
-      const data = await res.json();
-      setAttendanceData(data);
+      const data = await response.json();
+      setAttendanceData(Array.isArray(data) ? data : []);
     } catch (err) {
       setAttendanceData([]);
     }
@@ -342,13 +343,14 @@ export default function Dashboard({ onLogout }) {
   const fetchApologies = async () => {
     try {
       const token = localStorage.getItem('access_token');
-      const res = await fetch(`${API_URL}/api/apology-summary`, {
+      const response = await fetch(`${API_URL}/api/apology-summary`, {
         headers: {
+          'Accept': 'application/json',
           'Authorization': token ? `Bearer ${token}` : undefined,
         },
       });
-      const data = await res.json();
-      setApologyData(data);
+      const data = await response.json();
+      setApologyData(Array.isArray(data) ? data : []);
     } catch (err) {
       setApologyData([]);
     }
