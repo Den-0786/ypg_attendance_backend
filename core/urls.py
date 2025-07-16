@@ -9,7 +9,7 @@ from .views import (
     update_notes_tags, export_record_pdf, advanced_records_list, advanced_combined_records_list, audit_log_list,
     local_attendance, district_attendance, attendance_by_meeting_title,
     change_password, login_view_django, change_pin, get_pin_status, setup_initial_pin,
-    current_user_info, get_all_users, get_csrf_token
+    current_user_info, get_all_users, get_csrf_token, CustomTokenObtainPairView
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -47,7 +47,7 @@ urlpatterns = [
     path('login-django', login_view_django, name='login_django'),
 
     # JWT tokens (now at /api/token and /api/token/refresh)
-    path('token', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('token', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh', TokenRefreshView.as_view(), name='token_refresh'),
 
     # Meeting management

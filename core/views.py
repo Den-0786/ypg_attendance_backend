@@ -34,6 +34,10 @@ except ImportError:
 from django.utils.deprecation import MiddlewareMixin
 from .validators import validate_password_custom
 from django.views.decorators.csrf import ensure_csrf_cookie
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -1364,3 +1368,38 @@ def get_all_users(request):
 @ensure_csrf_cookie
 def get_csrf_token(request):
     return Response({'detail': 'CSRF cookie set'})
+
+class CustomTokenObtainPairView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        username = request.data.get('username')
+        password = request.data.get('password')
+        if not username or not password:
+            return Response({'detail': 'Username and password required.'}, status=400)
+        from .models import Credential
+        try:
+            user = Credential.objects.get(username=username)
+            if not user.check_password(password):
+                return Response({'detail': 'No active account for the given credentials'}, status=401)
+        except Credential.DoesNotExist:
+            return Response({'detail': 'No active account for the given credentials'}, status=401)
+        # Create JWT tokens
+        refresh = RefreshToken.for_user(user)
+        # Add custom claims
+        refresh['username'] = user.username
+        refresh['role'] = user.role
+        refresh['user_id'] = user.id
+        access = refresh.access_token
+        access['username'] = user.username
+        access['role'] = user.role
+        access['user_id'] = user.id
+        return Response({
+            'refresh': str(refresh),
+            'access': str(access),
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'role': user.role,
+            }
+        })
