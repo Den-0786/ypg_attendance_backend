@@ -64,26 +64,6 @@ const NoMeetingToast = ({ onClose }) => {
   );
 };
 
-// Utility to get cookie value by name
-function getCookie(name) {
-  let cookieValue = null;
-  if (typeof document !== 'undefined' && document.cookie && document.cookie !== '') {
-    console.log('All cookies:', document.cookie); // Debug: show all cookies
-    const cookies = document.cookie.split(';');
-    for (let i = 0; i < cookies.length; i++) {
-      const cookie = cookies[i].trim();
-      console.log(`Checking cookie: ${cookie}`); // Debug: show each cookie
-      if (cookie.substring(0, name.length + 1) === (name + '=')) {
-        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-        console.log(`Found ${name} cookie:`, cookieValue); // Debug: show found cookie
-        break;
-      }
-    }
-  }
-  console.log(`getCookie('${name}') returned:`, cookieValue); // Debug: show final result
-  return cookieValue;
-}
-
 const TOKEN_KEY = 'access_token';
 const REFRESH_KEY = 'refresh_token';
 
