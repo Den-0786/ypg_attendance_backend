@@ -125,7 +125,7 @@ const Sidebar = ({
           onChange={(e) => setSelectedYear(parseInt(e.target.value))}
           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
         >
-          {availableYears.map((year) => (
+          {Array.isArray(availableYears) && availableYears.map((year) => (
             <option key={year} value={year}>
               {year}
             </option>
@@ -274,12 +274,15 @@ export default function Dashboard({ onLogout }) {
 
   const availableYears = getAvailableYears();
 
+  // Defensive: ensure availableYears is always an array
+  const availableYearsArray = Array.isArray(availableYears) ? availableYears : [];
+
   // Update selected year if current selection is not available
   useEffect(() => {
-    if (!availableYears.includes(selectedYear)) {
-      setSelectedYear(availableYears[0] || new Date().getFullYear());
+    if (!availableYearsArray.includes(selectedYear)) {
+      setSelectedYear(availableYearsArray[0] || new Date().getFullYear());
     }
-  }, [availableYears, selectedYear]);
+  }, [availableYearsArray, selectedYear]);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -519,7 +522,7 @@ export default function Dashboard({ onLogout }) {
               onChange={(e) => setSelectedYear(parseInt(e.target.value))}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
             >
-              {availableYears.map((year) => (
+              {Array.isArray(availableYearsArray) && availableYearsArray.map((year) => (
                 <option key={year} value={year}>
                   {year}
                 </option>
