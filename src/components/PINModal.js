@@ -36,7 +36,7 @@ export default function PINModal({
 
       if (res.ok && data.is_valid) {
         onSuccess();
-        onClose();
+        // Do not call onClose() here; let parent handle modal state after redirect
       } else {
         setError(data.error || 'Invalid PIN');
       }

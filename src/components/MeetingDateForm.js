@@ -136,10 +136,13 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
   const handleDeactivateWithPIN = async () => {
     setDeactivating(true);
     try {
+      const token = localStorage.getItem('access_token');
       const res = await fetch(`${API_URL}/api/deactivate-meeting`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include', // Ensure session is sent
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : undefined,
+        },
       });
 
       const data = await res.json();
