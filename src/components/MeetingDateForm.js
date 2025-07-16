@@ -41,12 +41,13 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
     setAuthError('');
     setLoading(true);
     try {
+      const token = localStorage.getItem('access_token');
       const res = await fetch(`${API_URL}/api/set-meeting`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : undefined,
         },
-        credentials: 'include',
         body: JSON.stringify({
           title: titleInput,
           date: dateInput,

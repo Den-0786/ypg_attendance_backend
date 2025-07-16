@@ -324,10 +324,13 @@ export default function DashboardLocal({
         ? `${API_URL}/api/edit-apology/${updatedEntry.id}`
         : `${API_URL}/api/edit-attendance/${updatedEntry.id}`;
       
+      const token = localStorage.getItem('access_token');
       const res = await fetch(endpoint, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : undefined,
+        },
         body: JSON.stringify(updatedEntry),
       });
       if (res.ok) {

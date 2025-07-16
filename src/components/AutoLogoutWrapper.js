@@ -13,9 +13,12 @@ export default function AutoLogoutWrapper() {
   
   const handleLogout = async () => {
     try {
+      const token = localStorage.getItem('access_token');
       await fetch(`${API_URL}/api/logout`, {
         method: 'POST',
-        credentials: 'include'
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : undefined,
+        }
       });
     } catch (err) {
       console.error('Logout error:', err);

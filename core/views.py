@@ -42,9 +42,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def submit_attendance(request):
-    user_id = request.session.get('user_id')
+    user_id = request.user.id
     if not user_id:
         return Response({'error': 'Authentication required'}, status=401)
     
@@ -108,11 +108,11 @@ def submit_attendance(request):
 
 
 @api_view(['GET', 'POST'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def submit_apologies(request):
     if request.method == 'GET':
         # Return existing apologies for the current user
-        user_id = request.session.get('user_id')
+        user_id = request.user.id
         if not user_id:
             return Response({'error': 'Not authenticated'}, status=401)
         
@@ -130,7 +130,7 @@ def submit_apologies(request):
             return Response({'error': 'User not found'}, status=404)
     
     elif request.method == 'POST':
-        user_id = request.session.get('user_id')
+        user_id = request.user.id
         if not user_id:
             return Response({'error': 'Not authenticated'}, status=401)
         
@@ -175,11 +175,11 @@ def submit_apologies(request):
 
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def get_attendance_summary(request):
     year = request.GET.get('year')
     congregation = request.GET.get('congregation')
-    user_id = request.session.get('user_id')
+    user_id = request.user.id
     
     if not user_id:
         return Response({'error': 'Authentication required'}, status=401)
@@ -211,11 +211,11 @@ def get_attendance_summary(request):
 
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def get_apology_summary(request):
     year = request.GET.get('year')
     congregation = request.GET.get('congregation')
-    user_id = request.session.get('user_id')
+    user_id = request.user.id
     
     if not user_id:
         return Response({'error': 'Authentication required'}, status=401)
@@ -247,9 +247,9 @@ def get_apology_summary(request):
 
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def local_attendance(request):
-    user_id = request.session.get('user_id')
+    user_id = request.user.id
     
     if not user_id:
         return Response({'error': 'Authentication required'}, status=401)
@@ -289,9 +289,9 @@ def local_attendance(request):
     return Response(data)
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def district_attendance(request):
-    user_id = request.session.get('user_id')
+    user_id = request.user.id
     
     if not user_id:
         return Response({'error': 'Authentication required'}, status=401)
@@ -331,9 +331,9 @@ def district_attendance(request):
     return Response(data)
 
 @api_view(['DELETE'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def delete_attendance(request, pk):
-    user_id = request.session.get('user_id')
+    user_id = request.user.id
     
     if not user_id:
         return Response({'error': 'Authentication required'}, status=401)
@@ -361,9 +361,9 @@ def delete_attendance(request, pk):
         return Response({'error': 'Record not found or not authorized'}, status=404)
 
 @api_view(['PUT', 'PATCH'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def edit_attendance(request, pk):
-    user_id = request.session.get('user_id')
+    user_id = request.user.id
     
     if not user_id:
         return Response({'error': 'Authentication required'}, status=401)
@@ -406,9 +406,9 @@ def edit_attendance(request, pk):
         return Response({'error': 'Record not found or not authorized'}, status=404)
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def attendance_by_meeting_title(request):
-    user_id = request.session.get('user_id')
+    user_id = request.user.id
     
     if not user_id:
         return Response({'error': 'Authentication required'}, status=401)
@@ -714,9 +714,9 @@ def current_user_info(request):
 
 # --- Meeting Endpoints ---
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def set_meeting(request):
-    user_id = request.session.get('user_id')
+    user_id = request.user.id
     
     if not user_id:
         return Response({'error': 'Authentication required'}, status=401)
@@ -771,7 +771,7 @@ def set_meeting(request):
         return Response({'error': 'Failed to create meeting'}, status=400)
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def current_meeting(request):
     # First, check for and deactivate any expired meetings
     active_meetings = Meeting.objects.filter(is_active=True)
@@ -805,9 +805,9 @@ def deactivate_meeting(request):
     return Response({'message': f'Deactivated {count} meeting(s)'}, status=200)
 
 @api_view(['DELETE'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def delete_apology(request, pk):
-    user_id = request.session.get('user_id')
+    user_id = request.user.id
     
     if not user_id:
         return Response({'error': 'Authentication required'}, status=401)
@@ -835,9 +835,9 @@ def delete_apology(request, pk):
         return Response({'error': 'Record not found or not authorized'}, status=404)
 
 @api_view(['PUT', 'PATCH'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def edit_apology(request, pk):
-    user_id = request.session.get('user_id')
+    user_id = request.user.id
     
     if not user_id:
         return Response({'error': 'Authentication required'}, status=401)

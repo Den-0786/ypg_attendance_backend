@@ -189,7 +189,13 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
         ? `${API_URL}/api/delete-apology/${deleteId}`
         : `${API_URL}/api/delete-attendance/${deleteId}`;
       
-      await fetch(endpoint, { method: "DELETE", credentials: "include" });
+      const token = localStorage.getItem('access_token');
+      await fetch(endpoint, { 
+        method: "DELETE", 
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : undefined,
+        }
+      });
       setShowConfirm(false);
       setDeleteId(null);
       setDeleteName("");
@@ -248,10 +254,13 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
         }
       });
       
+      const token = localStorage.getItem('access_token');
       const res = await fetch(endpoint, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        headers: { 
+          "Content-Type": "application/json",
+          'Authorization': token ? `Bearer ${token}` : undefined,
+        },
         body: JSON.stringify(editData),
       });
       
@@ -300,10 +309,13 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
       ? `${API_URL}/api/edit-apology/${id}`
       : `${API_URL}/api/edit-attendance/${id}`;
       
+    const token = localStorage.getItem('access_token');
     await fetch(endpoint, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
+      headers: { 
+        "Content-Type": "application/json",
+        'Authorization': token ? `Bearer ${token}` : undefined,
+      },
       body: JSON.stringify({ notes: tagInput }),
     });
     setTagEditId(null);

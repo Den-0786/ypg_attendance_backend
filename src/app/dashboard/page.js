@@ -159,8 +159,11 @@ export default function AdminPage() {
     if (loggedIn && userRole === 'admin') {
       // Admin: fetch current meeting to decide what to show
       setLoadingMeeting(true);
+      const token = localStorage.getItem('access_token');
       fetch(`${API_URL}/api/current-meeting`, {
-        credentials: 'include'
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : undefined,
+        }
       })
         .then(res => res.json())
         .then(data => {

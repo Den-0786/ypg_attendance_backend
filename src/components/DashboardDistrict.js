@@ -179,9 +179,12 @@ export default function DashboardDistrict({
             onClick={async () => {
               toast.dismiss(t.id);
               try {
+                const token = localStorage.getItem('access_token');
                 const res = await fetch(endpoint, {
                   method: 'DELETE',
-                  credentials: 'include',
+                  headers: {
+                    'Authorization': token ? `Bearer ${token}` : undefined,
+                  },
                 });
                 if (res.ok) {
                   // Store deleted record in localStorage for undo
@@ -319,10 +322,13 @@ export default function DashboardDistrict({
         ? `${API_URL}/api/edit-apology/${updatedEntry.id}`
         : `${API_URL}/api/edit-attendance/${updatedEntry.id}`;
       
+      const token = localStorage.getItem('access_token');
       const res = await fetch(endpoint, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : undefined,
+        },
         body: JSON.stringify(updatedEntry),
       });
       if (res.ok) {

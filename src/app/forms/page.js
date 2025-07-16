@@ -95,8 +95,11 @@ export default function MeetingPage() {
     // Remove the check that only shows set meeting form for admin
     // Always allow showing the set meeting form for both admin and user
     setLoadingMeeting(true);
+    const token = localStorage.getItem('access_token');
     fetch(`${API_URL}/api/current-meeting`, {
-      credentials: 'include'
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : undefined,
+      }
     })
       .then(res => res.json())
       .then(data => {

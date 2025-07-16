@@ -31,8 +31,11 @@ export default function RecordsManager({ recordType = "attendance" }) {
       : `/api/apology-summary`;
     
     try {
+      const token = localStorage.getItem('access_token');
       const response = await fetch(url, {
-        credentials: 'include',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : undefined,
+        },
       });
       
       if (!response.ok) {
@@ -62,12 +65,13 @@ export default function RecordsManager({ recordType = "attendance" }) {
       : `/api/edit-apology/${editingRecord.id}`;
 
     try {
+      const token = localStorage.getItem('access_token');
       const response = await fetch(url, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : undefined,
         },
-        credentials: 'include',
         body: JSON.stringify(editingRecord),
       });
 

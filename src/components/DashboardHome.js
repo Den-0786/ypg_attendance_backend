@@ -390,9 +390,12 @@ export default function DashboardHome({
             onClick={async () => {
               toast.dismiss(t.id);
               try {
+                const token = localStorage.getItem('access_token');
                 const res = await fetch(`${API_URL}/api/delete-attendance/${entryId}`, {
                   method: 'DELETE',
-                  credentials: 'include',
+                  headers: {
+                    'Authorization': token ? `Bearer ${token}` : undefined,
+                  },
                 });
                 
                 if (res.ok) {
@@ -461,10 +464,13 @@ export default function DashboardHome({
         meeting_date: record.meeting_date,
         timestamp: record.timestamp
       };
+      const token = localStorage.getItem('access_token');
       const res = await fetch(`${API_URL}/api/submit-attendance`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : undefined,
+        },
         body: JSON.stringify([attendanceData]),
       });
       if (res.ok) {
@@ -531,10 +537,13 @@ export default function DashboardHome({
         ? `${API_URL}/api/edit-apology/${updatedEntry.id}`
         : `${API_URL}/api/edit-attendance/${updatedEntry.id}`;
       
+      const token = localStorage.getItem('access_token');
       const res = await fetch(endpoint, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : undefined,
+        },
         body: JSON.stringify(updatedEntry),
       });
       
@@ -562,10 +571,13 @@ export default function DashboardHome({
 
   const handleClearAllDataWithPIN = async (pin) => {
     try {
+      const token = localStorage.getItem('access_token');
       const res = await fetch(`${API_URL}/api/clear-all-data`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : undefined,
+        },
         body: JSON.stringify({ pin }),
       });
 
