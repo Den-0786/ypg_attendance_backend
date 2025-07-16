@@ -87,20 +87,17 @@ export function useAuth() {
         console.error('API_URL is not set. Please check your environment variables.');
         throw new Error('API_URL not configured');
       }
-
-      const res = await fetch(`${API_URL}/api/session-status`, { 
-        credentials: 'include',
+      const token = localStorage.getItem(TOKEN_KEY);
+      const res = await fetch(`${API_URL}/api/session-status`, {
         headers: {
           'Accept': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : undefined,
         }
       });
-      
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}: ${res.statusText}`);
       }
-      
       const data = await res.json();
-      
       if (data.loggedIn) {
         if (typeof setLoggedIn === 'function') {
           setLoggedIn(true);
@@ -108,7 +105,6 @@ export function useAuth() {
         if (typeof setUserRole === 'function') {
           setUserRole(data.role);
         }
-
       } else {
         if (typeof setLoggedIn === 'function') {
           setLoggedIn(false);
@@ -116,7 +112,6 @@ export function useAuth() {
         if (typeof setUserRole === 'function') {
           setUserRole(null);
         }
-
       }
     } catch (err) {
       console.error('Session check failed:', err);
