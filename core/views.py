@@ -1375,14 +1375,20 @@ class CustomTokenObtainPairView(APIView):
     def post(self, request, *args, **kwargs):
         username = request.data.get('username')
         password = request.data.get('password')
+        print(f"CustomTokenObtainPairView called with username: {username}")
         if not username or not password:
+            print("Missing username or password")
             return Response({'detail': 'Username and password required.'}, status=400)
         from .models import Credential
         try:
             user = Credential.objects.get(username=username)
+            print(f"User found: {user.username}, checking password...")
             if not user.check_password(password):
+                print("Password check failed")
                 return Response({'detail': 'No active account for the given credentials'}, status=401)
+            print("Password check passed")
         except Credential.DoesNotExist:
+            print("User not found")
             return Response({'detail': 'No active account for the given credentials'}, status=401)
         # Create JWT tokens
         refresh = RefreshToken.for_user(user)
