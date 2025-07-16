@@ -663,25 +663,15 @@ def logout_view(request):
     return Response({'message': 'Logged out'})
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def session_status(request):
-    if request.session.get('user_id'):
-        role = request.session.get('role', 'user')
-        username = request.session.get('username', '')
-        # Check if there's an active meeting for non-admin users
-        meetingSet = False
-        if role != 'admin':
-            meetingSet = Meeting.objects.filter(is_active=True).exists()
-        else:
-            meetingSet = True  # Admins always have meetingSet = True
-            
-        return Response({
-            'loggedIn': True,
-            'role': role,
-            'username': username,
-            'meetingSet': meetingSet
-        })
-    return Response({'loggedIn': False})
+    user = request.user
+    return Response({
+        'loggedIn': True,
+        'username': user.username,
+        'role': getattr(user, 'role', 'user') if hasattr(user, 'role') else 'user',
+        # Add more user info if needed
+    })
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
