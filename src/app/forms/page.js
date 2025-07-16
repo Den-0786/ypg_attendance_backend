@@ -121,8 +121,7 @@ export default function MeetingPage() {
     return null;
   }
 
-  // Remove automatic meeting form display
-  // Only show MeetingDateForm if user clicks 'Manage Meeting' or 'Set New Meeting'
+  // Only show MeetingDateForm if user clicks 'Manage Meeting'
   if (showMeetingForm) {
     return <MeetingDateForm 
       onClose={() => setShowMeetingForm(false)}

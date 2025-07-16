@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import AttendanceEntry, ApologyEntry, Credential, Meeting
+from .models import AttendanceEntry, ApologyEntry, Credential, Meeting, SecurityPIN
 
 @admin.register(Credential)
 class CredentialAdmin(admin.ModelAdmin):
@@ -24,3 +24,5 @@ class MeetingAdmin(admin.ModelAdmin):
     list_display = ('title', 'date', 'is_active')
     search_fields = ('title',)
     list_filter = ('is_active', 'date')
+
+admin.site.register(SecurityPIN)
