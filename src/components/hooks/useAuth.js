@@ -194,6 +194,7 @@ export function useAuth() {
           // fallback to default role
         }
         toast.success('Login successful');
+        // Redirect based on role
         if (role === 'admin') {
           router.replace('/dashboard');
         } else {

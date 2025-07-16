@@ -121,129 +121,24 @@ export default function MeetingPage() {
     return null;
   }
 
-  // Show MeetingDateForm if showMeetingForm is true (for all users)
+  // Remove automatic meeting form display
+  // Only show MeetingDateForm if user clicks 'Manage Meeting' or 'Set New Meeting'
   if (showMeetingForm) {
     return <MeetingDateForm 
-      onClose={() => {
-        setShowMeetingForm(false);
-        if (userRole === 'admin') {
-          setMeetingInfo({ 
-            date: 'No Meeting Set', 
-            title: 'No Active Meeting',
-            allowLogout: true 
-          });
-        }
-      }}
-      onMeetingSet={() => {
-        setShowMeetingForm(false);
-        setLoadingMeeting(true);
-        
-        // Multiple attempts to fetch meeting info for Chrome compatibility
-        const fetchMeetingInfo = async (attempt = 1) => {
-          try {
-            const res = await fetch(`${API_URL}/api/current-meeting`, { credentials: 'include' });
-            if (res.ok) {
-              const data = await res.json();
-              if (data && !data.error) {
-                setMeetingInfo(data);
-                setLoadingMeeting(false);
-              } else {
-                setMeetingInfo(null);
-                setLoadingMeeting(false);
-              }
-            } else {
-              throw new Error(`HTTP ${res.status}`);
-            }
-          } catch (error) {
-            if (attempt < 3) {
-              setTimeout(() => fetchMeetingInfo(attempt + 1), 1000);
-            } else {
-              setMeetingInfo(null);
-              setLoadingMeeting(false);
-            }
-          }
-        };
-        
-        // Start fetching with delay
-        setTimeout(() => fetchMeetingInfo(), 500);
-      }} 
+      onClose={() => setShowMeetingForm(false)}
+      onMeetingSet={() => setShowMeetingForm(false)}
     />;
   }
 
-  // Admin flow: show MeetingDateForm if no meeting, else MainApp
-  if (userRole === 'admin') {
-    if (loadingMeeting) {
-      return <div className="min-h-screen flex items-center justify-center">Loading meeting info...</div>;
-    }
-    if (!meetingInfo) {
-      if (contextMeetingDate && contextMeetingTitle) {
-        const fallbackMeetingInfo = {
-          date: contextMeetingDate,
-          title: contextMeetingTitle
-        };
-        return <MainApp activeTab={activeTab} setActiveTab={setActiveTab} handleLogout={handleLogout} meetingInfo={fallbackMeetingInfo} showManageMeeting={true} onManageMeeting={() => setShowMeetingForm(true)} />;
-      }
-      if (userRole === 'admin') {
-        return (
-          <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-            <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full text-center">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">No Active Meeting</h2>
-              <p className="text-gray-600 mb-6">
-                There is currently no active meeting set. You can set a new meeting or logout.
-              </p>
-              <div className="space-y-3">
-                <button
-                  onClick={() => setShowMeetingForm(true)}
-                  className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
-                >
-                  Set New Meeting
-                </button>
-                <button
-                  onClick={handleLogout}
-                  className="w-full bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition"
-                >
-                  Logout
-                </button>
-              </div>
-            </div>
-          </div>
-        );
-      }
-      return <div className="min-h-screen flex items-center justify-center text-red-500">No active meeting set. Please contact the admin.</div>;
-    }
-    // Show MainApp with meeting info and add a "Manage Meeting" button
-    return (
-      <div>
-        <MainApp 
-          activeTab={activeTab} 
-          setActiveTab={setActiveTab} 
-          handleLogout={handleLogout} 
-          meetingInfo={meetingInfo}
-          showManageMeeting={true}
-          onManageMeeting={() => setShowMeetingForm(true)}
-        />
-      </div>
-    );
-  }
-
-  // User flow: show MainApp with Manage Meeting button for all users
-  if (userRole === 'user') {
-    if (loadingMeeting) {
-      return <div className="min-h-screen flex items-center justify-center">Loading meeting info...</div>;
-    }
-    if (!meetingInfo) {
-      if (contextMeetingDate && contextMeetingTitle) {
-        const fallbackMeetingInfo = {
-          date: contextMeetingDate,
-          title: contextMeetingTitle
-        };
-        return <MainApp activeTab={activeTab} setActiveTab={setActiveTab} handleLogout={handleLogout} meetingInfo={fallbackMeetingInfo} showManageMeeting={true} onManageMeeting={() => setShowMeetingForm(true)} />;
-      }
-      // For users with no meeting, show MainApp with Manage Meeting button (toast will handle the notification)
-      return <MainApp activeTab={activeTab} setActiveTab={setActiveTab} handleLogout={handleLogout} meetingInfo={null} showManageMeeting={true} onManageMeeting={() => setShowMeetingForm(true)} />;
-    }
-    return <MainApp activeTab={activeTab} setActiveTab={setActiveTab} handleLogout={handleLogout} meetingInfo={meetingInfo} showManageMeeting={true} onManageMeeting={() => setShowMeetingForm(true)} />;
-  }
-
-  return null;
+  // Always show MainApp after login, regardless of meeting state
+  return (
+    <MainApp
+      activeTab={activeTab}
+      setActiveTab={setActiveTab}
+      handleLogout={handleLogout}
+      meetingInfo={meetingInfo}
+      showManageMeeting={true}
+      onManageMeeting={() => setShowMeetingForm(true)}
+    />
+  );
 }
