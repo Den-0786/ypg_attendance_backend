@@ -789,13 +789,12 @@ def current_meeting(request):
     return Response(serializer.data)
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def deactivate_meeting(request):
-    user_id = request.session.get('user_id')
-    
-    if not user_id:
+    user = request.user
+    if not user or not user.is_authenticated:
         return Response({'error': 'Authentication required'}, status=401)
-
+    # Optionally, check user role here if needed
     count = Meeting.objects.filter(is_active=True).update(is_active=False)
     return Response({'message': f'Deactivated {count} meeting(s)'}, status=200)
 

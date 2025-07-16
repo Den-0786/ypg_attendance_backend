@@ -221,3 +221,51 @@ export function useAuth() {
 
   return { loggedIn, userRole, loading, handleLogout, handleLogin, checkSession };
 }
+
+// Utility: fetch with JWT refresh
+export async function fetchWithAuth(url, options = {}, logoutCallback) {
+  const TOKEN_KEY = 'access_token';
+  const REFRESH_KEY = 'refresh_token';
+  let access = localStorage.getItem(TOKEN_KEY);
+  let refresh = localStorage.getItem(REFRESH_KEY);
+
+  // Helper to actually do the fetch
+  async function doFetch(token) {
+    const headers = { ...(options.headers || {}) };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    return fetch(url, { ...options, headers });
+  }
+
+  let res = await doFetch(access);
+  if (res.status !== 401) return res;
+
+  // Try refresh if 401 and refresh token exists
+  if (refresh) {
+    const refreshRes = await fetch(`${API_URL}/api/token/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh }),
+    });
+    if (refreshRes.ok) {
+      const data = await refreshRes.json();
+      if (data.access) {
+        localStorage.setItem(TOKEN_KEY, data.access);
+        access = data.access;
+        // Retry original request with new access token
+        res = await doFetch(access);
+        if (res.status !== 401) return res;
+      }
+    } else {
+      // Refresh failed, log out
+      if (typeof logoutCallback === 'function') logoutCallback();
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(REFRESH_KEY);
+    }
+  } else {
+    // No refresh token, log out
+    if (typeof logoutCallback === 'function') logoutCallback();
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(REFRESH_KEY);
+  }
+  return res;
+}

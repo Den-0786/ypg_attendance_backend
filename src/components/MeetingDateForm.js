@@ -6,6 +6,7 @@ import { HiEye, HiEyeOff } from 'react-icons/hi';
 import { useRouter } from 'next/navigation';
 import { capitalizeFirst, toTitleCase } from '../lib/utils';
 import PINModal from './PINModal';
+import { fetchWithAuth } from '@components/hooks/useAuth';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -136,26 +137,23 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
   const handleDeactivateWithPIN = async () => {
     setDeactivating(true);
     try {
-      const token = localStorage.getItem('access_token');
-      const res = await fetch(`${API_URL}/api/deactivate-meeting`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : undefined,
+      const res = await fetchWithAuth(
+        `${API_URL}/api/deactivate-meeting`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         },
-      });
-
+        handleLogout // optional: pass logout callback if you want to log out on refresh failure
+      );
       const data = await res.json();
-
       if (res.ok) {
         toast.success('Current meeting deactivated', { duration: 5000 });
-        // Clear context and localStorage
         setMeetingDate('');
         setMeetingTitle('');
         localStorage.removeItem('meetingDate');
         localStorage.removeItem('meetingTitle');
-        
-        // Call onMeetingSet to refresh the parent component's meeting state
         if (typeof onMeetingSet === 'function') {
           setTimeout(() => {
             onMeetingSet();

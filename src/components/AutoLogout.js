@@ -82,6 +82,7 @@ export default function AutoLogout({ loggedIn, onLogout }) {
       setWarningShown(false);
       setLogoutPending(false);
       clearTimers();
+      toast.dismiss(); // Dismiss all toasts on user activity
       resetInactivityTimer();
     } else {
       // If no warning, just reset timer as usual
