@@ -222,11 +222,15 @@ function getTopCongregations(attendanceData, year) {
 }
 
 function handleEditAttendance(id) {
-  toast(`Edit functionality for entry ${id} - not implemented yet`);
+  // This function is called by the dashboard components
+  // The actual edit functionality is handled within each dashboard component
+  // We don't need to do anything here as the components handle their own edit logic
 }
 
 function handleDeleteAttendance(id) {
-  toast(`Delete functionality for entry ${id} - not implemented yet`);
+  // This function is called by the dashboard components
+  // The actual delete functionality is handled within each dashboard component
+  // We don't need to do anything here as the components handle their own delete logic
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
@@ -664,7 +668,7 @@ export default function Dashboard({ onLogout }) {
 
       {/* Change Credentials Modal */}
       {showChangePasswordModal && (
-        <ChangePasswordForm onClose={() => setShowChangePasswordModal(false)} />
+        <ChangePasswordForm onClose={() => setShowChangePasswordModal(false)} currentUser={currentUser} />
       )}
 
       {/* PIN Modal */}

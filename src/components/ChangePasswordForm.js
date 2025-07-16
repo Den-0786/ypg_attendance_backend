@@ -8,7 +8,7 @@ import { getPasswordStrength } from "../lib/utils";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
-export default function ChangePasswordForm({ onClose }) {
+export default function ChangePasswordForm({ onClose, currentUser: propCurrentUser }) {
   const [formData, setFormData] = useState({
     currentUsername: "",
     currentPassword: "",
@@ -30,7 +30,7 @@ export default function ChangePasswordForm({ onClose }) {
   const [loading, setLoading] = useState(false);
   const [showPINModal, setShowPINModal] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState(propCurrentUser || null);
   const [isNewPasswordValid, setIsNewPasswordValid] = useState(false);
   const [pinStatus, setPinStatus] = useState(null);
   const [activeTab, setActiveTab] = useState('credentials');
@@ -39,10 +39,17 @@ export default function ChangePasswordForm({ onClose }) {
   const [isAdminMode, setIsAdminMode] = useState(false);
 
   useEffect(() => {
-    fetchCurrentUser();
+    if (propCurrentUser) {
+      setCurrentUser(propCurrentUser);
+      if (propCurrentUser.role === 'admin') {
+        fetchAllUsers();
+      }
+    } else {
+      fetchCurrentUser();
+    }
     checkPINStatus();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [propCurrentUser]);
 
   const fetchCurrentUser = async () => {
     try {
