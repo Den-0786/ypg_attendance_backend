@@ -387,12 +387,10 @@ export default function Dashboard({ onLogout }) {
     setShowPINModal(true);
   };
 
-  const handleDeactivateWithPIN = async () => {
+  const handleDeactivateWithPIN = async (pin) => {
     setDeactivating(true);
     try {
-      // Get PIN from PINModal
-      const pinInput = document.querySelector('input[type="password"]');
-      if (!pinInput || !pinInput.value) {
+      if (!pin) {
         toast.error('PIN is required');
         setDeactivating(false);
         return;
@@ -405,7 +403,7 @@ export default function Dashboard({ onLogout }) {
           'Content-Type': 'application/json',
           'Authorization': token ? `Bearer ${token}` : undefined,
         },
-        body: JSON.stringify({ pin: pinInput.value }),
+        body: JSON.stringify({ pin }),
       });
       
       if (res.ok) {
@@ -424,8 +422,8 @@ export default function Dashboard({ onLogout }) {
     }
   };
 
-  const handlePINSuccess = () => {
-    handleDeactivateWithPIN();
+  const handlePINSuccess = (pin) => {
+    handleDeactivateWithPIN(pin);
   };
 
   if (loading) {

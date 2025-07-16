@@ -93,7 +93,10 @@ export default function DashboardLocal({
   });
 
   // Add a helper to determine if a record is an apology
-  const isApologyEntry = (entry) => apologyData.some(apology => apology.id === entry.id);
+  const isApologyEntry = (entry) => {
+    // Check if entry has apology-specific fields
+    return entry && (entry.reason || entry.type === 'apology' || entry.record_kind === 'apology');
+  };
 
   // Combine attendance and apology data for processing
   const combinedData = [...attendanceData, ...apologyData];
@@ -187,15 +190,18 @@ export default function DashboardLocal({
     setShowPINModal(true);
   };
 
-  const handleDeleteWithPIN = async (entryId) => {
-    const isApology = isApologyEntry(attendanceData.find(e => e.id === entryId) || apologyData.find(e => e.id === entryId));
+  const handleDeleteWithPIN = async (entry, pin) => {
+    const isApology = isApologyEntry(entry);
     const endpoint = isApology 
-      ? `${API_URL}/api/delete-apology/${entryId}`
-      : `${API_URL}/api/delete-attendance/${entryId}`;
+      ? `${API_URL}/api/delete-apology/${entry.id}`
+      : `${API_URL}/api/delete-attendance/${entry.id}`;
     
+    const token = localStorage.getItem('access_token');
     const res = await fetch(endpoint, {
       method: 'DELETE',
-      credentials: 'include',
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : undefined,
+      },
     });
 
     if (res.ok) {
@@ -269,7 +275,9 @@ export default function DashboardLocal({
           localStorage.removeItem('pendingUndo');
           setLastDeleted(null);
           if (refetchAttendanceData) refetchAttendanceData();
+          if (refetchApologyData) refetchApologyData();
           window.dispatchEvent(new CustomEvent('attendanceDataChanged'));
+          window.dispatchEvent(new CustomEvent('apologyDataChanged'));
           toast.success('Entry restored successfully');
         } else {
           toast.error('Failed to restore entry');
@@ -287,24 +295,20 @@ export default function DashboardLocal({
     setShowPINModal(true);
   };
 
-  const handleEditWithPIN = async (entryId) => {
-    let entry = attendanceData.find(e => e.id === entryId);
-    if (!entry) {
-      entry = apologyData.find(e => e.id === entryId);
-    }
+  const handleEditWithPIN = async (entry, pin) => {
     if (entry) {
       setEditModal({ open: true, entry });
     } else {
-      toast('Edit functionality not implemented yet');
+      toast.error('Entry not found');
     }
   };
 
   // PIN success handler
-  const handlePINSuccess = async () => {
+  const handlePINSuccess = async (pin) => {
     if (pendingAction === 'edit' && pendingEntry) {
-      await handleEditWithPIN(pendingEntry);
+      await handleEditWithPIN(pendingEntry, pin);
     } else if (pendingAction === 'delete' && pendingEntry) {
-      await handleDeleteWithPIN(pendingEntry);
+      await handleDeleteWithPIN(pendingEntry, pin);
     }
     setPendingAction(null);
     setPendingEntry(null);

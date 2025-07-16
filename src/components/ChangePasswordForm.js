@@ -150,12 +150,13 @@ export default function ChangePasswordForm({ onClose }) {
           requestBody.target_user_id = selectedTargetUser.id;
         }
 
+        const token = localStorage.getItem('access_token');
         const response = await fetch(`${API_URL}/api/change-credentials`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": token ? `Bearer ${token}` : undefined,
           },
-          credentials: "include",
           body: JSON.stringify(requestBody),
         });
 

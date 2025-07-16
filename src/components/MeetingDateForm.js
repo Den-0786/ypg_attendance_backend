@@ -135,12 +135,10 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
     setShowPINModal(true);
   };
 
-  const handleDeactivateWithPIN = async () => {
+  const handleDeactivateWithPIN = async (pin) => {
     setDeactivating(true);
     try {
-      // Get PIN from PINModal
-      const pinInput = document.querySelector('input[type="password"]');
-      if (!pinInput || !pinInput.value) {
+      if (!pin) {
         toast.error('PIN is required');
         setDeactivating(false);
         return;
@@ -153,7 +151,7 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ pin: pinInput.value }),
+          body: JSON.stringify({ pin }),
         },
         handleLogout // optional: pass logout callback if you want to log out on refresh failure
       );
@@ -186,11 +184,11 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
   };
 
   // PIN success handler
-  const handlePINSuccess = () => {
+  const handlePINSuccess = (pin) => {
     if (pendingAction === 'activate') {
-      handleActivateWithPIN();
+      handleActivateWithPIN(pin);
     } else if (pendingAction === 'deactivate') {
-      handleDeactivateWithPIN();
+      handleDeactivateWithPIN(pin);
     }
     setPendingAction(null);
     setShowPINModal(false); // Close the PIN modal

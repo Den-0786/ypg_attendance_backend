@@ -214,8 +214,8 @@ export default function DashboardHome({
   
   // Add a helper function to identify apology entries
   const isApologyEntry = (entry) => {
-    // Check if the entry exists in the apologyData array by ID
-    return apologyData.some(apology => apology.id === entry.id);
+    // Check if entry has apology-specific fields
+    return entry && (entry.reason || entry.type === 'apology' || entry.record_kind === 'apology');
   };
   
   // Filter combined data by selected year
@@ -377,8 +377,11 @@ export default function DashboardHome({
     setShowPINModal(true);
   };
 
-  const handleDeleteWithPIN = async (entryId) => {
-    const deletedRecord = attendanceData.find(e => e.id === entryId);
+  const handleDeleteWithPIN = async (entry, pin) => {
+    const isApology = isApologyEntry(entry);
+    const endpoint = isApology 
+      ? `${API_URL}/api/delete-apology/${entry.id}`
+      : `${API_URL}/api/delete-attendance/${entry.id}`;
     
     toast.custom((t) => (
       <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-lg border border-red-400 max-w-xs mx-auto flex flex-col items-center">
@@ -391,7 +394,7 @@ export default function DashboardHome({
               toast.dismiss(t.id);
               try {
                 const token = localStorage.getItem('access_token');
-                const res = await fetch(`${API_URL}/api/delete-attendance/${entryId}`, {
+                const res = await fetch(endpoint, {
                   method: 'DELETE',
                   headers: {
                     'Authorization': token ? `Bearer ${token}` : undefined,
@@ -399,14 +402,13 @@ export default function DashboardHome({
                 });
                 
                 if (res.ok) {
-                  const deletedRecord = attendanceData.find(e => e.id === entryId) || apologyData.find(e => e.id === entryId);
                   const undoData = {
-                    component: 'records',
-                    record: deletedRecord,
+                    component: 'home',
+                    record: entry,
                     timestamp: Date.now()
                   };
                   localStorage.setItem('pendingUndo', JSON.stringify(undoData));
-                  setLastDeleted(deletedRecord);
+                  setLastDeleted(entry);
                   // Show undo toast
                   toast.custom((undoToast) => (
                     <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg border border-blue-400 max-w-xs mx-auto flex items-center justify-between">
@@ -421,7 +423,9 @@ export default function DashboardHome({
                     </div>
                   ), { duration: 5000 });
                   if (refetchAttendanceData) refetchAttendanceData();
+                  if (refetchApologyData) refetchApologyData();
                   window.dispatchEvent(new CustomEvent('attendanceDataChanged'));
+                  window.dispatchEvent(new CustomEvent('apologyDataChanged'));
                 } else {
                   const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
                   toast.error(`Failed to delete entry: ${errorData.error || res.statusText}`);
@@ -446,7 +450,7 @@ export default function DashboardHome({
     if (!pendingUndo) return;
     try {
       const undoData = JSON.parse(pendingUndo);
-      if (undoData.component !== 'records') return;
+      if (undoData.component !== 'home') return;
       const record = undoData.record;
       const isApology = isApologyEntry(record);
       if (isApology) {
@@ -477,7 +481,9 @@ export default function DashboardHome({
         localStorage.removeItem('pendingUndo');
         setLastDeleted(null);
         if (refetchAttendanceData) refetchAttendanceData();
+        if (refetchApologyData) refetchApologyData();
         window.dispatchEvent(new CustomEvent('attendanceDataChanged'));
+        window.dispatchEvent(new CustomEvent('apologyDataChanged'));
         toast.success('Entry restored successfully');
       } else {
         toast.error('Failed to restore entry');
@@ -494,30 +500,22 @@ export default function DashboardHome({
     setShowPINModal(true);
   };
 
-  const handleEditWithPIN = async (entryId) => {
-    let entry = attendanceData.find(e => e.id === entryId);
-    if (!entry) {
-      entry = apologyData.find(e => e.id === entryId);
-    }
+  const handleEditWithPIN = async (entry, pin) => {
     if (entry) {
       setEditModal({ open: true, entry });
     } else {
-      toast('Edit functionality not implemented yet');
+      toast.error('Entry not found');
     }
   };
 
   // PIN success handler
-  const handlePINSuccess = () => {
+  const handlePINSuccess = (pin) => {
     if (pendingAction === 'edit' && pendingEntry) {
-      handleEditWithPIN(pendingEntry);
+      handleEditWithPIN(pendingEntry, pin);
     } else if (pendingAction === 'delete' && pendingEntry) {
-      handleDeleteWithPIN(pendingEntry);
+      handleDeleteWithPIN(pendingEntry, pin);
     } else if (pendingAction === 'clear_all') {
-      // Get PIN from PINModal and proceed with clear all
-      const pinInput = document.querySelector('input[type="password"]');
-      if (pinInput) {
-        handleClearAllDataWithPIN(pinInput.value);
-      }
+      handleClearAllDataWithPIN(pin);
     }
     setPendingAction(null);
     setPendingEntry(null);

@@ -211,11 +211,11 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
   };
 
   // PIN success handler
-  const handlePINSuccess = () => {
+  const handlePINSuccess = (pin) => {
     if (pendingAction === 'edit' && pendingRecord) {
-      handleEditWithPIN(pendingRecord);
+      handleEditWithPIN(pendingRecord, pin);
     } else if (pendingAction === 'delete' && pendingRecord) {
-      handleDeleteWithPIN(pendingRecord.id, pendingRecord.name);
+      handleDeleteWithPIN(pendingRecord.id, pendingRecord.name, pin);
     }
     setPendingAction(null);
     setPendingRecord(null);

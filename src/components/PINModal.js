@@ -35,7 +35,7 @@ export default function PINModal({
       const data = await res.json();
 
       if (res.ok && data.is_valid) {
-        onSuccess();
+        onSuccess(pin);
         // Do not call onClose() here; let parent handle modal state after redirect
       } else {
         setError(data.error || 'Invalid PIN');

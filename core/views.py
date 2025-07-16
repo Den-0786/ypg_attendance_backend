@@ -475,10 +475,10 @@ def change_password(request):
     return Response({'message': 'Password changed successfully'})
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def change_credentials(request):
-    user_id = request.session.get('user_id')
-    role = request.session.get('role', 'unknown')
+    user_id = request.user.id
+    role = request.user.role if hasattr(request.user, 'role') else 'unknown'
     
     if not user_id:
         return Response({'error': 'Authentication required'}, status=401)

@@ -93,7 +93,10 @@ export default function DashboardDistrict({
   });
 
   // Add a helper to determine if a record is an apology
-  const isApologyEntry = (entry) => apologyData.some(apology => apology.id === entry.id);
+  const isApologyEntry = (entry) => {
+    // Check if entry has apology-specific fields
+    return entry && (entry.reason || entry.type === 'apology' || entry.record_kind === 'apology');
+  };
 
   // Combine attendance and apology data for processing
   const combinedData = [...attendanceData, ...apologyData];
@@ -163,11 +166,11 @@ export default function DashboardDistrict({
     setShowPINModal(true);
   };
 
-  const handleDeleteWithPIN = async (entryId) => {
-    const isApology = isApologyEntry(attendanceData.find(e => e.id === entryId));
+  const handleDeleteWithPIN = async (entry, pin) => {
+    const isApology = isApologyEntry(entry);
     const endpoint = isApology 
-      ? `${API_URL}/api/delete-apology/${entryId}`
-      : `${API_URL}/api/delete-attendance/${entryId}`;
+      ? `${API_URL}/api/delete-apology/${entry.id}`
+      : `${API_URL}/api/delete-attendance/${entry.id}`;
     
     toast.custom((t) => (
       <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-lg border border-red-400 max-w-xs mx-auto flex flex-col items-center">
@@ -188,14 +191,13 @@ export default function DashboardDistrict({
                 });
                 if (res.ok) {
                   // Store deleted record in localStorage for undo
-                  const deletedRecord = attendanceData.find(e => e.id === entryId) || apologyData.find(e => e.id === entryId);
                   const undoData = {
-                    component: 'records',
-                    record: deletedRecord,
+                    component: 'district',
+                    record: entry,
                     timestamp: Date.now()
                   };
                   localStorage.setItem('pendingUndo', JSON.stringify(undoData));
-                  setLastDeleted(deletedRecord);
+                  setLastDeleted(entry);
                   // Show undo toast
                   toast.custom((undoToast) => (
                     <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg border border-blue-400 max-w-xs mx-auto flex items-center justify-between">
@@ -210,7 +212,9 @@ export default function DashboardDistrict({
                     </div>
                   ), { duration: 5000 });
                   if (refetchAttendanceData) refetchAttendanceData();
+                  if (refetchApologyData) refetchApologyData();
                   window.dispatchEvent(new CustomEvent('attendanceDataChanged'));
+                  window.dispatchEvent(new CustomEvent('apologyDataChanged'));
                 } else {
                   toast.error('Failed to delete entry');
                 }
@@ -235,7 +239,7 @@ export default function DashboardDistrict({
     
     try {
       const undoData = JSON.parse(pendingUndo);
-      if (undoData.component !== 'records') return;
+      if (undoData.component !== 'district') return;
       
       const record = undoData.record;
       const isApology = isApologyEntry(record);
@@ -267,7 +271,9 @@ export default function DashboardDistrict({
           localStorage.removeItem('pendingUndo');
           setLastDeleted(null);
           if (refetchAttendanceData) refetchAttendanceData();
+          if (refetchApologyData) refetchApologyData();
           window.dispatchEvent(new CustomEvent('attendanceDataChanged'));
+          window.dispatchEvent(new CustomEvent('apologyDataChanged'));
           toast.success('Entry restored successfully');
         } else {
           toast.error('Failed to restore entry');
@@ -285,24 +291,20 @@ export default function DashboardDistrict({
     setShowPINModal(true);
   };
 
-  const handleEditWithPIN = async (entryId) => {
-    let entry = attendanceData.find(e => e.id === entryId);
-    if (!entry) {
-      entry = apologyData.find(e => e.id === entryId);
-    }
+  const handleEditWithPIN = async (entry, pin) => {
     if (entry) {
       setEditModal({ open: true, entry });
     } else {
-      toast('Edit functionality not implemented yet');
+      toast.error('Entry not found');
     }
   };
 
   // PIN success handler
-  const handlePINSuccess = async () => {
+  const handlePINSuccess = async (pin) => {
     if (pendingAction === 'edit' && pendingEntry) {
-      await handleEditWithPIN(pendingEntry);
+      await handleEditWithPIN(pendingEntry, pin);
     } else if (pendingAction === 'delete' && pendingEntry) {
-      await handleDeleteWithPIN(pendingEntry);
+      await handleDeleteWithPIN(pendingEntry, pin);
     }
     setPendingAction(null);
     setPendingEntry(null);
