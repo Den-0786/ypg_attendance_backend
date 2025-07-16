@@ -306,6 +306,7 @@ export default function DashboardDistrict({
     }
     setPendingAction(null);
     setPendingEntry(null);
+    setShowPINModal(false); // Close the PIN modal
   };
 
   // Handler for saving edit
@@ -448,7 +449,7 @@ export default function DashboardDistrict({
       </div>
       
       {/* Table of District Executives */}
-      <div className="overflow-x-auto custom-scrollbar mb-6 md:mb-10">
+      <div className="overflow-x-auto custom-scrollbar mb-6 md:mb-10 max-w-full">
         {groupedSummary && typeof groupedSummary === 'object' && Object.keys(groupedSummary).length === 0 ? (
           <div className="text-center py-8">
             <div className="text-gray-500 dark:text-gray-400 text-lg font-medium">
@@ -477,13 +478,13 @@ export default function DashboardDistrict({
                       Object.keys(groupedSummary[cong][month]).map(day => (
                         <div key={day} className="mb-2 pl-2 border-l-2 border-blue-300 dark:border-blue-600">
                           <div className="font-medium text-sm text-gray-700 dark:text-gray-200 mb-1">{day}</div>
-                          <table className="min-w-max text-gray-900 dark:text-gray-100 mb-2">
+                          <table className="w-full text-gray-900 dark:text-gray-100 mb-2 border-collapse">
                             <thead className={darkMode ? "bg-gray-700 text-gray-100" : "bg-gray-200 text-gray-900"}>
                               <tr>
-                                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm min-w-[120px] whitespace-nowrap">Meeting</th>
-                                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm min-w-[220px]">Attendee(s)</th>
-                                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Submitted Time(s)</th>
-                                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Presence Status</th>
+                                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Meeting</th>
+                                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Attendee(s)</th>
+                                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Submitted Time</th>
+                                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Status</th>
                                 <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Reason</th>
                                 <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Actions</th>
                               </tr>
@@ -491,13 +492,13 @@ export default function DashboardDistrict({
                             <tbody>
                               {groupedSummary[cong][month][day] && Array.isArray(groupedSummary[cong][month][day]) &&
                                 groupedSummary[cong][month][day].map((entry, i) => (
-                                  <tr key={entry.id || i} className="text-sm md:text-base">
-                                    <td className="border px-2 md:px-4 py-2 text-xs md:text-sm min-w-[120px] whitespace-nowrap">
+                                  <tr key={entry.id || i} className="text-sm md:text-base hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                    <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
                                       <div className="text-xs md:text-sm font-medium text-blue-600 dark:text-blue-200">
                                         {entry.meeting_title || "Unknown Meeting"}
                                       </div>
                                     </td>
-                                    <td className="border px-2 md:px-4 py-2 text-xs md:text-sm min-w-[220px]">
+                                    <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
                                       <span className="font-semibold">{entry.name}</span>
                                       <span> ({entry.position})</span>
                                     </td>
@@ -519,10 +520,26 @@ export default function DashboardDistrict({
                                       <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
                                         {entry.reason || 'No reason provided'}
                                       </td>
-                                    ) : null}
+                                    ) : (
+                                      <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
+                                        <span className="text-gray-400">-</span>
+                                      </td>
+                                    )}
                                     <td className="border px-2 md:px-4 py-2">
-                                      <button onClick={() => onEdit(entry)} className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-2">Edit</button>
-                                      <button onClick={() => onDelete(entry)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">Delete</button>
+                                      <div className="flex gap-2">
+                                        <button 
+                                          onClick={() => onEdit(entry)} 
+                                          className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 px-2 py-1 rounded text-xs font-medium hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                                        >
+                                          Edit
+                                        </button>
+                                        <button 
+                                          onClick={() => onDelete(entry)} 
+                                          className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 px-2 py-1 rounded text-xs font-medium hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                        >
+                                          Delete
+                                        </button>
+                                      </div>
                                     </td>
                                   </tr>
                                 ))}

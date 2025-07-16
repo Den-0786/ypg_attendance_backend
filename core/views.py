@@ -800,7 +800,13 @@ def deactivate_meeting(request):
     user = request.user
     if not user or not user.is_authenticated:
         return Response({'error': 'Authentication required'}, status=401)
-    # Optionally, check user role here if needed
+    
+    # Require PIN for meeting deactivation
+    pin = request.data.get('pin')
+    from .models import SecurityPIN
+    if not pin or not SecurityPIN.verify_pin(pin):
+        return Response({'error': 'Valid PIN required for this action.'}, status=403)
+    
     count = Meeting.objects.filter(is_active=True).update(is_active=False)
     return Response({'message': f'Deactivated {count} meeting(s)'}, status=200)
 

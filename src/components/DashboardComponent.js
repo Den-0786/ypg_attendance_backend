@@ -390,6 +390,14 @@ export default function Dashboard({ onLogout }) {
   const handleDeactivateWithPIN = async () => {
     setDeactivating(true);
     try {
+      // Get PIN from PINModal
+      const pinInput = document.querySelector('input[type="password"]');
+      if (!pinInput || !pinInput.value) {
+        toast.error('PIN is required');
+        setDeactivating(false);
+        return;
+      }
+      
       const token = localStorage.getItem('access_token');
       const res = await fetch(`${API_URL}/api/deactivate-meeting`, {
         method: 'POST',
@@ -397,11 +405,13 @@ export default function Dashboard({ onLogout }) {
           'Content-Type': 'application/json',
           'Authorization': token ? `Bearer ${token}` : undefined,
         },
+        body: JSON.stringify({ pin: pinInput.value }),
       });
       
       if (res.ok) {
         toast.success('Meeting deactivated successfully!');
-        // Optionally refresh the page or update state
+        setShowPINModal(false);
+        // Refresh the page to update meeting status
         window.location.reload();
       } else {
         const data = await res.json();
@@ -411,7 +421,6 @@ export default function Dashboard({ onLogout }) {
       toast.error('Network error occurred');
     } finally {
       setDeactivating(false);
-      setShowPINModal(false);
     }
   };
 

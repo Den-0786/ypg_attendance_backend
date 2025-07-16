@@ -219,6 +219,7 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
     }
     setPendingAction(null);
     setPendingRecord(null);
+    setShowPINModal(false); // Close the PIN modal
   };
 
   // Edit
@@ -683,13 +684,14 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
                                     <FaCheckCircle className="text-green-500" />
                                   )}
                                 </span>
+                                <span className="text-xs">
+                                  {record.record_kind === 'apology' ? 'Apology' : 'Present'}
+                                </span>
                               </div>
                             </td>
-                            {record.record_kind === 'apology' ? (
-                              <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
-                                {record.reason || 'No reason provided'}
-                              </td>
-                            ) : null}
+                            <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
+                              {record.record_kind === 'apology' ? (record.reason || 'No reason provided') : '-'}
+                            </td>
                             <td className="border px-2 md:px-4 py-2">
                               <button onClick={() => handleEdit(record)} className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-2">Edit</button>
                               <button onClick={() => handleDelete(record.id, record.name)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">Delete</button>
@@ -789,7 +791,7 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
       )}
       {/* Edit Modal */}
       {showEdit && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-[9998]">
           <div className="bg-white dark:bg-gray-800 p-3 rounded shadow-lg w-full max-w-xs">
             <h2 className="text-lg font-bold mb-4">Edit Record</h2>
             {Object.keys(editForm).length === 0 ? (
@@ -829,7 +831,7 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
       )}
       {/* Delete Confirmation Modal */}
       {showConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-[9998]">
           <div className="bg-white dark:bg-gray-800 p-6 rounded shadow-lg text-center">
             <p className="text-gray-900 dark:text-white">
               Are you sure you want to delete all records for <strong className="text-gray-900 dark:text-white">{deleteName}</strong>?
@@ -853,7 +855,7 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
       )}
       {/* Bulk Delete Confirmation Modal */}
       {showBulkConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-[9998]">
           <div className="bg-white dark:bg-gray-800 p-6 rounded shadow-lg text-center">
             <p className="text-gray-900 dark:text-white">
               Are you sure you want to delete all selected records?
