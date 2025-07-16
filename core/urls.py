@@ -46,9 +46,9 @@ urlpatterns = [
     path('current-user-info', current_user_info, name='current_user_info'),
     path('login-django', login_view_django, name='login_django'),
 
-    # JWT tokens (optional if you want to switch to token auth later)
-    path('api/token', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh', TokenRefreshView.as_view(), name='token_refresh'),
+    # JWT tokens (now at /api/token and /api/token/refresh)
+    path('token', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('token/refresh', TokenRefreshView.as_view(), name='token_refresh'),
 
     # Meeting management
     path('set-meeting', set_meeting, name='set_meeting'),
