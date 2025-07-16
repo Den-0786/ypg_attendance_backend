@@ -31,13 +31,6 @@ export default function Page() {
   // Only admin and user roles are supported
   const allowedRoles = ['admin', 'user'];
 
-  // Always redirect to /login if not already there
-  useEffect(() => {
-    if (pathname !== '/login') {
-      router.replace('/login');
-    }
-  }, [pathname, router]);
-
   // Always start fresh - clear any existing session state
   useEffect(() => {
     if (!hasInitialized.current) {
