@@ -200,10 +200,13 @@ export default function ApologyForm({ meetingInfo }) {
         admin_username: adminUsername,
         admin_password: adminPassword
       };
+      const token = localStorage.getItem('access_token');
       const response = await fetch(`${API_URL}/api/submit-apologies`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : undefined,
+        },
         body: JSON.stringify(payload),
       });
       const data = await response.json();
@@ -278,12 +281,13 @@ export default function ApologyForm({ meetingInfo }) {
         admin_password: adminPassword,
       };
       
+      const token = localStorage.getItem('access_token');
       const response = await fetch(`${API_URL}/api/submit-apologies`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : undefined,
         },
-        credentials: 'include',
         body: JSON.stringify(payload),
       });
       

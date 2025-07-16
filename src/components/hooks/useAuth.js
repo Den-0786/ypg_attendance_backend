@@ -84,6 +84,9 @@ function getCookie(name) {
   return cookieValue;
 }
 
+const TOKEN_KEY = 'access_token';
+const REFRESH_KEY = 'refresh_token';
+
 export function useAuth() {
   const router = useRouter(); 
   const store = useAuthStore();
@@ -180,77 +183,39 @@ export function useAuth() {
 
   const handleLogin = async (username, password) => {
     try {
-      // 1. Fetch CSRF token first
-      await fetch(`${API_URL}/api/csrf/`, {
-        credentials: 'include',
-      });
-      // Add a small delay to ensure the cookie is set
-      await new Promise(resolve => setTimeout(resolve, 100)); // 100ms delay
-      // 2. Get CSRF token from cookie
-      const csrftoken = getCookie('csrftoken');
-      console.log('CSRF token:', csrftoken); // Debug log
-      console.log('CSRF token length:', csrftoken ? csrftoken.length : 'undefined'); // Debug: check length
-      // 3. Make login request with CSRF token
-      const headers = {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': csrftoken,
-      };
-      console.log('Request headers:', headers); // Debug: show headers being sent
-      const res = await fetch(`${API_URL}/api/login`, {
+      // 1. Request JWT tokens from /api/token
+      const res = await fetch(`${API_URL}/api/token`, {
         method: 'POST',
-        headers,
-        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ username, password }),
       });
-
       const data = await res.json();
-
-      if (res.ok && data.success) {
+      if (res.ok && data.access) {
+        // 2. Store tokens in localStorage
+        localStorage.setItem(TOKEN_KEY, data.access);
+        localStorage.setItem(REFRESH_KEY, data.refresh);
+        // 3. Optionally decode token to get user role (if included in payload)
+        // For now, just set loggedIn to true
         if (typeof setLoggedIn === 'function') {
           setLoggedIn(true);
         }
         if (typeof setUserRole === 'function') {
-          setUserRole(data.role);
-        }
-        // Fetch current meeting after login
-        try {
-          const meetingRes = await fetch(`${API_URL}/api/current-meeting`, { credentials: 'include' });
-          if (meetingRes.ok) {
-            const meetingData = await meetingRes.json();
-            if (meetingData && meetingData.date && meetingData.title) {
-              setMeetingDate(meetingData.date);
-              setMeetingTitle(meetingData.title);
-              localStorage.setItem('meetingDate', meetingData.date);
-              localStorage.setItem('meetingTitle', meetingData.title);
-            }
-          }
-        } catch (err) {
-          // Ignore meeting fetch errors
+          setUserRole('user'); // You may want to decode the token to get the actual role
         }
         toast.success('Login successful');
-        return data.role;
+        return 'user';
       } else {
-        // Show error toast and throw error
-        toast.error(data.error || 'Invalid credentials');
-        const error = new Error(data.error || 'Login failed');
+        toast.error(data.detail || 'Invalid credentials');
+        const error = new Error(data.detail || 'Invalid credentials');
         error.isLoginError = true;
         throw error;
       }
     } catch (err) {
-      // Only log non-login errors to console
-      if (!err.isLoginError) {
-        console.error('Login error:', err);
-        toast.error('Login failed. Please try again.');
-      }
-      // If it's already an Error object with a message, re-throw it
-      if (err instanceof Error) {
-        throw err;
-      }
-      // Otherwise, create a new error with a generic message
-      const error = new Error('Login failed. Please try again.');
-      error.isLoginError = true;
       toast.error('Login failed. Please try again.');
-      throw error;
+      err.isLoginError = true;
+      throw err;
     }
   };
 

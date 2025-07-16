@@ -282,12 +282,13 @@ export default function AttendanceForm({ meetingInfo }) {
         timestamp: new Date().toTimeString().slice(0, 8),
       }));
       const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+      const token = localStorage.getItem('access_token');
       const res = await fetch(`${API_URL}/api/submit-attendance`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : undefined,
         },
-        credentials: 'include',
         body: JSON.stringify(payload),
       });
       const data = await res.json();

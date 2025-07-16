@@ -303,8 +303,12 @@ export default function Dashboard({ onLogout }) {
   // Fetch current user info
   const fetchCurrentUser = async () => {
     try {
+      const token = localStorage.getItem('access_token');
       const response = await fetch(`${API_URL}/api/session-status`, {
-        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : undefined,
+        },
       });
       const data = await response.json();
       setCurrentUser(data);
@@ -319,8 +323,11 @@ export default function Dashboard({ onLogout }) {
 
   const fetchAttendance = async () => {
     try {
+      const token = localStorage.getItem('access_token');
       const res = await fetch(`${API_URL}/api/attendance-summary`, {
-        credentials: 'include',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : undefined,
+        },
       });
       const data = await res.json();
       setAttendanceData(data);
@@ -331,8 +338,11 @@ export default function Dashboard({ onLogout }) {
 
   const fetchApologies = async () => {
     try {
+      const token = localStorage.getItem('access_token');
       const res = await fetch(`${API_URL}/api/apology-summary`, {
-        credentials: 'include',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : undefined,
+        },
       });
       const data = await res.json();
       setApologyData(data);
@@ -375,9 +385,13 @@ export default function Dashboard({ onLogout }) {
   const handleDeactivateWithPIN = async () => {
     setDeactivating(true);
     try {
+      const token = localStorage.getItem('access_token');
       const res = await fetch(`${API_URL}/api/deactivate-meeting`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : undefined,
+        },
       });
       
       if (res.ok) {

@@ -103,9 +103,10 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
     setLoading(true);
     try {
       // Fetch both attendance and apology data
+      const token = localStorage.getItem('access_token');
       const [attendanceRes, apologyRes] = await Promise.all([
-        fetch(`${API_URL}/api/attendance-summary`, { credentials: "include" }),
-        fetch(`${API_URL}/api/apology-summary`, { credentials: "include" })
+        fetch(`${API_URL}/api/attendance-summary`, { headers: { 'Authorization': token ? `Bearer ${token}` : undefined } }),
+        fetch(`${API_URL}/api/apology-summary`, { headers: { 'Authorization': token ? `Bearer ${token}` : undefined } })
       ]);
       
       if (!attendanceRes.ok) throw new Error("Failed to fetch attendance records");
