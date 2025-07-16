@@ -26,7 +26,7 @@ export default function AutoLogoutWrapper() {
       if (typeof setUserRole === 'function') {
         setUserRole(null);
       }
-      window.location.href = '/';
+      window.location.href = '/login';
     }
   };
 

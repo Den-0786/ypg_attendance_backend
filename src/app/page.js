@@ -7,7 +7,7 @@
 
 'use client';
 import { useEffect, useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@components/hooks/useAuth';
 import { useAuthStore } from '@components/store/authStore';
 import LoginForm from '@components/LoginForm';
@@ -23,12 +23,20 @@ export default function Page() {
   const setMeetingSet = store.setMeetingSet;
   
   const router = useRouter();
+  const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(true);
   const [loginLoading, setLoginLoading] = useState(false);
   const hasInitialized = useRef(false);
 
   // Only admin and user roles are supported
   const allowedRoles = ['admin', 'user'];
+
+  // Always redirect to /login if not already there
+  useEffect(() => {
+    if (pathname !== '/login') {
+      router.replace('/login');
+    }
+  }, [pathname, router]);
 
   // Always start fresh - clear any existing session state
   useEffect(() => {

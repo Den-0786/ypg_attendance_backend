@@ -142,10 +142,10 @@ export function useAuth() {
         credentials: 'include'
       });
       toast.success('Logged out successfully');
-      
-      // Clear any stored toast flags from localStorage
       if (typeof window !== 'undefined') {
         localStorage.removeItem('hasShownNoMeetingToast');
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(REFRESH_KEY);
       }
     } catch (err) {
       console.error('Logout error:', err);
@@ -157,13 +157,12 @@ export function useAuth() {
       if (typeof setUserRole === 'function') {
         setUserRole(null);
       }
-      router.push('/');
+      router.replace('/login');
     }
   };
 
   const handleLogin = async (username, password) => {
     try {
-      // 1. Request JWT tokens from /api/token
       const res = await fetch(`${API_URL}/api/token`, {
         method: 'POST',
         headers: {
@@ -173,19 +172,39 @@ export function useAuth() {
       });
       const data = await res.json();
       if (res.ok && data.access) {
-        // 2. Store tokens in localStorage
         localStorage.setItem(TOKEN_KEY, data.access);
         localStorage.setItem(REFRESH_KEY, data.refresh);
-        // 3. Optionally decode token to get user role (if included in payload)
-        // For now, just set loggedIn to true
         if (typeof setLoggedIn === 'function') {
           setLoggedIn(true);
         }
-        if (typeof setUserRole === 'function') {
-          setUserRole('user'); // You may want to decode the token to get the actual role
+        // Get role from session-status endpoint
+        let role = 'user';
+        try {
+          const sessionRes = await fetch(`${API_URL}/api/session-status`, {
+            headers: {
+              'Authorization': `Bearer ${data.access}`,
+              'Accept': 'application/json',
+            },
+          });
+          if (sessionRes.ok) {
+            const sessionData = await sessionRes.json();
+            if (sessionData.role) {
+              role = sessionData.role;
+              if (typeof setUserRole === 'function') {
+                setUserRole(role);
+              }
+            }
+          }
+        } catch (e) {
+          // fallback to default role
         }
         toast.success('Login successful');
-        return 'user';
+        if (role === 'admin') {
+          router.replace('/dashboard');
+        } else {
+          router.replace('/forms');
+        }
+        return role;
       } else {
         toast.error(data.detail || 'Invalid credentials');
         const error = new Error(data.detail || 'Invalid credentials');
