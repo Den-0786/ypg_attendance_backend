@@ -403,8 +403,10 @@ export default function DashboardHome({
                 const res = await fetch(endpoint, {
                   method: 'DELETE',
                   headers: {
+                    'Content-Type': 'application/json',
                     'Authorization': token ? `Bearer ${token}` : undefined,
                   },
+                  body: JSON.stringify({ pin }), // Include PIN in request body
                 });
                 
                 if (res.ok) {
@@ -557,7 +559,7 @@ export default function DashboardHome({
         },
         body: JSON.stringify({
           ...updatedEntry,
-          pin: pendingEntry?.pin // Include the PIN that was used for verification
+          pin: editModal.entry.pin // Get PIN from the edit modal entry
         }),
       });
       

@@ -192,11 +192,13 @@ export default function DashboardDistrict({
                 const res = await fetch(endpoint, {
                   method: 'DELETE',
                   headers: {
+                    'Content-Type': 'application/json',
                     'Authorization': token ? `Bearer ${token}` : undefined,
                   },
+                  body: JSON.stringify({ pin }), // Include PIN in request body
                 });
+                
                 if (res.ok) {
-                  // Store deleted record in localStorage for undo
                   const undoData = {
                     component: 'district',
                     record: entry,
@@ -222,7 +224,8 @@ export default function DashboardDistrict({
                   window.dispatchEvent(new CustomEvent('attendanceDataChanged'));
                   window.dispatchEvent(new CustomEvent('apologyDataChanged'));
                 } else {
-                  toast.error('Failed to delete entry');
+                  const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
+                  toast.error(`Failed to delete entry: ${errorData.error || res.statusText}`);
                 }
               } catch (err) {
                 toast.error('Network error');
@@ -346,7 +349,7 @@ export default function DashboardDistrict({
         },
         body: JSON.stringify({
           ...updatedEntry,
-          pin: updatedEntry.pin // Include the PIN that was used for verification
+          pin: editModal.entry.pin // Get PIN from the edit modal entry
         }),
       });
       

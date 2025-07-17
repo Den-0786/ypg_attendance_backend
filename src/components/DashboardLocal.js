@@ -202,44 +202,67 @@ export default function DashboardLocal({
       ? `${API_URL}/api/delete-apology/${entry.id}`
       : `${API_URL}/api/delete-attendance/${entry.id}`;
     
-    const token = localStorage.getItem('access_token');
-    const res = await fetch(endpoint, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': token ? `Bearer ${token}` : undefined,
-      },
-    });
-
-    if (res.ok) {
-      // Store deleted record in localStorage for undo
-      const deletedRecord = attendanceData.find(e => e.id === entryId) || apologyData.find(e => e.id === entryId);
-      const undoData = {
-        component: 'local',
-        record: deletedRecord,
-        timestamp: Date.now()
-      };
-      localStorage.setItem('pendingUndo', JSON.stringify(undoData));
-      setLastDeleted(deletedRecord);
-      // Show undo toast
-      toast.custom((undoToast) => (
-        <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg border border-blue-400 max-w-xs mx-auto flex items-center justify-between">
-          <span className="text-gray-700 dark:text-gray-200">Entry deleted</span>
-          <button 
-            className="ml-3 text-blue-600 hover:text-blue-800 underline"
-            onClick={() => {
-              handleUndo();
-              toast.dismiss(undoToast.id);
+    toast.custom((t) => (
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-lg border border-red-400 max-w-xs mx-auto flex flex-col items-center">
+        <div className="text-lg font-bold text-red-600 mb-2">Confirm Delete</div>
+        <div className="text-gray-700 dark:text-gray-200 mb-4">Are you sure you want to delete this entry?</div>
+        <div className="flex gap-3">
+          <button
+            className="bg-red-600 text-white px-4 py-1 rounded hover:bg-red-700"
+            onClick={async () => {
+              toast.dismiss(t.id);
+              try {
+                const token = localStorage.getItem('access_token');
+                const res = await fetch(endpoint, {
+                  method: 'DELETE',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': token ? `Bearer ${token}` : undefined,
+                  },
+                  body: JSON.stringify({ pin }), // Include PIN in request body
+                });
+                
+                if (res.ok) {
+                  const undoData = {
+                    component: 'local',
+                    record: entry,
+                    timestamp: Date.now()
+                  };
+                  localStorage.setItem('pendingUndo', JSON.stringify(undoData));
+                  setLastDeleted(entry);
+                  // Show undo toast
+                  toast.custom((undoToast) => (
+                    <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg border border-blue-400 max-w-xs mx-auto flex items-center justify-between">
+                      <span className="text-gray-700 dark:text-gray-200">Entry deleted</span>
+                      <button 
+                        className="ml-3 text-blue-600 hover:text-blue-800 underline"
+                        onClick={() => {
+                          handleUndo();
+                          toast.dismiss(undoToast.id);
+                        }}
+                      >Undo</button>
+                    </div>
+                  ), { duration: 5000 });
+                  if (refetchAttendanceData) refetchAttendanceData();
+                  if (refetchApologyData) refetchApologyData();
+                  window.dispatchEvent(new CustomEvent('attendanceDataChanged'));
+                  window.dispatchEvent(new CustomEvent('apologyDataChanged'));
+                } else {
+                  const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
+                  toast.error(`Failed to delete entry: ${errorData.error || res.statusText}`);
+                }
+              } catch (err) {
+                toast.error('Network error');
+              }
             }}
-          >Undo</button>
+          >Yes, Delete</button>
+          <button
+            className="bg-gray-300 text-gray-800 px-4 py-1 rounded hover:bg-gray-400"
+            onClick={() => toast.dismiss(t.id)}
+          >Cancel</button>
         </div>
-      ), { duration: 5000 });
-      if (refetchAttendanceData) refetchAttendanceData();
-      if (refetchApologyData) refetchApologyData();
-      window.dispatchEvent(new CustomEvent('attendanceDataChanged'));
-      window.dispatchEvent(new CustomEvent('apologyDataChanged'));
-    } else {
-      toast.error('Failed to delete entry');
-    }
+      </div>
+    ), { duration: 5000 });
   };
 
   // Add handleUndo function
@@ -350,7 +373,7 @@ export default function DashboardLocal({
         },
         body: JSON.stringify({
           ...updatedEntry,
-          pin: updatedEntry.pin // Include the PIN that was used for verification
+          pin: editModal.entry.pin // Get PIN from the edit modal entry
         }),
       });
       
