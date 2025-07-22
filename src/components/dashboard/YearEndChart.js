@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 const months = [
@@ -11,6 +11,9 @@ export default function YearEndChart({ attendanceData, darkMode }) {
   const [chartData, setChartData] = useState([]);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [availableYears, setAvailableYears] = useState([]);
+  const [hoveredBar, setHoveredBar] = useState(null);
+  const [tooltipHovered, setTooltipHovered] = useState(false);
+  const chartContainerRef = useRef(null); // <-- for positioning
 
   useEffect(() => {
     // Always process data to show all congregations, even if no attendance data
@@ -154,66 +157,74 @@ export default function YearEndChart({ attendanceData, darkMode }) {
     }
   };
 
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      const presentMonths = payload.filter(p => p.value === 1).length;
-      const absentMonths = 12 - presentMonths;
-      const currentDate = new Date();
-      const currentYear = currentDate.getFullYear();
-      const currentMonth = currentDate.getMonth();
-      
-      return (
-        <div className={
-          'p-2 rounded-xl shadow-2xl border backdrop-blur-sm bg-gray-900 border-gray-700 text-white'
-        }>
-          <p className="font-bold text-lg mb-3 text-center">{label}</p>
-          <div className="space-y-2 text-sm">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-gray-400">Total Meetings</p>
-                <p className="font-semibold text-lg">{data.totalMeetings}</p>
-              </div>
-              <div>
-                <p className="text-gray-400">Full Year Rate</p>
-                <p className="font-semibold text-lg">{data.attendanceRate}%</p>
-              </div>
+  // Custom top-centered modal for hovered bar
+  const TopCenterTooltip = ({ data, label }) => {
+    if (!data) return null;
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth();
+    return (
+      <div
+        style={{
+          position: 'absolute',
+          left: '50%',
+          top: 0,
+          transform: 'translateX(-50%)',
+          zIndex: 50,
+          width: 'min(320px, 95vw)',
+          pointerEvents: 'auto',
+        }}
+        className={
+          'p-4 rounded-xl shadow-2xl border backdrop-blur-sm bg-gray-900 border-gray-700 text-white mt-2'
+        }
+        onMouseEnter={() => setTooltipHovered(true)}
+        onMouseLeave={() => setTooltipHovered(false)}
+      >
+        <p className="font-bold text-lg mb-3 text-center">{label}</p>
+        <div className="space-y-2 text-sm">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-gray-400">Total Meetings</p>
+              <p className="font-semibold text-lg">{data.totalMeetings}</p>
             </div>
-          
-            <div className="mt-3 pt-3 border-t border-gray-700">
-              <p className="text-xs text-gray-400 mb-2">Monthly Breakdown:</p>
-              <div className="grid grid-cols-4 gap-1">
-                {months.map((month, index) => {
-                  const hasAttendance = data.monthlyAttendance && data.monthlyAttendance[index] > 0;
-                  const isCurrentMonth = selectedYear === currentYear && index === currentMonth;
-                  const isFutureMonth = selectedYear === currentYear && index > currentMonth;
-                  return (
-                    <div key={month} className="flex items-center gap-1">
-                      <div 
-                        className={`w-2 h-2 rounded-full ${
-                          hasAttendance ? 'bg-green-500' : 
-                          isFutureMonth ? 'bg-gray-600' :
-                          'bg-gray-600'
-                        }`}
-                      />
-                      <span className={`text-xs ${
-                        isCurrentMonth ? 'font-bold text-blue-400' :
-                        isFutureMonth ? 'text-gray-500' :
-                        'text-gray-300'
-                      }`}>
-                        {month.slice(0, 3)}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
+            <div>
+              <p className="text-gray-400">Full Year Rate</p>
+              <p className="font-semibold text-lg">{data.attendanceRate}%</p>
+            </div>
+          </div>
+          <div className="mt-3 pt-3 border-t border-gray-700">
+            <p className="text-xs text-gray-400 mb-2">Monthly Breakdown:</p>
+            <div className="grid grid-cols-4 gap-1">
+              {months.map((month, index) => {
+                const hasAttendance = data.monthlyAttendance && data.monthlyAttendance[index] > 0;
+                const isCurrentMonth = selectedYear === currentYear && index === currentMonth;
+                const isFutureMonth = selectedYear === currentYear && index > currentMonth;
+                return (
+                  <div key={month} className="flex items-center gap-1">
+                    <div 
+                      className={`w-2 h-2 rounded-full ${
+                        hasAttendance ? 'bg-green-500' : 
+                        isFutureMonth ? 'bg-gray-600' :
+                        'bg-gray-600'
+                      }`}
+                    />
+                    <span className={`text-xs ${
+                      isCurrentMonth ? 'font-bold text-blue-400' :
+                      isFutureMonth ? 'text-gray-500' :
+                      'text-gray-300'
+                    }`}>
+                      {month.slice(0, 3)}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
-      );
-    }
-    return null;
+      </div>
+    );
   };
+
   const exportData = () => {
     const csvContent = [
       ['Congregation', 'Total Meetings', 'Attendance Rate (%)', 'Present Months', 'Absent Months', ...months],
@@ -255,7 +266,12 @@ export default function YearEndChart({ attendanceData, darkMode }) {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-3 sm:p-4 md:p-6 lg:p-8">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-3 sm:p-4 md:p-6 lg:p-8 relative" ref={chartContainerRef}>
+      {/* Top-centered tooltip/modal */}
+      {(hoveredBar || tooltipHovered) && (
+        <TopCenterTooltip data={hoveredBar?.data} label={hoveredBar?.label} />
+      )}
+      {/* Chart title and export button above scrollable area */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-3 sm:mb-4 md:mb-6">
         <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
           Year-End Attendance Summary
@@ -274,8 +290,8 @@ export default function YearEndChart({ attendanceData, darkMode }) {
           </button>
         </div>
       </div>
-      {/* Chart with horizontal scroll */}
-      <div className="w-full overflow-x-auto">
+      {/* Chart with horizontal scroll - only the chart is scrollable */}
+      <div className="w-full overflow-x-auto justify-start">
         <div className="min-w-[700px]">
           <ResponsiveContainer width="100%" height={500}>
             <BarChart
@@ -284,11 +300,12 @@ export default function YearEndChart({ attendanceData, darkMode }) {
               margin={{ 
                 top: 20, 
                 right: 20, 
-                left: 80, 
+                left: 0, 
                 bottom: chartData.length > 5 ? 100 : 60
               }}
               barGap={4}
               barCategoryGap={12}
+              onMouseLeave={() => { if (!tooltipHovered) setHoveredBar(null); }}
             >
               <XAxis 
                 type="category" 
@@ -322,7 +339,8 @@ export default function YearEndChart({ attendanceData, darkMode }) {
                 axisLine={true}
                 tickLine={true}
               />
-              <Tooltip content={<CustomTooltip />} />
+              {/* Hide default tooltip */}
+              <Tooltip content={() => null} />
               {months.map((month, monthIndex) => (
                 <Bar
                   key={month}
@@ -330,6 +348,11 @@ export default function YearEndChart({ attendanceData, darkMode }) {
                   barSize={8}
                   radius={[2, 2, 2, 2]}
                   stackId="a"
+                  onMouseOver={(_, barIndex) => {
+                    // Find the data for the hovered bar
+                    const barData = chartData[barIndex];
+                    setHoveredBar({ data: barData, label: barData.congregation });
+                  }}
                 >
                   {chartData.map((entry, index) => (
                     <Cell 

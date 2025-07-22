@@ -166,22 +166,11 @@ export default function DashboardLocal({
   ];
 
   // Add at the top with other hooks
-  const [lastDeleted, setLastDeleted] = useState(null);
-
-  // Check for pending undo on component mount
-  useEffect(() => {
-    const pendingUndo = localStorage.getItem('pendingUndo');
-    if (pendingUndo) {
-      try {
-        const undoData = JSON.parse(pendingUndo);
-        if (undoData.component === 'local') {
-          setLastDeleted(undoData.record);
-        }
-      } catch (err) {
-        localStorage.removeItem('pendingUndo');
-      }
-    }
-  }, []);
+  // Remove all undo/restore logic and UI
+  // 1. Remove handleUndo function
+  // 2. Remove lastDeleted state and any references
+  // 3. Remove localStorage.setItem('pendingUndo', ...) and related code
+  // 4. Remove Undo button from toasts
 
   // Handler for deleting an entry (custom confirmation)
   const handleDelete = (entryId) => {
@@ -198,10 +187,10 @@ export default function DashboardLocal({
 
   const handleDeleteWithPIN = async (entry, pin) => {
     const isApology = isApologyEntry(entry);
+    // Use hard delete endpoint
     const endpoint = isApology 
-      ? `${API_URL}/api/delete-apology/${entry.id}`
-      : `${API_URL}/api/delete-attendance/${entry.id}`;
-    
+      ? `${API_URL}/api/delete-apology/${entry.id}?pin=${encodeURIComponent(pin)}`
+      : `${API_URL}/api/delete-attendance/${entry.id}?pin=${encodeURIComponent(pin)}`;
     toast.custom((t) => (
       <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-lg border border-red-400 max-w-xs mx-auto flex flex-col items-center">
         <div className="text-lg font-bold text-red-600 mb-2">Confirm Delete</div>
@@ -218,31 +207,9 @@ export default function DashboardLocal({
                   headers: {
                     'Content-Type': 'application/json',
                     'Authorization': token ? `Bearer ${token}` : undefined,
-                  },
-                  body: JSON.stringify({ pin }), // Include PIN in request body
+                  }
                 });
-                
                 if (res.ok) {
-                  const undoData = {
-                    component: 'local',
-                    record: entry,
-                    timestamp: Date.now()
-                  };
-                  localStorage.setItem('pendingUndo', JSON.stringify(undoData));
-                  setLastDeleted(entry);
-                  // Show undo toast
-                  toast.custom((undoToast) => (
-                    <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg border border-blue-400 max-w-xs mx-auto flex items-center justify-between">
-                      <span className="text-gray-700 dark:text-gray-200">Entry deleted</span>
-                      <button 
-                        className="ml-3 text-blue-600 hover:text-blue-800 underline"
-                        onClick={() => {
-                          handleUndo();
-                          toast.dismiss(undoToast.id);
-                        }}
-                      >Undo</button>
-                    </div>
-                  ), { duration: 5000 });
                   if (refetchAttendanceData) refetchAttendanceData();
                   if (refetchApologyData) refetchApologyData();
                   window.dispatchEvent(new CustomEvent('attendanceDataChanged'));
@@ -263,58 +230,6 @@ export default function DashboardLocal({
         </div>
       </div>
     ), { duration: 5000 });
-  };
-
-  // Add handleUndo function
-  const handleUndo = async () => {
-    const pendingUndo = localStorage.getItem('pendingUndo');
-    if (!pendingUndo) return;
-    
-    try {
-      const undoData = JSON.parse(pendingUndo);
-      if (undoData.component !== 'local') return;
-      
-      const record = undoData.record;
-      const isApology = isApologyEntry(record);
-
-      if (isApology) {
-        setPendingUndoApology(record);
-        setShowAdminModal(true);
-        return;
-      } else {
-        // Restore attendance record
-        const attendanceData = {
-          name: record.name,
-          phone: record.phone || '',
-          congregation: record.congregation,
-          type: record.type || 'local',
-          position: record.position,
-          meeting_date: record.meeting_date,
-          timestamp: record.timestamp
-        };
-        
-        const res = await fetch(`${API_URL}/api/submit-attendance`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify([attendanceData]),
-        });
-        
-        if (res.ok) {
-          localStorage.removeItem('pendingUndo');
-          setLastDeleted(null);
-          if (refetchAttendanceData) refetchAttendanceData();
-          if (refetchApologyData) refetchApologyData();
-          window.dispatchEvent(new CustomEvent('attendanceDataChanged'));
-          window.dispatchEvent(new CustomEvent('apologyDataChanged'));
-          toast.success('Entry restored successfully');
-        } else {
-          toast.error('Failed to restore entry');
-        }
-      }
-    } catch (err) {
-      toast.error('Failed to restore entry');
-    }
   };
 
   // Handler for editing an entry (show modal)
@@ -352,44 +267,32 @@ export default function DashboardLocal({
 
   // Handler for saving edit
   const handleSaveEdit = async (updatedEntry) => {
-    if (isApologyEntry(updatedEntry)) {
-      setPendingEditApology(updatedEntry);
-      setShowAdminModal(true);
-      return;
-    }
-    try {
-      // Determine if this is an apology or attendance record
-      const isApology = apologyData.some(e => e.id === updatedEntry.id);
-      const endpoint = isApology 
-        ? `${API_URL}/api/edit-apology/${updatedEntry.id}`
-        : `${API_URL}/api/edit-attendance/${updatedEntry.id}`;
-      
-      const token = localStorage.getItem('access_token');
-      const res = await fetch(endpoint, {
-        method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : undefined,
-        },
-        body: JSON.stringify({
-          ...updatedEntry,
-          pin: editModal.entry.pin // Get PIN from the edit modal entry
-        }),
-      });
-      
-      if (res.ok) {
-        toast.success('Entry updated successfully');
-        setEditModal({ open: false, entry: null });
-        if (refetchAttendanceData) refetchAttendanceData();
-        if (refetchApologyData) refetchApologyData();
-        // Dispatch custom event to notify other components
-        window.dispatchEvent(new CustomEvent('attendanceDataChanged'));
-      } else {
-        const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
-        toast.error(`Failed to update entry: ${errorData.error || res.statusText}`);
-      }
-    } catch (err) {
-      toast.error('Network error - please check your connection');
+    // Always submit edit directly with PIN, no admin modal
+    const isApology = isApologyEntry(updatedEntry);
+    const endpoint = isApology 
+      ? `${API_URL}/api/edit-apology/${updatedEntry.id}`
+      : `${API_URL}/api/edit-attendance/${updatedEntry.id}`;
+    const token = localStorage.getItem('access_token');
+    const res = await fetch(endpoint, {
+      method: 'PUT',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : undefined,
+      },
+      body: JSON.stringify({
+        ...updatedEntry,
+        pin: updatedEntry.pin
+      }),
+    });
+    if (res.ok) {
+      toast.success('Entry updated successfully');
+      setEditModal({ open: false, entry: null });
+      if (refetchAttendanceData) refetchAttendanceData();
+      if (refetchApologyData) refetchApologyData();
+      window.dispatchEvent(new CustomEvent('attendanceDataChanged'));
+    } else {
+      const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
+      toast.error(`Failed to update entry: ${errorData.error || res.statusText}`);
     }
   };
 
@@ -454,7 +357,7 @@ export default function DashboardLocal({
     <div>
       {/* Search Bar */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 md:mb-6 space-y-3 md:space-y-0">
-        <h1 className="text-lg md:text-xl font-bold">Local Congregations</h1>
+        <h1 className="text-lg md:text-xl font-bold w-full text-center">Local Congregations</h1>
         <div className="flex flex-col md:flex-row gap-3 md:gap-4 items-center">
           <label className="text-sm flex items-center gap-1">
             Year:
@@ -525,73 +428,75 @@ export default function DashboardLocal({
                       Object.keys(groupedSummary[cong][month]).map(day => (
                         <div key={day} className="mb-2 pl-2 border-l-2 border-blue-300 dark:border-blue-600">
                           <div className="font-medium text-sm text-gray-700 dark:text-gray-200 mb-1">{day}</div>
-                          <table className="w-full text-gray-900 dark:text-gray-100 mb-2 border-collapse">
-                            <thead className={darkMode ? "bg-gray-700 text-gray-100" : "bg-gray-200 text-gray-900"}>
-                              <tr>
-                                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Meeting</th>
-                                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Attendee(s)</th>
-                                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Submitted Time</th>
-                                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Status</th>
-                                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Reason</th>
-                                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Actions</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {Array.isArray(groupedSummary[cong][month][day]) &&
-                                groupedSummary[cong][month][day].map((entry, i) => (
-                                  <tr key={entry.id || i} className="text-sm md:text-base hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                    <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
-                                      <div className="text-xs md:text-sm font-medium text-blue-600 dark:text-blue-200">
-                                        {entry.meeting_title || "Unknown Meeting"}
-                                      </div>
-                                    </td>
-                                    <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
-                                      <span className="font-semibold">{entry.name}</span>
-                                      <span> ({entry.position})</span>
-                                    </td>
-                                    <td className="border px-2 md:px-4 py-2 space-y-1">
-                                      <div className="text-xs md:text-sm">{entry.timestamp}</div>
-                                    </td>
-                                    <td className="border px-2 md:px-4 py-2">
-                                      <div className="flex items-center gap-2 mb-1">
-                                        <span className="text-lg">
-                                          {isApologyEntry(entry) ? (
-                                            <FaTimesCircle className="text-red-500" />
-                                          ) : (
-                                            <FaCheckCircle className="text-green-500" />
-                                          )}
-                                        </span>
-                                      </div>
-                                    </td>
-                                    {isApologyEntry(entry) ? (
-                                      <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
-                                        {entry.reason || 'No reason provided'}
+                          <div className="overflow-x-auto w-full">
+                            <table className="min-w-max w-full text-gray-900 dark:text-gray-100 mb-2 border-collapse">
+                              <thead className={darkMode ? "bg-gray-700 text-gray-100" : "bg-gray-200 text-gray-900"}>
+                                <tr>
+                                  <th className="text-center px-2 md:px-4 py-2 border-r border-gray-300 text-xs md:text-sm">Meeting</th>
+                                  <th className="text-center px-2 md:px-4 py-2 border-r border-gray-300 text-xs md:text-sm">Attendee(s)</th>
+                                  <th className="px-2 md:px-4 py-2 border-r border-gray-300 text-xs md:text-sm">Submitted Time</th>
+                                  <th className="px-2 md:px-4 py-2 border-r border-gray-300 text-xs md:text-sm">Status</th>
+                                  <th className="px-2 md:px-4 py-2 border-r border-gray-300 text-xs md:text-sm">Reason</th>
+                                  <th className="text-center px-2 md:px-4 py-2 text-xs md:text-sm">Actions</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {Array.isArray(groupedSummary[cong][month][day]) &&
+                                  groupedSummary[cong][month][day].map((entry, i) => (
+                                    <tr key={entry.id || i} className="text-sm md:text-base hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                      <td className="border px-2 md:px-4 py-2 text-xs md:text-sm border-r border-gray-300 text-center">
+                                        <div className="text-xs md:text-sm font-medium text-blue-600 dark:text-blue-200">
+                                          {entry.meeting_title || "Unknown Meeting"}
+                                        </div>
                                       </td>
-                                    ) : (
-                                      <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
-                                        <span className="text-gray-400">-</span>
+                                      <td className="border px-2 md:px-4 py-2 text-xs md:text-sm border-r border-gray-300 text-center">
+                                        <span className="font-semibold">{entry.name}</span>
+                                        <span> ({entry.position})</span>
                                       </td>
-                                    )}
-                                    <td className="border px-2 md:px-4 py-2">
-                                      <div className="flex gap-2">
-                                        <button 
-                                          onClick={() => handleEdit(entry.id)} 
-                                          className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 px-2 py-1 rounded text-xs font-medium hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                                        >
-                                          Edit
-                                        </button>
-                                        <button 
-                                          onClick={() => handleDelete(entry.id)} 
-                                          className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 px-2 py-1 rounded text-xs font-medium hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                                        >
-                                          Delete
-                                        </button>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                ))}
-                            </tbody>
-                          </table>
+                                      <td className="border px-2 md:px-4 py-2 space-y-1 border-r border-gray-300 text-center">
+                                        <div className="text-xs md:text-sm">{entry.timestamp}</div>
+                                      </td>
+                                      <td className="border px-2 md:px-4 py-2 border-r border-gray-300 text-center">
+                                        <div className="flex items-center gap-2 mb-1 justify-center">
+                                          <span className="text-lg">
+                                            {isApologyEntry(entry) ? (
+                                              <FaTimesCircle className="text-red-500" />
+                                            ) : (
+                                              <FaCheckCircle className="text-green-500" />
+                                            )}
+                                          </span>
+                                        </div>
+                                      </td>
+                                      {isApologyEntry(entry) ? (
+                                        <td className="border px-2 md:px-4 py-2 text-xs md:text-sm border-r border-gray-300 text-center">
+                                          {entry.reason || 'No reason provided'}
+                                        </td>
+                                      ) : (
+                                        <td className="border px-2 md:px-4 py-2 text-xs md:text-sm border-r border-gray-300 text-center">
+                                          <span className="text-gray-400">-</span>
+                                        </td>
+                                      )}
+                                      <td className="border px-2 md:px-4 py-2 text-center">
+                                        <div className="flex gap-2 justify-center">
+                                          <button 
+                                            onClick={() => handleEdit(entry.id)} 
+                                            className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 px-2 py-1 rounded text-xs font-medium hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                                          >
+                                            Edit
+                                          </button>
+                                          <button 
+                                            onClick={() => handleDelete(entry.id)} 
+                                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 px-2 py-1 rounded text-xs font-medium hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                          >
+                                            Delete
+                                          </button>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  ))}
+                              </tbody>
+                            </table>
+                          </div>
                         </div>
                       ))}
                 </div>
@@ -622,7 +527,7 @@ export default function DashboardLocal({
                   className="w-full mt-1 p-2 border rounded"
                   value={editModal.entry.phone}
                   onChange={e => setEditModal(m => ({ ...m, entry: { ...m.entry, phone: capitalizeWords(e.target.value) } }))}
-                  required
+                  // Phone is optional for both attendance and apology
                 />
               </label>
               <label className="block text-sm font-medium">Congregation
@@ -669,80 +574,6 @@ export default function DashboardLocal({
         title={pendingAction === 'edit' ? 'Enter PIN to Edit' : 'Enter PIN to Delete'}
         message={pendingAction === 'edit' ? 'Please enter the 4-digit PIN to edit this record' : 'Please enter the 4-digit PIN to delete this record'}
       />
-
-      {showAdminModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-xs">
-            <h3 className="font-bold mb-2 text-center">Admin Credentials Required</h3>
-            <input type="text" className="w-full mb-2 p-2 rounded border" placeholder="Admin Username" value={adminUsername} onChange={e => setAdminUsername(e.target.value)} />
-            <input type="password" className="w-full mb-4 p-2 rounded border" placeholder="Admin Password" value={adminPassword} onChange={e => setAdminPassword(e.target.value)} />
-            <div className="flex gap-2">
-              <button className="bg-blue-600 text-white px-4 py-1 rounded" onClick={async () => {
-                if (pendingUndoApology) {
-                  // Restore apology
-                  const res = await fetch(`${API_URL}/api/submit-apologies`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify({
-                      apologies: [pendingUndoApology],
-                      admin_username: adminUsername,
-                      admin_password: adminPassword
-                    })
-                  });
-                  if (res.ok) {
-                    localStorage.removeItem('pendingUndo');
-                    setLastDeleted(null);
-                    setShowAdminModal(false);
-                    setPendingUndoApology(null);
-                    setAdminUsername('');
-                    setAdminPassword('');
-                    if (refetchApologyData) refetchApologyData();
-                    window.dispatchEvent(new CustomEvent('apologyDataChanged'));
-                    toast.success('Apology restored!');
-                  } else {
-                    toast.error('Failed to restore apology');
-                  }
-                } else if (pendingEditApology) {
-                  // Edit apology
-                  const res = await fetch(`${API_URL}/api/edit-apology/${pendingEditApology.id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify({
-                      ...pendingEditApology,
-                      admin_username: adminUsername,
-                      admin_password: adminPassword
-                    })
-                  });
-                  if (res.ok) {
-                    setShowAdminModal(false);
-                    setPendingEditApology(null);
-                    setAdminUsername('');
-                    setAdminPassword('');
-                    if (refetchApologyData) refetchApologyData();
-                    window.dispatchEvent(new CustomEvent('apologyDataChanged'));
-                    toast.success('Apology updated!');
-                  } else {
-                    toast.error('Failed to update apology');
-                  }
-                }
-              }}>
-                Submit
-              </button>
-              <button className="bg-gray-400 text-white px-4 py-1 rounded" onClick={() => {
-                setShowAdminModal(false);
-                setPendingUndoApology(null);
-                setPendingEditApology(null);
-                setAdminUsername('');
-                setAdminPassword('');
-              }}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 } 

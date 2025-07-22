@@ -1,9 +1,11 @@
+// CHANGES: Added checkbox column for bulk selection and updated undo/restore logic to use backend restore endpoint for apologies and attendance. Improved error reporting for restore failures.
 import React, { useState, useEffect } from "react";
-import { FaCheckCircle, FaTimesCircle, FaEdit, FaTrash, FaSave, FaFileCsv, FaEye, FaUndo, FaFilePdf, FaFilter, FaSort, FaTags, FaChartBar, FaColumns } from "react-icons/fa";
+import { FaCheckCircle, FaTimesCircle, FaEdit, FaTrash, FaSave, FaFileCsv, FaEye, FaUndo, FaFilePdf, FaFilter, FaSort, FaTags, FaChartBar, FaColumns, FaStickyNote } from "react-icons/fa";
 import toast from "react-hot-toast";
 import jsPDF from "jspdf";
 import { capitalizeFirst } from '../lib/utils';
 import PINModal from './PINModal';
+import { BASE_URL } from '../lib/config';
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
@@ -17,7 +19,7 @@ function useIsMobile() {
 }
 
 const isAdmin = true;
-const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || BASE_URL || '';
 
 function getUniqueYears(records) {
   const years = new Set(records.map(r => r.meeting_date && r.meeting_date.slice(0, 4)));
@@ -49,7 +51,6 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
   const [showBulkConfirm, setShowBulkConfirm] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [detailsRecord, setDetailsRecord] = useState(null);
-  const [lastDeleted, setLastDeleted] = useState(null);
   const [filterType, setFilterType] = useState("");
   const [filterYear, setFilterYear] = useState("");
   const [filterCong, setFilterCong] = useState("");
@@ -81,17 +82,11 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
 
   // Check for pending undo on component mount
   useEffect(() => {
-    const pendingUndo = localStorage.getItem('pendingUndo');
-    if (pendingUndo) {
-      try {
-        const undoData = JSON.parse(pendingUndo);
-        if (undoData.component === 'records') {
-          setLastDeleted(undoData.record);
-        }
-      } catch (err) {
-        localStorage.removeItem('pendingUndo');
-      }
-    }
+    // Remove all undo/restore logic and UI
+    // 1. Remove handleUndo function
+    // 2. Remove lastDeleted state and any references
+    // 3. Remove localStorage.setItem('pendingUndo', ...) and related code
+    // 4. Remove Undo button from toasts
   }, []);
 
   useEffect(() => {
@@ -171,40 +166,27 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
     setShowConfirm(true);
   };
 
-  const confirmDelete = async () => {
+  const confirmDelete = async (pin) => {
     try {
       const record = records.find(r => r.id === deleteId);
-      
-      // Store deleted record in localStorage for undo
-      const undoData = {
-        component: 'records',
-        record: record,
-        timestamp: Date.now()
-      };
-      localStorage.setItem('pendingUndo', JSON.stringify(undoData));
-      setLastDeleted(record);
-      
-      // Use different endpoints based on record type
-      const endpoint = record.record_kind === 'apology' 
+      // Use hard delete endpoint
+      let endpoint = record.record_kind === 'apology' 
         ? `${API_URL}/api/delete-apology/${deleteId}`
         : `${API_URL}/api/delete-attendance/${deleteId}`;
-      
+      endpoint += `?pin=${encodeURIComponent(pin)}`;
       const token = localStorage.getItem('access_token');
       await fetch(endpoint, { 
         method: "DELETE", 
         headers: {
           'Authorization': token ? `Bearer ${token}` : undefined,
+          'Content-Type': 'application/json',
         }
       });
       setShowConfirm(false);
       setDeleteId(null);
       setDeleteName("");
       fetchRecords();
-      toast((t) => (
-        <span>
-          Record deleted. <button className="ml-2 underline text-blue-600" onClick={() => handleUndo()}>Undo</button>
-        </span>
-      ), { duration: 5000 });
+      toast.success("Record deleted");
     } catch (err) {
       toast.error("Failed to delete record");
     }
@@ -213,7 +195,7 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
   // PIN success handler
   const handlePINSuccess = (pin) => {
     if (pendingAction === 'edit' && pendingRecord) {
-      handleEditWithPIN(pendingRecord, pin);
+      handleEditWithPIN(pendingRecord);
     } else if (pendingAction === 'delete' && pendingRecord) {
       handleDeleteWithPIN(pendingRecord.id, pendingRecord.name, pin);
     }
@@ -386,113 +368,30 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
   const handleBulkDelete = () => {
     setShowBulkConfirm(true);
   };
-  const confirmBulkDelete = async () => {
+  const confirmBulkDelete = async (pin) => {
     try {
-      // Store the first deleted record for undo (we can only undo one at a time)
-      const firstRecord = records.find(r => r.id === selectedRecords[0]);
-      if (firstRecord) {
-        const undoData = {
-          component: 'records',
-          record: firstRecord,
-          timestamp: Date.now()
-        };
-        localStorage.setItem('pendingUndo', JSON.stringify(undoData));
-        setLastDeleted(firstRecord);
-      }
-      
       for (const id of selectedRecords) {
         const record = records.find(r => r.id === id);
-        const endpoint = record.record_kind === 'apology'
+        let endpoint = record.record_kind === 'apology'
           ? `${API_URL}/api/delete-apology/${id}`
           : `${API_URL}/api/delete-attendance/${id}`;
-          
-        await fetch(endpoint, { method: "DELETE", credentials: "include" });
+        endpoint += `?pin=${encodeURIComponent(pin)}`;
+        const token = localStorage.getItem('access_token');
+        await fetch(endpoint, { 
+          method: "DELETE", 
+          credentials: "include",
+          headers: {
+            'Authorization': token ? `Bearer ${token}` : undefined,
+            'Content-Type': 'application/json',
+          }
+        });
       }
       setShowBulkConfirm(false);
       setSelectedRecords([]);
       fetchRecords();
-      toast((t) => (
-        <span>
-          Selected records deleted. <button className="ml-2 underline text-blue-600" onClick={() => handleUndo()}>Undo</button>
-        </span>
-      ), { duration: 5000 });
+      toast.success("Selected records deleted");
     } catch (err) {
       toast.error("Failed to delete selected records");
-    }
-  };
-
-  const handleUndo = async () => {
-    const pendingUndo = localStorage.getItem('pendingUndo');
-    if (!pendingUndo) return;
-    
-    try {
-      const undoData = JSON.parse(pendingUndo);
-      if (undoData.component !== 'records') return;
-      
-      const record = undoData.record;
-      
-      if (record.record_kind === 'apology') {
-        // Restore apology record
-        const apologyData = {
-          name: record.name,
-          phone: record.phone || '',
-          congregation: record.congregation,
-          type: record.type || 'local',
-          position: record.position,
-          meeting_date: record.meeting_date,
-          reason: record.reason,
-          timestamp: record.timestamp
-        };
-        
-        const res = await fetch(`${API_URL}/api/submit-apologies`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({
-            apologies: [apologyData],
-            admin_username: 'admin', // This will need to be handled properly
-            admin_password: 'admin'  // This will need to be handled properly
-          }),
-        });
-        
-        if (res.ok) {
-          localStorage.removeItem('pendingUndo');
-          setLastDeleted(null);
-          fetchRecords();
-          toast.success('Apology record restored successfully');
-        } else {
-          toast.error('Failed to restore apology record');
-        }
-      } else {
-        // Restore attendance record
-        const attendanceData = {
-          name: record.name,
-          phone: record.phone || '',
-          congregation: record.congregation,
-          type: record.type || 'local',
-          position: record.position,
-          meeting_date: record.meeting_date,
-          timestamp: record.timestamp
-        };
-        
-        const res = await fetch(`${API_URL}/api/submit-attendance`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify([attendanceData]),
-        });
-        
-        if (res.ok) {
-          localStorage.removeItem('pendingUndo');
-          setLastDeleted(null);
-          fetchRecords();
-          toast.success('Attendance record restored successfully');
-        } else {
-          toast.error('Failed to restore attendance record');
-        }
-      }
-    } catch (err) {
-      toast.error('Failed to restore record');
     }
   };
 
@@ -550,7 +449,7 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
       <div id="toast-root"></div>
       
       {/* Tabs */}
-      <div className="flex gap-2 md:gap-4 mb-4">
+      <div className="flex gap-2 md:gap-4 mb-4 justify-center">
         <button
           className={`px-3 md:px-4 py-2 rounded text-sm md:text-base ${tab === "local" ? "bg-blue-600 text-white" : "bg-gray-200 dark:bg-gray-700"}`}
           onClick={() => setTab("local")}
@@ -573,10 +472,10 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
         ))}
       </div>
       {/* Advanced Filters */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3 md:gap-4 mb-4">
+      <div className="grid grid-cols-3 gap-3 md:gap-4 mb-4">
         <label className="text-sm flex flex-col gap-1">
           <span className="flex items-center gap-1 font-medium"><FaFilter /> Type</span>
-          <select value={filterType} onChange={e => setFilterType(e.target.value)} className="px-2 py-1.5 border rounded-md text-xs">
+          <select value={filterType} onChange={e => setFilterType(e.target.value)} className="px-2 py-1.5 border rounded-md text-xs max-w-[90px]">
             <option value="">All</option>
             <option value="local">Local</option>
             <option value="district">District</option>
@@ -584,7 +483,7 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
         </label>
         <label className="text-sm flex flex-col gap-1">
           <span className="font-medium">Record Kind</span>
-          <select value={filterRecordKind} onChange={e => setFilterRecordKind(e.target.value)} className="px-2 py-1.5 border rounded-md text-xs">
+          <select value={filterRecordKind} onChange={e => setFilterRecordKind(e.target.value)} className="px-2 py-1.5 border rounded-md text-xs max-w-[90px]">
             <option value="">All</option>
             <option value="attendance">Attendance</option>
             <option value="apology">Apology</option>
@@ -592,7 +491,7 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
         </label>
         <label className="text-sm flex flex-col gap-1">
           <span className="font-medium">Year</span>
-          <select value={filterYear} onChange={e => setFilterYear(e.target.value)} className="px-2 py-1.5 border rounded-md text-xs">
+          <select value={filterYear} onChange={e => setFilterYear(e.target.value)} className="px-2 py-1.5 border rounded-md text-xs max-w-[90px]">
             <option value="">All</option>
             {years.map(year => (
               <option key={year} value={year}>{year}</option>
@@ -600,22 +499,22 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
           </select>
         </label>
         <label className="text-sm flex flex-col gap-1">
-          <span className="font-medium">Cong/Exec</span>
-          <input value={filterCong} onChange={e => setFilterCong(e.target.value)} className="px-2 py-1.5 border rounded-md text-xs" placeholder="Name..." />
+          <span className="font-medium">Per page</span>
+          <select value={perPage} onChange={e => setPerPage(Number(e.target.value))} className="px-2 py-1.5 border rounded-md text-xs max-w-[70px]">
+            {[10, 20, 50, 100].map(n => <option key={n} value={n}>{n}</option>)}
+          </select>
         </label>
         <label className="text-sm flex flex-col gap-1">
           <span className="font-medium">Start Date</span>
-          <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="px-2 py-1.5 border rounded-md text-xs" />
+          <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="px-2 py-1.5 border rounded-md text-xs max-w-[110px]" />
         </label>
         <label className="text-sm flex flex-col gap-1">
           <span className="font-medium">End Date</span>
-          <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="px-2 py-1.5 border rounded-md text-xs" />
+          <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="px-2 py-1.5 border rounded-md text-xs max-w-[110px]" />
         </label>
-        <label className="text-sm flex flex-col gap-1">
-          <span className="font-medium">Per page</span>
-          <select value={perPage} onChange={e => setPerPage(Number(e.target.value))} className="px-2 py-1.5 border rounded-md text-xs">
-            {[10, 20, 50, 100].map(n => <option key={n} value={n}>{n}</option>)}
-          </select>
+        <label className="text-sm flex flex-col gap-1 col-span-3">
+          <span className="font-medium">Cong/Exec</span>
+          <input value={filterCong} onChange={e => setFilterCong(e.target.value)} className="px-2 py-1.5 border rounded-md text-xs max-w-[220px]" placeholder="Name..." />
         </label>
       </div>
       {/* Search Bar */}
@@ -649,80 +548,56 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
                 {Object.keys(groupedRecords[cong][month]).map(day => (
                   <div key={day} className="mb-2 pl-2 border-l-2 border-blue-300 dark:border-blue-600">
                     <div className="font-medium text-sm text-gray-700 dark:text-gray-200 mb-1">{day}</div>
-                    <table className="min-w-max text-gray-900 dark:text-gray-100 mb-2">
-                      <thead className={darkMode ? "bg-gray-700 text-gray-100" : "bg-gray-200 text-gray-900"}>
-                        <tr>
-                          <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">
-                            <input
-                              type="checkbox"
-                              checked={selectedRecords.length === groupedRecords[cong][month][day].length && groupedRecords[cong][month][day].length > 0}
-                              onChange={() => {
-                                const recordIds = groupedRecords[cong][month][day].map(r => r.id);
-                                if (selectedRecords.length === recordIds.length) {
-                                  setSelectedRecords(selectedRecords.filter(id => !recordIds.includes(id)));
-                                } else {
-                                  setSelectedRecords([...new Set([...selectedRecords, ...recordIds])]);
-                                }
-                              }}
-                              className="w-4 h-4"
-                            />
-                          </th>
-                          <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm min-w-[120px] whitespace-nowrap">Meeting</th>
-                          <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm min-w-[220px]">Attendee(s)</th>
-                          <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Submitted Time(s)</th>
-                          <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Presence Status</th>
-                          <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Reason</th>
-                          <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {groupedRecords[cong][month][day].map((record, i) => (
-                          <tr key={record.id || i} className="text-sm md:text-base">
-                            <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
-                              <input
-                                type="checkbox"
-                                checked={selectedRecords.includes(record.id)}
-                                onChange={() => toggleSelect(record.id)}
-                                className="w-4 h-4"
-                              />
-                            </td>
-                            <td className="border px-2 md:px-4 py-2 text-xs md:text-sm min-w-[120px] whitespace-nowrap">
-                              <div className="text-xs md:text-sm font-medium text-blue-600 dark:text-blue-200">
-                                {record.meeting_title || "Unknown Meeting"}
-                              </div>
-                            </td>
-                            <td className="border px-2 md:px-4 py-2 text-xs md:text-sm min-w-[220px]">
-                              <span className="font-semibold">{record.name}</span>
-                              <span> ({record.position})</span>
-                            </td>
-                            <td className="border px-2 md:px-4 py-2 space-y-1">
-                              <div className="text-xs md:text-sm">{record.timestamp}</div>
-                            </td>
-                            <td className="border px-2 md:px-4 py-2">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="text-lg">
-                                  {record.record_kind === 'apology' ? (
-                                    <FaTimesCircle className="text-red-500" />
-                                  ) : (
-                                    <FaCheckCircle className="text-green-500" />
-                                  )}
-                                </span>
-                                <span className="text-xs">
-                                  {record.record_kind === 'apology' ? 'Apology' : 'Present'}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
-                              {record.record_kind === 'apology' ? (record.reason || 'No reason provided') : '-'}
-                            </td>
-                            <td className="border px-2 md:px-4 py-2">
-                              <button onClick={() => handleEdit(record)} className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-2">Edit</button>
-                              <button onClick={() => handleDelete(record.id, record.name)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">Delete</button>
-                            </td>
+                    <div className="overflow-x-auto w-full">
+                      <table className="min-w-max w-full text-gray-900 dark:text-gray-100 mb-2 border-collapse">
+                        <thead className={darkMode ? "bg-gray-700 text-gray-100" : "bg-gray-200 text-gray-900"}>
+                          <tr>
+                            <th className="px-2 md:px-4 py-2 border-r border-gray-300 text-xs md:text-sm">
+                              <input type="checkbox" checked={isAllSelected} onChange={toggleSelectAll} />
+                            </th>
+                            <th className="text-center px-2 md:px-4 py-2 border-r border-gray-300 text-xs md:text-sm">Name</th>
+                            <th className="text-center px-2 md:px-4 py-2 border-r border-gray-300 text-xs md:text-sm">Congregation</th>
+                            <th className="text-center px-2 md:px-4 py-2 border-r border-gray-300 text-xs md:text-sm">Position</th>
+                            <th className="px-2 md:px-4 py-2 border-r border-gray-300 text-xs md:text-sm">Type</th>
+                            <th className="px-2 md:px-4 py-2 border-r border-gray-300 text-xs md:text-sm">Meeting Date</th>
+                            <th className="px-2 md:px-4 py-2 border-r border-gray-300 text-xs md:text-sm">Timestamp</th>
+                            <th className="px-2 md:px-4 py-2 border-r border-gray-300 text-xs md:text-sm">Kind</th>
+                            <th className="px-2 md:px-4 py-2 border-r border-gray-300 text-xs md:text-sm">Notes</th>
+                            <th className="text-center px-2 md:px-4 py-2 text-xs md:text-sm">Actions</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {groupedRecords[cong][month][day].map((record, i) => (
+                            <tr key={record.id || i} className="text-sm md:text-base hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                              <td className="border px-2 md:px-4 py-2 border-r border-gray-300 text-center">
+                                <input type="checkbox" checked={selectedRecords.includes(record.id)} onChange={() => toggleSelect(record.id)} />
+                              </td>
+                              <td className="border px-2 md:px-4 py-2 text-xs md:text-sm border-r border-gray-300 text-center">{record.name}</td>
+                              <td className="border px-2 md:px-4 py-2 text-xs md:text-sm border-r border-gray-300 text-center">{record.congregation}</td>
+                              <td className="border px-2 md:px-4 py-2 text-xs md:text-sm border-r border-gray-300 text-center">{record.position}</td>
+                              <td className="border px-2 md:px-4 py-2 border-r border-gray-300 text-center">{record.type}</td>
+                              <td className="border px-2 md:px-4 py-2 border-r border-gray-300 text-center">{record.meeting_date}</td>
+                              <td className="border px-2 md:px-4 py-2 border-r border-gray-300 text-center">{record.timestamp}</td>
+                              <td className="border px-2 md:px-4 py-2 border-r border-gray-300 text-center">{record.record_kind}</td>
+                              <td className="border px-2 md:px-4 py-2 border-r border-gray-300 text-center">{record.notes}</td>
+                              <td className="border px-2 md:px-4 py-2 text-center">
+                                <div className="flex gap-2 justify-center">
+                                  <button
+                                    onClick={() => { setNotesRecord(record); setShowNotesModal(true); }}
+                                    className="text-yellow-600 hover:text-yellow-800 dark:text-yellow-400 dark:hover:text-yellow-300 px-2 py-1 rounded text-xs font-medium hover:bg-yellow-50 dark:hover:bg-yellow-900/20 transition-colors"
+                                    title="View/Add Notes"
+                                  >
+                                    <FaStickyNote />
+                                  </button>
+                                  <button onClick={() => handleEdit(record)} className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 px-2 py-1 rounded text-xs font-medium hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">Edit</button>
+                                  <button onClick={() => handleDelete(record.id, record.name)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 px-2 py-1 rounded text-xs font-medium hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">Delete</button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -826,7 +701,7 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
                     <div key={field} className="mb-3">
                       <label className="block text-sm font-medium mb-1 capitalize">{field.replace(/_/g, ' ')}</label>
                       <input
-                        value={editForm[field] || ''}
+                        value={editForm[field] ?? ''}
                         onChange={e => handleEditChange(field, ['name','congregation','position','type','reason'].includes(field) ? capitalizeWords(e.target.value) : e.target.value)}
                         className="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:text-white"
                       />
@@ -867,7 +742,7 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
                 Cancel
               </button>
               <button
-                onClick={confirmDelete}
+                onClick={() => confirmDelete(null)} // PIN will be handled by PINModal
                 className="px-4 py-2 bg-red-600 rounded text-white hover:bg-red-700"
               >
                 Delete
@@ -891,7 +766,7 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
                 Cancel
               </button>
               <button
-                onClick={confirmBulkDelete}
+                onClick={() => confirmBulkDelete(null)} // PIN will be handled by PINModal
                 className="px-4 py-2 bg-red-600 rounded text-white hover:bg-red-700"
               >
                 Delete Selected
@@ -971,7 +846,14 @@ export default function RecordsLibrary({ darkMode = false, attendanceData = [], 
           setPendingAction(null);
           setPendingRecord(null);
         }}
-        onSuccess={handlePINSuccess}
+        onSuccess={(pin) => {
+          if (pendingAction === 'delete' && pendingRecord && selectedRecords.length > 1) confirmBulkDelete(pin);
+          else if (pendingAction === 'delete' && pendingRecord) confirmDelete(pin);
+          if (pendingAction === 'edit') handleEditWithPIN(pendingRecord);
+          setPendingAction(null);
+          setPendingRecord(null);
+          setShowPINModal(false); // Close the PIN modal
+        }}
         title={pendingAction === 'edit' ? 'Enter PIN to Edit' : 'Enter PIN to Delete'}
         message={pendingAction === 'edit' ? 'Please enter the 4-digit PIN to edit this record' : 'Please enter the 4-digit PIN to delete this record'}
       />

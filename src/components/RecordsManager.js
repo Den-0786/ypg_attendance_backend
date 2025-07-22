@@ -101,12 +101,13 @@ export default function RecordsManager({ recordType = "attendance" }) {
 
     const url = recordType === 'attendance' 
       ? `/api/delete-attendance/${recordId}`
-      : `/api/delete-apology/${recordId}`;
+      : `/api/delete-apology/${recordId}${pin ? `?pin=${encodeURIComponent(pin)}` : ''}`;
 
     try {
       const response = await fetch(url, {
         method: 'DELETE',
         credentials: 'include',
+        ...(recordType !== 'apology' && pin ? { body: JSON.stringify({ pin }) } : {})
       });
 
       if (!response.ok) {

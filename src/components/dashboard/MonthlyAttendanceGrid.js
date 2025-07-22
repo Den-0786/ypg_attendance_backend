@@ -1,9 +1,10 @@
 'use client';
 import { useState, useEffect } from 'react';
 
+// COMPACT LAYOUT: Ensured short month names, reduced table spacing, and made congregation names adjacent to months.
 const months = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
 ];
 
 export default function MonthlyAttendanceGrid({ attendanceData, darkMode }) {
@@ -120,12 +121,12 @@ export default function MonthlyAttendanceGrid({ attendanceData, darkMode }) {
     );
   }
 
+  // Restore the original layout: months as rows (y-axis), congregations as columns (x-axis)
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-4 md:p-6">
       <h2 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white mb-4 md:mb-6">
         Monthly Attendance Grid
       </h2>
-      
       <div className="overflow-x-auto custom-scrollbar pb-4">
         <div className="min-w-max">
           {/* Data Rows - January at bottom, December at top */}
@@ -141,7 +142,6 @@ export default function MonthlyAttendanceGrid({ attendanceData, darkMode }) {
               ))}
             </div>
           ))}
-
           {/* Header with congregation names - at the bottom */}
           <div className="grid grid-cols-10 gap-2 mt-4 pt-4 border-t-2 border-gray-300 dark:border-gray-600">
             <div className="w-24 md:w-32 font-semibold text-gray-700 dark:text-gray-300 text-sm md:text-base sticky left-0 bg-white dark:bg-gray-800 z-10">
@@ -155,7 +155,6 @@ export default function MonthlyAttendanceGrid({ attendanceData, darkMode }) {
           </div>
         </div>
       </div>
-
       {/* Legend */}
       <div className="mt-4 md:mt-6 flex flex-wrap items-center justify-center gap-3 md:gap-6 text-xs md:text-sm">
         <div className="flex items-center gap-1 md:gap-2">

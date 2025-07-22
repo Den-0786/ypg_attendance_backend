@@ -3,8 +3,8 @@ import { useState, useEffect } from 'react';
 import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 
 const months = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
 ];
 
 export default function AttendanceChart({ attendanceData, darkMode }) {
@@ -116,25 +116,25 @@ export default function AttendanceChart({ attendanceData, darkMode }) {
       <div className="overflow-x-auto custom-scrollbar">
         <div className="min-w-max">
           {/* Header with congregation names */}
-          <div className="grid grid-cols-13 gap-1 md:gap-2 mb-4">
-            <div className="w-24 md:w-32 font-semibold text-gray-700 dark:text-gray-300 text-sm md:text-base">
+          <div className="grid" style={{ gridTemplateColumns: `minmax(60px, 1fr) repeat(${congregations.length}, minmax(70px, 1fr))` }}>
+            <div className="w-16 md:w-20 font-semibold text-gray-700 dark:text-gray-300 text-xs md:text-sm sticky left-0 bg-white dark:bg-gray-800 z-10">
               Month
             </div>
             {congregations.map(congregation => (
-              <div key={congregation} className="w-16 md:w-24 text-center text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300">
-                {congregation.length > 8 ? congregation.substring(0, 8) + '...' : congregation}
+              <div key={congregation} className="w-20 min-w-[70px] text-center text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap overflow-hidden text-ellipsis">
+                {congregation}
               </div>
             ))}
           </div>
 
           {/* Data Rows - January at bottom, December at top */}
           {processedData.slice().reverse().map((monthData, index) => (
-            <div key={monthData.month} className="grid grid-cols-13 gap-1 md:gap-2 py-1 md:py-2 border-b border-gray-200 dark:border-gray-700">
-              <div className="w-24 md:w-32 font-medium text-gray-900 dark:text-white text-sm md:text-base">
+            <div key={monthData.month} className="grid" style={{ gridTemplateColumns: `minmax(60px, 1fr) repeat(${congregations.length}, minmax(70px, 1fr))` }}>
+              <div className="w-16 md:w-20 font-medium text-gray-900 dark:text-white text-xs md:text-sm sticky left-0 bg-white dark:bg-gray-800 z-10">
                 {monthData.month}
               </div>
               {congregations.map(congregation => (
-                <div key={congregation} className="w-16 md:w-24 flex justify-center">
+                <div key={congregation} className="w-20 min-w-[70px] flex justify-center">
                   {renderAttendanceBoxes(monthData.data[congregation] || [])}
                 </div>
               ))}
@@ -146,18 +146,18 @@ export default function AttendanceChart({ attendanceData, darkMode }) {
       {/* Legend */}
       <div className="mt-4 md:mt-6 flex flex-wrap items-center justify-center gap-3 md:gap-6 text-xs md:text-sm">
         <div className="flex items-center gap-1 md:gap-2">
-          <div className="w-2 md:w-3 h-2 md:h-3 bg-green-500 border border-green-600 rounded-sm"></div>
+          <div className="w-3 h-3 bg-green-500 border border-green-600 rounded-sm"></div>
           <span className="text-gray-700 dark:text-gray-300">Present</span>
         </div>
         <div className="flex items-center gap-1 md:gap-2">
-          <div className="w-2 md:w-3 h-2 md:h-3 bg-yellow-500 border border-yellow-600 rounded-sm"></div>
+          <div className="w-3 h-3 bg-yellow-500 border border-yellow-600 rounded-sm"></div>
           <span className="text-gray-700 dark:text-gray-300">No Attendance</span>
         </div>
         <div className="text-gray-500 dark:text-gray-400 text-center">
-          • 2 boxes per month per congregation
+          • 2 boxes per month per congregation (representing 2 participants)
         </div>
         <div className="text-gray-500 dark:text-gray-400 text-center">
-          • Only completed months shown
+          • Shows months up to current month ({months[new Date().getMonth()]})
         </div>
       </div>
     </div>

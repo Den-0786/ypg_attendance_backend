@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { capitalizeFirst, toTitleCase } from '../lib/utils';
 import PINModal from './PINModal';
 import AttendanceChart from "./dashboard/AttendanceChart";
+import { useMemo } from 'react';
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
@@ -175,7 +176,6 @@ export default function DashboardHome({
   const [showPINModal, setShowPINModal] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
   const [pendingEntry, setPendingEntry] = useState(null);
-  const [lastDeleted, setLastDeleted] = useState(null);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear()); // Default to current year
   // Add state for admin credentials modal
   const [showAdminModal, setShowAdminModal] = useState(false);
@@ -262,21 +262,6 @@ export default function DashboardHome({
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentYear]);
-
-  // Check for pending undo on component mount
-  useEffect(() => {
-    const pendingUndo = localStorage.getItem('pendingUndo');
-    if (pendingUndo) {
-      try {
-        const undoData = JSON.parse(pendingUndo);
-        if (undoData.component === 'records') {
-          setLastDeleted(undoData.record);
-        }
-      } catch (err) {
-        localStorage.removeItem('pendingUndo');
-      }
-    }
-  }, []);
 
   // Additional safety check
   if (!Array.isArray(attendanceData)) {
@@ -385,10 +370,10 @@ export default function DashboardHome({
 
   const handleDeleteWithPIN = async (entry, pin) => {
     const isApology = isApologyEntry(entry);
+    // Use hard delete endpoint
     const endpoint = isApology 
-      ? `${API_URL}/api/delete-apology/${entry.id}`
-      : `${API_URL}/api/delete-attendance/${entry.id}`;
-    
+      ? `${API_URL}/api/delete-apology/${entry.id}?pin=${encodeURIComponent(pin)}`
+      : `${API_URL}/api/delete-attendance/${entry.id}?pin=${encodeURIComponent(pin)}`;
     toast.custom((t) => (
       <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-lg border border-red-400 max-w-xs mx-auto flex flex-col items-center">
         <div className="text-lg font-bold text-red-600 mb-2">Confirm Delete</div>
@@ -405,31 +390,10 @@ export default function DashboardHome({
                   headers: {
                     'Content-Type': 'application/json',
                     'Authorization': token ? `Bearer ${token}` : undefined,
-                  },
-                  body: JSON.stringify({ pin }), // Include PIN in request body
+                  }
                 });
-                
                 if (res.ok) {
-                  const undoData = {
-                    component: 'home',
-                    record: entry,
-                    timestamp: Date.now()
-                  };
-                  localStorage.setItem('pendingUndo', JSON.stringify(undoData));
-                  setLastDeleted(entry);
-                  // Show undo toast
-                  toast.custom((undoToast) => (
-                    <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg border border-blue-400 max-w-xs mx-auto flex items-center justify-between">
-                      <span className="text-gray-700 dark:text-gray-200">Entry deleted</span>
-                      <button 
-                        className="ml-3 text-blue-600 hover:text-blue-800 underline"
-                        onClick={() => {
-                          handleUndo();
-                          toast.dismiss(undoToast.id);
-                        }}
-                      >Undo</button>
-                    </div>
-                  ), { duration: 5000 });
+                  toast.success('Entry deleted successfully');
                   if (refetchAttendanceData) refetchAttendanceData();
                   if (refetchApologyData) refetchApologyData();
                   window.dispatchEvent(new CustomEvent('attendanceDataChanged'));
@@ -450,55 +414,6 @@ export default function DashboardHome({
         </div>
       </div>
     ), { duration: 5000 });
-  };
-
-  // Add handleUndo function
-  const handleUndo = async () => {
-    const pendingUndo = localStorage.getItem('pendingUndo');
-    if (!pendingUndo) return;
-    try {
-      const undoData = JSON.parse(pendingUndo);
-      if (undoData.component !== 'home') return;
-      const record = undoData.record;
-      const isApology = isApologyEntry(record);
-      if (isApology) {
-        setPendingUndoApology(record);
-        setShowAdminModal(true);
-        return;
-      }
-      // Restore attendance record
-      const attendanceData = {
-        name: record.name,
-        phone: record.phone || '',
-        congregation: record.congregation,
-        type: record.type || 'local',
-        position: record.position,
-        meeting_date: record.meeting_date,
-        timestamp: record.timestamp
-      };
-      const token = localStorage.getItem('access_token');
-      const res = await fetch(`${API_URL}/api/submit-attendance`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : undefined,
-        },
-        body: JSON.stringify([attendanceData]),
-      });
-      if (res.ok) {
-        localStorage.removeItem('pendingUndo');
-        setLastDeleted(null);
-        if (refetchAttendanceData) refetchAttendanceData();
-        if (refetchApologyData) refetchApologyData();
-        window.dispatchEvent(new CustomEvent('attendanceDataChanged'));
-        window.dispatchEvent(new CustomEvent('apologyDataChanged'));
-        toast.success('Entry restored successfully');
-      } else {
-        toast.error('Failed to restore entry');
-      }
-    } catch (err) {
-      toast.error('Failed to restore entry');
-    }
   };
 
   // Handler for editing an entry (show modal)
@@ -538,44 +453,32 @@ export default function DashboardHome({
 
   // Handler for saving edit
   const handleSaveEdit = async (updatedEntry) => {
-    if (isApologyEntry(updatedEntry)) {
-      setPendingEditApology(updatedEntry);
-      setShowAdminModal(true);
-      return;
-    }
-    try {
-      // Determine if this is an apology or attendance record
-      const isApology = apologyData.some(e => e.id === updatedEntry.id);
-      const endpoint = isApology 
-        ? `${API_URL}/api/edit-apology/${updatedEntry.id}`
-        : `${API_URL}/api/edit-attendance/${updatedEntry.id}`;
-      
-      const token = localStorage.getItem('access_token');
-      const res = await fetch(endpoint, {
-        method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : undefined,
-        },
-        body: JSON.stringify({
-          ...updatedEntry,
-          pin: editModal.entry.pin // Get PIN from the edit modal entry
-        }),
-      });
-      
-      if (res.ok) {
-        toast.success('Entry updated successfully');
-        setEditModal({ open: false, entry: null });
-        if (refetchAttendanceData) refetchAttendanceData();
-        if (refetchApologyData) refetchApologyData();
-        // Dispatch custom event to notify other components
-        window.dispatchEvent(new CustomEvent('attendanceDataChanged'));
-      } else {
-        const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
-        toast.error(`Failed to update entry: ${errorData.error || res.statusText}`);
-      }
-    } catch (err) {
-      toast.error('Network error - please check your connection');
+    // Always submit edit directly with PIN, no admin modal
+    const isApology = isApologyEntry(updatedEntry);
+    const endpoint = isApology 
+      ? `${API_URL}/api/edit-apology/${updatedEntry.id}`
+      : `${API_URL}/api/edit-attendance/${updatedEntry.id}`;
+    const token = localStorage.getItem('access_token');
+    const res = await fetch(endpoint, {
+      method: 'PUT',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : undefined,
+      },
+      body: JSON.stringify({
+        ...updatedEntry,
+        pin: updatedEntry.pin
+      }),
+    });
+    if (res.ok) {
+      toast.success('Entry updated successfully');
+      setEditModal({ open: false, entry: null });
+      if (refetchAttendanceData) refetchAttendanceData();
+      if (refetchApologyData) refetchApologyData();
+      window.dispatchEvent(new CustomEvent('attendanceDataChanged'));
+    } else {
+      const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
+      toast.error(`Failed to update entry: ${errorData.error || res.statusText}`);
     }
   };
 
@@ -626,10 +529,82 @@ export default function DashboardHome({
     "NOM": "bg-gray-100 border-gray-300 dark:bg-gray-900 dark:border-gray-700"
   };
 
+  // Progress calculations for cards
+  const localProgress = useMemo(() => getLocalProgress(attendanceData, selectedYear), [attendanceData, selectedYear]);
+  const districtProgress = useMemo(() => getDistrictProgress(attendanceData, selectedYear), [attendanceData, selectedYear]);
+  const progressCardClass = "flex flex-col justify-between items-center p-4 rounded-xl shadow-md min-w-[220px] max-w-xs w-full";
+  const circleStyle = (percent, color) => ({
+    background: `conic-gradient(${color} ${percent * 3.6}deg, #e5e7eb 0deg)`
+  });
+
   return (
     <div>
-      
-      {/* Dashboard Summary Cards */}
+      {/* Progress Cards - horizontally scrollable on mobile, side-by-side on desktop */}
+      <div className="flex gap-4 mb-6 mt-2 items-center overflow-x-auto custom-scrollbar snap-x snap-mandatory pl-8 pr-4">
+        <div className={progressCardClass + " bg-blue-700 text-white min-w-[260px] snap-start"}>
+          <div className="font-semibold text-lg mb-2">Local Congregations Progress</div>
+          <div className="flex items-center gap-4">
+            <div className="relative w-16 h-16 flex items-center justify-center">
+              <svg width="64" height="64" viewBox="0 0 64 64">
+                <circle cx="32" cy="32" r="28" stroke="#e5e7eb" strokeWidth="8" fill="none" />
+                <circle
+                  cx="32" cy="32" r="28"
+                  stroke="url(#blueGradient)"
+                  strokeWidth="8"
+                  fill="none"
+                  strokeDasharray={2 * Math.PI * 28}
+                  strokeDashoffset={2 * Math.PI * 28 * (1 - localProgress / 100)}
+                  strokeLinecap="round"
+                  style={{ transition: 'stroke-dashoffset 0.6s cubic-bezier(.4,2,.3,1)' }}
+                />
+                <defs>
+                  <linearGradient id="blueGradient" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#3b82f6" />
+                    <stop offset="1" stopColor="#60a5fa" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <span className="absolute text-xl font-bold">{localProgress}%</span>
+            </div>
+            <div className="flex flex-col text-sm">
+              <span>Yearly Progress: {localProgress}%</span>
+              <span>Current Year: {selectedYear || new Date().getFullYear()}</span>
+            </div>
+          </div>
+        </div>
+        <div className={progressCardClass + " bg-green-700 text-white min-w-[260px] snap-center"}>
+          <div className="font-semibold text-lg mb-2">District Executives Progress</div>
+          <div className="flex items-center gap-4">
+            <div className="relative w-16 h-16 flex items-center justify-center">
+              <svg width="64" height="64" viewBox="0 0 64 64">
+                <circle cx="32" cy="32" r="28" stroke="#e5e7eb" strokeWidth="8" fill="none" />
+                <circle
+                  cx="32" cy="32" r="28"
+                  stroke="url(#greenGradient)"
+                  strokeWidth="8"
+                  fill="none"
+                  strokeDasharray={2 * Math.PI * 28}
+                  strokeDashoffset={2 * Math.PI * 28 * (1 - districtProgress / 100)}
+                  strokeLinecap="round"
+                  style={{ transition: 'stroke-dashoffset 0.6s cubic-bezier(.4,2,.3,1)' }}
+                />
+                <defs>
+                  <linearGradient id="greenGradient" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#10b981" />
+                    <stop offset="1" stopColor="#6ee7b7" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <span className="absolute text-xl font-bold">{districtProgress}%</span>
+            </div>
+            <div className="flex flex-col text-sm">
+              <span>Yearly Progress: {districtProgress}%</span>
+              <span>Current Year: {selectedYear || new Date().getFullYear()}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* Original Four Summary Cards */}
       <div className="overflow-x-auto md:overflow-x-visible custom-scrollbar">
         <div className="flex md:grid md:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6 min-w-max md:min-w-0">
           <div className="p-3 md:p-4 bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-800 rounded-lg shadow-sm">
@@ -644,53 +619,32 @@ export default function DashboardHome({
             <h3 className="text-xs md:text-sm font-semibold text-purple-700 dark:text-purple-300">Total Meetings</h3>
             <p className="text-lg md:text-xl font-bold text-purple-900 dark:text-purple-100">{totalMeetingsCount}</p>
           </div>
-          <div className="p-3 md:p-4 bg-amber-50 dark:bg-orange-900 border border-amber-200 dark:border-orange-800 rounded-lg shadow-sm">
+          <div className="p-3 md:p-4 bg-amber-50 dark:bg-orange-900 border border-amber-200 dark:border-amber-800 rounded-lg shadow-sm">
             <h3 className="text-xs md:text-sm font-semibold text-amber-700 dark:text-orange-300">Grand Total Progress</h3>
             <p className="text-lg md:text-xl font-bold text-amber-900 dark:text-orange-100">{getGrandTotalProgress(filteredData, selectedYear)}%</p>
           </div>
         </div>
       </div>
-      {/* Performance Categories Analytics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {(() => {
-          // Calculate attendance rate per congregation for the specified year
-          const targetYear = selectedYear || new Date().getFullYear();
-          const congregationAttendance = {};
-          filteredData.forEach(entry => {
-            const date = new Date(entry.meeting_date);
-            if (date.getFullYear() === targetYear && entry.type !== 'district') {
-              if (!congregationAttendance[entry.congregation]) {
-                congregationAttendance[entry.congregation] = 0;
-              }
-              congregationAttendance[entry.congregation] += 1;
-            }
-          });
-          // Assume 2 meetings per month, 12 months
-          const totalPossible = 2 * 12;
-          const categories = { excellent: 0, good: 0, needsImprovement: 0 };
-          Object.values(congregationAttendance).forEach(count => {
-            const rate = (count / totalPossible) * 100;
-            if (rate >= 90) categories.excellent += 1;
-            else if (rate >= 70) categories.good += 1;
-            else categories.needsImprovement += 1;
-          });
-          return (
-            <>
-              <div className="p-4 bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-xl shadow-sm flex flex-col items-center">
-                <span className="text-2xl font-bold text-green-700 dark:text-green-300">{categories.excellent}</span>
-                <span className="text-sm font-semibold text-green-700 dark:text-green-300">Excellent (90%+)</span>
-              </div>
-              <div className="p-4 bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-xl shadow-sm flex flex-col items-center">
-                <span className="text-2xl font-bold text-yellow-700 dark:text-yellow-300">{categories.good}</span>
-                <span className="text-sm font-semibold text-yellow-700 dark:text-yellow-300">Good (70-89%)</span>
-              </div>
-              <div className="p-4 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-xl shadow-sm flex flex-col items-center">
-                <span className="text-2xl font-bold text-red-700 dark:text-red-300">{categories.needsImprovement}</span>
-                <span className="text-sm font-semibold text-red-700 dark:text-red-300">Needs Improvement (&lt; 69%)</span>
-              </div>
-            </>
-          );
-        })()}
+      {/* Three Stat Cards (Total Congregations, Top Attendees, Unique People) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div className="bg-purple-50 dark:bg-purple-900 p-3 rounded-lg border border-purple-200 dark:border-purple-700">
+          <p className="text-sm font-semibold text-purple-700 dark:text-purple-300">Total Congregations</p>
+          <p className="text-lg font-bold text-purple-900 dark:text-purple-100">
+            {getTop3Congregations(filteredData.filter(entry => !isApologyEntry(entry)), selectedYear).length}
+          </p>
+        </div>
+        <div className="bg-green-50 dark:bg-green-900 p-3 rounded-lg border border-green-200 dark:border-green-700">
+          <p className="text-sm font-semibold text-green-700 dark:text-green-300">Top Attendees (5+)</p>
+          <p className="text-lg font-bold text-green-900 dark:text-green-100">
+            {getTop3Attendees(filteredData.filter(entry => !isApologyEntry(entry)), selectedYear).length}
+          </p>
+        </div>
+        <div className="bg-blue-50 dark:bg-blue-900 p-3 rounded-lg border border-blue-200 dark:border-blue-700">
+          <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">Unique People (&lt;5)</p>
+          <p className="text-lg font-bold text-blue-900 dark:text-blue-100">
+            {getUniquePeopleLessThan5(filteredData.filter(entry => !isApologyEntry(entry)), selectedYear).length}
+          </p>
+        </div>
       </div>
       {/* Search Bar and Attendance/Apology Buttons */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 md:mb-6 space-y-3 md:space-y-0">
@@ -751,73 +705,75 @@ export default function DashboardHome({
                       Object.keys(groupedSummary[cong][month]).map(day => (
                         <div key={day} className="mb-2 pl-2 border-l-2 border-blue-300 dark:border-blue-600">
                           <div className="font-medium text-sm text-gray-700 dark:text-gray-200 mb-1">{day}</div>
-                          <table className="w-full text-gray-900 dark:text-gray-100 mb-2 border-collapse">
-                            <thead className={darkMode ? "bg-gray-700 text-gray-100" : "bg-gray-200 text-gray-900"}>
-                              <tr>
-                                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Meeting</th>
-                                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Attendee(s)</th>
-                                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Submitted Time</th>
-                                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Status</th>
-                                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Reason</th>
-                                <th className="text-left px-2 md:px-4 py-2 border text-xs md:text-sm">Actions</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {Array.isArray(groupedSummary[cong][month][day]) &&
-                                groupedSummary[cong][month][day].map((entry, i) => (
-                                  <tr key={entry.id || i} className="text-sm md:text-base hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                    <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
-                                      <div className="text-xs md:text-sm font-medium text-blue-600 dark:text-blue-200">
-                                        {entry.meeting_title || "Unknown Meeting"}
-                                      </div>
-                                    </td>
-                                    <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
-                                      <span className="font-semibold">{entry.name}</span>
-                                      <span> ({entry.position})</span>
-                                    </td>
-                                    <td className="border px-2 md:px-4 py-2 space-y-1">
-                                      <div className="text-xs md:text-sm">{entry.timestamp}</div>
-                                    </td>
-                                    <td className="border px-2 md:px-4 py-2">
-                                      <div className="flex items-center gap-2 mb-1">
-                                        <span className="text-lg">
-                                          {isApologyEntry(entry) ? (
-                                            <FaTimesCircle className="text-red-500" />
-                                          ) : (
-                                            <FaCheckCircle className="text-green-500" />
-                                          )}
-                                        </span>
-                                      </div>
-                                    </td>
-                                    {isApologyEntry(entry) ? (
-                                      <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
-                                        {entry.reason || 'No reason provided'}
+                          <div className="overflow-x-auto w-full">
+                            <table className="min-w-max w-full text-gray-900 dark:text-gray-100 mb-2 border-collapse">
+                              <thead className={darkMode ? "bg-gray-700 text-gray-100" : "bg-gray-200 text-gray-900"}>
+                                <tr>
+                                  <th className="text-center px-2 md:px-4 py-2 border-r border-gray-300 text-xs md:text-sm">Meeting</th>
+                                  <th className="text-center px-2 md:px-4 py-2 border-r border-gray-300 text-xs md:text-sm">Attendee(s)</th>
+                                  <th className="text-left px-2 md:px-4 py-2 border-r border-gray-300 text-xs md:text-sm">Submitted Time</th>
+                                  <th className="text-left px-2 md:px-4 py-2 border-r border-gray-300 text-xs md:text-sm">Status</th>
+                                  <th className="text-left px-2 md:px-4 py-2 border-r border-gray-300 text-xs md:text-sm">Reason</th>
+                                  <th className="text-center px-2 md:px-4 py-2 text-xs md:text-sm">Actions</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {Array.isArray(groupedSummary[cong][month][day]) &&
+                                  groupedSummary[cong][month][day].map((entry, i) => (
+                                    <tr key={entry.id || i} className="text-sm md:text-base hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                      <td className="border px-2 md:px-4 py-2 text-xs md:text-sm border-r border-gray-300 text-center">
+                                        <div className="text-xs md:text-sm font-medium text-blue-600 dark:text-blue-200">
+                                          {entry.meeting_title || "Unknown Meeting"}
+                                        </div>
                                       </td>
-                                    ) : (
-                                      <td className="border px-2 md:px-4 py-2 text-xs md:text-sm">
-                                        <span className="text-gray-400">-</span>
+                                      <td className="border px-2 md:px-4 py-2 text-xs md:text-sm border-r border-gray-300 text-center">
+                                        <span className="font-semibold">{entry.name}</span>
+                                        <span> ({entry.position})</span>
                                       </td>
-                                    )}
-                                    <td className="border px-2 md:px-4 py-2">
-                                      <div className="flex gap-2">
-                                        <button 
-                                          onClick={() => handleEdit(entry.id)} 
-                                          className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 px-2 py-1 rounded text-xs font-medium hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                                        >
-                                          Edit
-                                        </button>
-                                        <button 
-                                          onClick={() => handleDelete(entry.id)} 
-                                          className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 px-2 py-1 rounded text-xs font-medium hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                                        >
-                                          Delete
-                                        </button>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                ))}
-                            </tbody>
-                          </table>
+                                      <td className="border px-2 md:px-4 py-2 space-y-1 border-r border-gray-300 text-center">
+                                        <div className="text-xs md:text-sm">{entry.timestamp}</div>
+                                      </td>
+                                      <td className="border px-2 md:px-4 py-2 border-r border-gray-300 text-center">
+                                        <div className="flex items-center gap-2 mb-1 justify-center">
+                                          <span className="text-lg">
+                                            {isApologyEntry(entry) ? (
+                                              <FaTimesCircle className="text-red-500" />
+                                            ) : (
+                                              <FaCheckCircle className="text-green-500" />
+                                            )}
+                                          </span>
+                                        </div>
+                                      </td>
+                                      {isApologyEntry(entry) ? (
+                                        <td className="border px-2 md:px-4 py-2 text-xs md:text-sm border-r border-gray-300 text-center">
+                                          {entry.reason || 'No reason provided'}
+                                        </td>
+                                      ) : (
+                                        <td className="border px-2 md:px-4 py-2 text-xs md:text-sm border-r border-gray-300 text-center">
+                                          <span className="text-gray-400">-</span>
+                                        </td>
+                                      )}
+                                      <td className="border px-2 md:px-4 py-2 text-center">
+                                        <div className="flex gap-2 justify-center">
+                                          <button 
+                                            onClick={() => handleEdit(entry.id)} 
+                                            className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 px-2 py-1 rounded text-xs font-medium hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                                          >
+                                            Edit
+                                          </button>
+                                          <button 
+                                            onClick={() => handleDelete(entry.id)} 
+                                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 px-2 py-1 rounded text-xs font-medium hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                          >
+                                            Delete
+                                          </button>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  ))}
+                              </tbody>
+                            </table>
+                          </div>
                         </div>
                       ))}
                   </div>
@@ -963,7 +919,7 @@ export default function DashboardHome({
                   className="w-full mt-1 p-2 border rounded"
                   value={editModal.entry.phone}
                   onChange={e => setEditModal(m => ({ ...m, entry: { ...m.entry, phone: capitalizeWords(e.target.value) } }))}
-                  required
+                  // Phone is optional for both attendance and apology
                 />
               </label>
               <label className="block text-sm font-medium">Congregation
@@ -1033,8 +989,6 @@ export default function DashboardHome({
                     })
                   });
                   if (res.ok) {
-                    localStorage.removeItem('pendingUndo');
-                    setLastDeleted(null);
                     setShowAdminModal(false);
                     setPendingUndoApology(null);
                     setAdminUsername('');
@@ -1053,8 +1007,7 @@ export default function DashboardHome({
                     credentials: 'include',
                     body: JSON.stringify({
                       ...pendingEditApology,
-                      admin_username: adminUsername,
-                      admin_password: adminPassword
+                      pin: pendingEditApology.pin
                     })
                   });
                   if (res.ok) {

@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { FaUsers } from 'react-icons/fa';
 
@@ -9,16 +9,25 @@ const months = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
-// Define all district executive positions
-const districtPositions = [
-  'President', "President's Rep", 'Secretary', 'Assistant Secretary',
-  'Financial Secretary', 'Treasurer', 'Bible Studies Coordinator', 'Organizer'
+// Define the fixed order for district executive positions
+const positionsList = [
+  'President',
+  "President's Rep",
+  'Secretary',
+  'Assistant Secretary',
+  'Financial Secretary',
+  'Treasurer',
+  'Organizer',
+  'Bible Studies Coordinator',
 ];
 
 export default function DistrictExecutiveChart({ attendanceData, darkMode }) {
   const [chartData, setChartData] = useState([]);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [availableYears, setAvailableYears] = useState([]);
+  const [hoveredBar, setHoveredBar] = useState(null);
+  const [tooltipHovered, setTooltipHovered] = useState(false);
+  const chartContainerRef = useRef(null);
 
   useEffect(() => {
     // Always process data to show all positions, even if no attendance data
@@ -60,7 +69,7 @@ export default function DistrictExecutiveChart({ attendanceData, darkMode }) {
     const positionMap = new Map();
     
     // Initialize all district positions with 12 months of data (all 0 initially)
-    districtPositions.forEach(position => {
+    positionsList.forEach(position => {
       positionMap.set(position, Array(12).fill(0));
     });
     
@@ -77,9 +86,7 @@ export default function DistrictExecutiveChart({ attendanceData, darkMode }) {
       }
     });
 
-    const positionsList = Array.from(positionMap.keys()).sort();
-
-    // Create chart data with positions as bars and months as segments
+    // Always use the fixed positionsList order
     const data = positionsList.map(position => {
       const monthlyData = positionMap.get(position);
       
@@ -118,73 +125,74 @@ export default function DistrictExecutiveChart({ attendanceData, darkMode }) {
       setChartData(data);
     }
   };
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      const presentMonths = payload.filter(p => p.value === 1).length;
-      const absentMonths = 12 - presentMonths;
-      const currentDate = new Date();
-      const currentYear = currentDate.getFullYear();
-      const currentMonth = currentDate.getMonth();
-      
-      return (
-        <div className={
-          'p-4 rounded-xl  shadow-2xl border backdrop-blur-sm bg-gray-900 border-gray-700 text-white'
-        }>
-          <p className="font-bold text-lg mb-3 text-center">{label}</p>
-          <div className="space-y-2 text-sm">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-gray-400">Total Meetings</p>
-                <p className="font-semibold text-lg">{data.totalMeetings}</p>
-              </div>
-              <div>
-                <p className="text-gray-400">Full Year Rate</p>
-                <p className="font-semibold text-lg">{data.attendanceRate}%</p>
-              </div>
+
+  // Custom top-centered modal for hovered bar
+  const TopCenterTooltip = ({ data, label }) => {
+    if (!data) return null;
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth();
+    return (
+      <div
+        style={{
+          position: 'absolute',
+          left: '50%',
+          top: 0,
+          transform: 'translateX(-50%)',
+          zIndex: 50,
+          width: 'min(320px, 95vw)',
+          pointerEvents: 'auto',
+        }}
+        className={
+          'p-4 rounded-xl shadow-2xl border backdrop-blur-sm bg-gray-900 border-gray-700 text-white mt-2'
+        }
+        onMouseEnter={() => setTooltipHovered(true)}
+        onMouseLeave={() => setTooltipHovered(false)}
+      >
+        <p className="font-bold text-lg mb-3 text-center">{label}</p>
+        <div className="space-y-2 text-sm">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-gray-400">Total Meetings</p>
+              <p className="font-semibold text-lg">{data.totalMeetings}</p>
             </div>
-            {/* {selectedYear === currentYear && data.currentYearProgress && (
-              <div className="mt-3 p-2 bg-blue-900/20 rounded-lg">
-                <p className="text-blue-300 font-medium">Current Year Progress</p>
-                <p className="text-blue-200 font-bold text-lg">
-                  {data.currentYearProgress}% ({months.slice(0, currentMonth + 1).join(', ')})
-                </p>
-              </div>
-            )} */}
-            <div className="mt-3 pt-3 border-t border-gray-700">
-              <p className="text-xs text-gray-400 mb-2">Monthly Breakdown:</p>
-              <div className="grid grid-cols-4 gap-1">
-                {months.map((month, index) => {
-                  const hasAttendance = data.monthlyAttendance && data.monthlyAttendance[index] > 0;
-                  const isCurrentMonth = selectedYear === currentYear && index === currentMonth;
-                  const isFutureMonth = selectedYear === currentYear && index > currentMonth;
-                  return (
-                    <div key={month} className="flex items-center gap-1">
-                      <div 
-                        className={`w-2 h-2 rounded-full ${
-                          hasAttendance ? 'bg-green-500' : 
-                          isFutureMonth ? 'bg-gray-600' :
-                          'bg-gray-600'
-                        }`}
-                      />
-                      <span className={`text-xs ${
-                        isCurrentMonth ? 'font-bold text-blue-400' :
-                        isFutureMonth ? 'text-gray-500' :
-                        'text-gray-300'
-                      }`}>
-                        {month.slice(0, 3)}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
+            <div>
+              <p className="text-gray-400">Full Year Rate</p>
+              <p className="font-semibold text-lg">{data.attendanceRate}%</p>
+            </div>
+          </div>
+          <div className="mt-3 pt-3 border-t border-gray-700">
+            <p className="text-xs text-gray-400 mb-2">Monthly Breakdown:</p>
+            <div className="grid grid-cols-4 gap-1">
+              {months.map((month, index) => {
+                const hasAttendance = data.monthlyAttendance && data.monthlyAttendance[index] > 0;
+                const isCurrentMonth = selectedYear === currentYear && index === currentMonth;
+                const isFutureMonth = selectedYear === currentYear && index > currentMonth;
+                return (
+                  <div key={month} className="flex items-center gap-1">
+                    <div 
+                      className={`w-2 h-2 rounded-full ${
+                        hasAttendance ? 'bg-green-500' : 
+                        isFutureMonth ? 'bg-gray-600' :
+                        'bg-gray-600'
+                      }`}
+                    />
+                    <span className={`text-xs ${
+                      isCurrentMonth ? 'font-bold text-blue-400' :
+                      isFutureMonth ? 'text-gray-500' :
+                      'text-gray-300'
+                    }`}>
+                      {month.slice(0, 3)}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
-      );
-      }
-      return null;
-    };
+      </div>
+    );
+  };
 
     const exportData = () => {
       const csvContent = [
@@ -227,7 +235,11 @@ export default function DistrictExecutiveChart({ attendanceData, darkMode }) {
     }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-4 md:p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-4 md:p-6 relative" ref={chartContainerRef}>
+      {/* Top-centered tooltip/modal */}
+      {(hoveredBar || tooltipHovered) && (
+        <TopCenterTooltip data={hoveredBar?.data} label={hoveredBar?.label} />
+      )}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 md:mb-6">
         <h2 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
           <FaUsers className="text-blue-500" />
@@ -252,7 +264,7 @@ export default function DistrictExecutiveChart({ attendanceData, darkMode }) {
       </div>
       
       <div className="w-full overflow-x-auto flex items-center justify-center">
-        <div className="min-w-[700px]"> 
+        <div className="min-w-[700px] relative"> 
           <ResponsiveContainer width="100%" height={400}>
             <BarChart
               data={chartData}
@@ -260,11 +272,12 @@ export default function DistrictExecutiveChart({ attendanceData, darkMode }) {
               margin={{ 
                 top: 20, 
                 right: 20,
-                left: 100, 
+                left: 0, 
                 bottom: 80 
               }}
               barGap={4}
               barCategoryGap={16}
+              onMouseLeave={() => { if (!tooltipHovered) setHoveredBar(null); }}
             >
               <XAxis 
                 type="category" 
@@ -298,7 +311,8 @@ export default function DistrictExecutiveChart({ attendanceData, darkMode }) {
                 axisLine={true}
                 tickLine={true}
               />
-              <Tooltip content={<CustomTooltip />} />
+              {/* Hide default tooltip */}
+              <Tooltip content={() => null} />
               
               {/* Create bars for each month */}
               {months.map((month, monthIndex) => {
@@ -310,6 +324,11 @@ export default function DistrictExecutiveChart({ attendanceData, darkMode }) {
                     barSize={window.innerWidth < 768 ? 12 : 8} 
                     radius={[2, 2, 2, 2]}
                     stackId="a"
+                    onMouseOver={(_, barIndex) => {
+                      // Find the data for the hovered bar
+                      const barData = chartData[barIndex];
+                      setHoveredBar({ data: barData, label: barData.position });
+                    }}
                   >
                     {chartData.map((entry, index) => {
                       const hasAttendance = entry.monthlyAttendance && entry.monthlyAttendance[monthIndex] > 0;

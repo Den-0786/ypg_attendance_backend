@@ -12,100 +12,39 @@ import { useAuth } from '@components/hooks/useAuth';
 import { useAuthStore } from '@components/store/authStore';
 import LoginForm from '@components/LoginForm';
 import { toast } from 'react-hot-toast';
+import Image from 'next/image';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
 export default function Page() {
-  const { handleLogin, loggedIn, userRole } = useAuth();
-  const store = useAuthStore();
-  const setLoggedIn = store.setLoggedIn;
-  const setUserRole = store.setUserRole;
-  const setMeetingSet = store.setMeetingSet;
-  
   const router = useRouter();
-  const pathname = usePathname();
-  const [isLoading, setIsLoading] = useState(true);
-  const [loginLoading, setLoginLoading] = useState(false);
-  const hasInitialized = useRef(false);
 
-  // Only admin and user roles are supported
-  const allowedRoles = ['admin', 'user'];
-
-  // Always start fresh - clear any existing session state
-  useEffect(() => {
-    if (!hasInitialized.current) {
-      hasInitialized.current = true;
-      // Remove session clearing on every mount:
-      // if (typeof setLoggedIn === 'function') {
-      //   setLoggedIn(false);
-      // }
-      // if (typeof setUserRole === 'function') {
-      //   setUserRole(null);
-      // }
-      // if (typeof setMeetingSet === 'function') {
-      //   setMeetingSet(false);
-      // }
-      // if (typeof window !== 'undefined') {
-      //   localStorage.clear();
-      //   sessionStorage.clear();
-      //   fetch(`${API_URL}/api/logout`, {
-      //     method: 'POST',
-      //     credentials: 'include',
-      //   }).catch(() => {});
-      // }
-      setIsLoading(false);
-    }
-  }, [setLoggedIn, setUserRole, setMeetingSet]);
-
-  // Redirect after successful login
-  useEffect(() => {
-    if (!isLoading && loggedIn && userRole) {
-      if (userRole === 'admin') {
-        router.replace('/dashboard');
-      } else if (userRole === 'user') {
-        router.replace('/forms');
-      }
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoading, loggedIn, userRole]);
-
-  const onLogin = async (username, password) => {
-    setLoginLoading(true);
-    try {
-      const role = await handleLogin(username, password);
-      if (role === 'admin') {
-        router.replace('/dashboard');
-      } else if (role === 'user') {
-        router.replace('/forms');
-      }
-    } catch (error) {
-      // Handle login errors gracefully without logging to console
-      if (error.isLoginError) {
-        // This is a login error, toast is already shown in useAuth
-        // Don't log to console or show duplicate toast
-      } else {
-        // This is a different type of error, log it for debugging
-        console.error('Login failed:', error);
-        // Don't show duplicate toast since useAuth already handles it
-      }
-    } finally {
-      setLoginLoading(false);
-    }
-  };
-
-  // Show loading only during login process
-  if (isLoading || loginLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-gray-600">
-        <div className="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-12 w-12 mb-4 animate-spin border-t-blue-600"></div>
-        <span className="ml-4">Loading...</span>
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-100 via-blue-300 to-green-200 dark:from-gray-900 dark:via-blue-900 dark:to-green-900">
+      <div className="max-w-lg w-full px-6 py-12 bg-white/80 dark:bg-gray-900/80 rounded-2xl shadow-2xl flex flex-col items-center">
+        <div className="mb-6 flex flex-col items-center">
+          <div className="w-20 h-20 rounded-full overflow-hidden bg-blue-100 flex items-center justify-center mb-2 shadow-lg">
+            <Image src="/ypg.jpeg" alt="YPG Logo" width={80} height={80} className="object-cover w-full h-full" />
+          </div>
+          <h1 className="text-2xl md:text-3xl font-extrabold text-blue-800 dark:text-blue-200 mb-2 text-center">Welcome to Ahinsan District YPG markify</h1>
+          <p className="text-gray-700 dark:text-gray-300 text-center text-lg max-w-xs">A modern platform for tracking, managing, and analyzing attendance and apologies for local congregations and district executives.</p>
+        </div>
+        <button
+          className="mt-8 px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white text-lg font-semibold rounded-full shadow transition-colors"
+          onClick={() => router.push('/login')}
+        >
+          Login
+        </button>
+        <div className="mt-6 text-center text-blue-700 dark:text-blue-200 text-base max-w-xs">
+          <div className="font-bold">YPG ... Service all the way</div>
+          <div className="italic mt-1">YOU ... Practice Godliness ....</div>
+        </div>
       </div>
-    );
-  }
-
-
-
-  return <LoginForm onLogin={onLogin} />;
+      <div className="mt-10 text-center text-gray-500 dark:text-gray-400 text-xs">
+        &copy; {new Date().getFullYear()} YPG Attendance App. All rights reserved.
+      </div>
+    </div>
+  );
 }
 
 // Add spinner CSS if not present

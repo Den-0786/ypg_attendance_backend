@@ -46,7 +46,7 @@ const Sidebar = ({
 }) => (
   <div
     className={cn(
-      "fixed md:static z-50 h-screen w-64 p-4 border-r flex flex-col justify-between transition-transform duration-300 bg-white dark:bg-gray-900 text-gray-900 dark:text-white md:translate-x-0",
+      "fixed md:static z-50 h-screen w-64 p-4 border-r flex flex-col justify-between transition-transform duration-300 bg-white dark:bg-gray-900 text-gray-900 dark:text-white md:translate-x-0 max-h-screen overflow-y-auto pb-8",
       isMobile ? "translate-x-0" : "-translate-x-full"
     )}
   >
