@@ -27,16 +27,20 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-your-secret-key-here-
 
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-# --- LOCAL DEVELOPMENT SETTINGS (REMOVE OR REVERT FOR PRODUCTION) ---
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:8000',
-    'http://127.0.0.1:8000',
-]
-CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:8000',
-    'http://127.0.0.1:8000',
-]
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=lambda v: [s.strip() for s in v.split(',')])
+
+CORS_ALLOWED_ORIGINS = config(
+    'CORS_ALLOWED_ORIGINS',
+    default='http://localhost:3000,http://localhost:3001,http://localhost:3002,http://127.0.0.1:3000,http://127.0.0.1:3001,http://127.0.0.1:3002',
+    cast=lambda v: [s.strip() for s in v.split(',')]
+)
+
+CSRF_TRUSTED_ORIGINS = config(
+    'CSRF_TRUSTED_ORIGINS',
+    default='http://localhost:8000,http://127.0.0.1:8000',
+    cast=lambda v: [s.strip() for s in v.split(',')]
+)
+
 SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False
 SECURE_SSL_REDIRECT = False
