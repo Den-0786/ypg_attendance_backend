@@ -36,12 +36,6 @@ class Credential(models.Model):
     @property
     def pk(self):
         return self.id
-
-    @property
-    def _meta(self):
-        class Meta:
-            label = "core.Credential"
-        return Meta
     # --- END PATCH ---
 
 class AttendanceEntry(models.Model):
