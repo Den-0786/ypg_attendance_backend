@@ -99,7 +99,8 @@ WSGI_APPLICATION = 'ypg_backend.wsgi.application'
 
 DATABASES = {}
 
-database_url = os.environ.get('DATABASE_URL')
+# database_url = os.environ.get('DATABASE_URL')
+database_url = config('DATABASE_URL', default=None)
 if database_url:
     DATABASES['default'] = dj_database_url.config(
         default=database_url,
