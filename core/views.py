@@ -1381,39 +1381,44 @@ class CustomTokenObtainPairView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
-        username = request.data.get('username')
-        password = request.data.get('password')
-        logger.warning(f"CustomTokenObtainPairView called with username: {username}")
-        if not username or not password:
-            logger.warning("Missing username or password")
-            return Response({'detail': 'Username and password required.'}, status=400)
-        from .models import Credential
         try:
-            user = Credential.objects.get(username=username)
-            logger.warning(f"User found: {user.username}, checking password...")
-            if not user.check_password(password):
-                logger.warning("Password check failed")
+            username = request.data.get('username')
+            password = request.data.get('password')
+            logger.warning(f"CustomTokenObtainPairView called with username: {username}")
+            if not username or not password:
+                logger.warning("Missing username or password")
+                return Response({'detail': 'Username and password required.'}, status=400)
+            from .models import Credential
+            try:
+                user = Credential.objects.get(username=username)
+                logger.warning(f"User found: {user.username}, checking password...")
+                if not user.check_password(password):
+                    logger.warning("Password check failed")
+                    return Response({'detail': 'No active account for the given credentials'}, status=401)
+                logger.warning("Password check passed")
+            except Credential.DoesNotExist:
+                logger.warning("User not found")
                 return Response({'detail': 'No active account for the given credentials'}, status=401)
-            logger.warning("Password check passed")
-        except Credential.DoesNotExist:
-            logger.warning("User not found")
-            return Response({'detail': 'No active account for the given credentials'}, status=401)
-        # Create JWT tokens
-        refresh = RefreshToken.for_user(user)
-        # Add custom claims
-        refresh['username'] = user.username
-        refresh['role'] = user.role
-        refresh['user_id'] = user.id
-        access = refresh.access_token
-        access['username'] = user.username
-        access['role'] = user.role
-        access['user_id'] = user.id
-        return Response({
-            'refresh': str(refresh),
-            'access': str(access),
-            'user': {
-                'id': user.id,
-                'username': user.username,
-                'role': user.role,
-            }
-        })
+            # Create JWT tokens
+            refresh = RefreshToken.for_user(user)
+            # Add custom claims
+            refresh['username'] = user.username
+            refresh['role'] = user.role
+            refresh['user_id'] = user.id
+            access = refresh.access_token
+            access['username'] = user.username
+            access['role'] = user.role
+            access['user_id'] = user.id
+            return Response({
+                'refresh': str(refresh),
+                'access': str(access),
+                'user': {
+                    'id': user.id,
+                    'username': user.username,
+                    'role': user.role,
+                }
+            })
+        except Exception as e:
+            import traceback
+            logger.error(traceback.format_exc())
+            return Response({'detail': str(e)}, status=500)
