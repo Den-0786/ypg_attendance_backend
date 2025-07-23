@@ -1,3 +1,5 @@
+
+# sourcery skip: merge-repeated-ifs, swap-if-else-branches
 """
 Django settings for ypg_backend project.
 
@@ -15,30 +17,36 @@ from decouple import config
 import os
 import dj_database_url
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-your-secret-key-here-change-in-production')
 
-# SECURITY WARNING: don't run with debug turned on in production!
+
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=lambda v: [s.strip() for s in v.split(',')])
-
-# If deploying behind a proxy (like on Render, Railway, etc.)
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SECURE_SSL_REDIRECT = False
+# --- LOCAL DEVELOPMENT SETTINGS (REMOVE OR REVERT FOR PRODUCTION) ---
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
 SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False
+SECURE_SSL_REDIRECT = False
+# --- END LOCAL DEVELOPMENT SETTINGS ---
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
-# Application definition
+
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -242,28 +250,17 @@ if DEBUG:
         'content-type',
         'content-length',
     ]
-    # Allow credentials
+    
     CORS_ALLOW_CREDENTIALS = True
-    # Allow all origins in development
+    
     CORS_ORIGIN_ALLOW_ALL = True
 
-# Session settings
-# SESSION_COOKIE_SAMESITE = "None"  # Allows cross-site cookies for local dev and production
-# SESSION_COOKIE_SECURE = True     # Set to True in production (HTTPS only)
-# SESSION_COOKIE_HTTPONLY = True
-# SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-# SESSION_COOKIE_AGE = 86400  # 24 hours
 
-# # CSRF cookie settings for cross-origin authentication (important for mobile)
-# CSRF_COOKIE_SAMESITE = "None"
-# CSRF_COOKIE_SECURE = True
-
-# Session and CSRF cookie settings
 SESSION_COOKIE_SAMESITE = "None"
 CSRF_COOKIE_SAMESITE = "None"
 SESSION_COOKIE_HTTPONLY = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-SESSION_COOKIE_AGE = 86400  # 24 hours
+SESSION_COOKIE_AGE = 86400  
 
 if DEBUG:
     SESSION_COOKIE_SECURE = False
@@ -272,7 +269,7 @@ else:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 
-# Security settings
+
 if not DEBUG:
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
@@ -280,15 +277,14 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000
     SECURE_REDIRECT_EXEMPT = []
     SECURE_SSL_REDIRECT = True
-    # SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     X_FRAME_OPTIONS = 'DENY'
 else:
-    # Development settings
+    
     SECURE_SSL_REDIRECT = False
     SECURE_BROWSER_XSS_FILTER = False
     SECURE_CONTENT_TYPE_NOSNIFF = False
 
-# Email settings
+
 EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
 EMAIL_HOST = config('EMAIL_HOST', default='')
 EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
@@ -297,7 +293,7 @@ EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@ypgattendance.com')
 
-# Logging
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -337,5 +333,5 @@ LOGGING = {
     },
 }
 
-# Create logs directory if it doesn't exist
+
 os.makedirs(BASE_DIR / 'logs', exist_ok=True)

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 import { useEffect, useState, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
@@ -11,6 +12,8 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 export default function LoginPage() {
   const { handleLogin, loggedIn, userRole } = useAuth();
   const store = useAuthStore();
+
+// sourcery skip: use-object-destructuring
   const setLoggedIn = store.setLoggedIn;
   const setUserRole = store.setUserRole;
   const setMeetingSet = store.setMeetingSet;
@@ -21,10 +24,10 @@ export default function LoginPage() {
   const [loginLoading, setLoginLoading] = useState(false);
   const hasInitialized = useRef(false);
 
-  // Only admin and user roles are supported
+  
   const allowedRoles = ['admin', 'user'];
 
-  // Always start fresh - clear any existing session state
+
   useEffect(() => {
     if (!hasInitialized.current) {
       hasInitialized.current = true;
@@ -32,7 +35,7 @@ export default function LoginPage() {
     }
   }, [setLoggedIn, setUserRole, setMeetingSet]);
 
-  // Redirect after successful login
+
   useEffect(() => {
     if (!isLoading && loggedIn && userRole) {
       if (userRole === 'admin') {
@@ -41,7 +44,7 @@ export default function LoginPage() {
         router.replace('/forms');
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [isLoading, loggedIn, userRole]);
 
   const onLogin = async (username, password) => {
@@ -54,21 +57,20 @@ export default function LoginPage() {
         router.replace('/forms');
       }
     } catch (error) {
-      // Handle login errors gracefully without logging to console
+
       if (error.isLoginError) {
-        // This is a login error, toast is already shown in useAuth
-        // Don't log to console or show duplicate toast
+        
       } else {
-        // This is a different type of error, log it for debugging
+        
         console.error('Login failed:', error);
-        // Don't show duplicate toast since useAuth already handles it
+        
       }
     } finally {
       setLoginLoading(false);
     }
   };
 
-  // Show loading only during login process
+  
   if (isLoading || loginLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-600">
