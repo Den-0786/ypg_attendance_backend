@@ -25,6 +25,25 @@ class Credential(models.Model):
     def __str__(self):
         return self.username
 
+    # --- PATCH FOR SIMPLEJWT COMPATIBILITY ---
+    @property
+    def is_active(self):
+        return True
+
+    def get_username(self):
+        return self.username
+
+    @property
+    def pk(self):
+        return self.id
+
+    @property
+    def _meta(self):
+        class Meta:
+            label = "core.Credential"
+        return Meta
+    # --- END PATCH ---
+
 class AttendanceEntry(models.Model):
     name = models.CharField(max_length=100)
     phone = models.CharField(max_length=20)
