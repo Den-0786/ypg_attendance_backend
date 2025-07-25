@@ -35,17 +35,8 @@ export default function LoginPage() {
     }
   }, [setLoggedIn, setUserRole, setMeetingSet]);
 
-
-  useEffect(() => {
-    if (!isLoading && loggedIn && userRole) {
-      if (userRole === 'admin') {
-        router.replace('/dashboard');
-      } else if (userRole === 'user') {
-        router.replace('/forms');
-      }
-    }
-
-  }, [isLoading, loggedIn, userRole]);
+  // Remove the automatic redirect when already logged in
+  // Users should always see the login form and enter credentials
 
   const onLogin = async (username, password) => {
     setLoginLoading(true);
