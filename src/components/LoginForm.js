@@ -25,15 +25,15 @@ export default function LoginForm({ onLogin }) {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-gradient-to-br from-purple-600 via-pink-600 to-orange-500">
       {/* Left Section - Login Form */}
-      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8 order-2 lg:order-1">
-        <div className="w-full max-w-md">
-          <div className="bg-gray-900 rounded-2xl p-6 sm:p-8 shadow-2xl">
-            <div className="text-center mb-6 sm:mb-8">
-              <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Welcome back</h1>
-              <p className="text-gray-300 text-sm sm:text-base">Please enter your account details</p>
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-4 order-2 lg:order-1">
+        <div className="w-full max-w-sm">
+          <div className="bg-gray-900 rounded-2xl p-6 sm:p-6 shadow-2xl">
+            <div className="text-center mb-6">
+              <h1 className="text-2xl sm:text-2xl font-bold text-white mb-2">Welcome back</h1>
+              <p className="text-gray-300 text-sm">Please enter your account details</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-2">
                   Username
@@ -42,7 +42,7 @@ export default function LoginForm({ onLogin }) {
                   id="username"
                   type="text"
                   placeholder="Enter your username"
-                  className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-gray-800 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-colors placeholder-gray-400 text-sm sm:text-base"
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-colors placeholder-gray-400 text-sm"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
@@ -59,7 +59,7 @@ export default function LoginForm({ onLogin }) {
                     id="password"
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Enter your password"
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-gray-800 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-colors placeholder-gray-400 text-sm sm:text-base pr-12"
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-colors placeholder-gray-400 text-sm pr-10"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -71,7 +71,7 @@ export default function LoginForm({ onLogin }) {
                     onClick={() => setShowPassword(!showPassword)}
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
-                    {showPassword ? <HiEye size={18} /> : <HiEyeOff size={18} />}
+                    {showPassword ? <HiEye size={16} /> : <HiEyeOff size={16} />}
                   </button>
                 </div>
               </div>
@@ -97,7 +97,7 @@ export default function LoginForm({ onLogin }) {
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`w-full py-2 sm:py-3 px-4 rounded-lg text-white font-semibold text-base sm:text-lg transition-all duration-200 ${
+                className={`w-full py-2 px-4 rounded-lg text-white font-semibold text-base transition-all duration-200 ${
                   isLoading 
                     ? 'bg-gray-600 cursor-not-allowed' 
                     : 'bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600 transform hover:scale-105 shadow-lg'
@@ -108,7 +108,7 @@ export default function LoginForm({ onLogin }) {
             </form>
 
             {/* Social Login */}
-            <div className="mt-6 sm:mt-8">
+            <div className="mt-6">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-gray-700"></div>
@@ -118,15 +118,15 @@ export default function LoginForm({ onLogin }) {
                 </div>
               </div>
 
-              <div className="mt-4 sm:mt-6 flex justify-center space-x-3 sm:space-x-4">
-                <button className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-800 rounded-full flex items-center justify-center text-gray-300 hover:text-white hover:bg-gray-700 transition-colors">
-                  <FaFacebook size={16} className="sm:w-5 sm:h-5" />
+              <div className="mt-4 flex justify-center space-x-3">
+                <button className="w-9 h-9 bg-gray-800 rounded-full flex items-center justify-center text-gray-300 hover:text-white hover:bg-gray-700 transition-colors">
+                  <FaFacebook size={14} />
                 </button>
-                <button className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-800 rounded-full flex items-center justify-center text-gray-300 hover:text-white hover:bg-gray-700 transition-colors">
-                  <FaTiktok size={16} className="sm:w-5 sm:h-5" />
+                <button className="w-9 h-9 bg-gray-800 rounded-full flex items-center justify-center text-gray-300 hover:text-white hover:bg-gray-700 transition-colors">
+                  <FaTiktok size={14} />
                 </button>
-                <button className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-800 rounded-full flex items-center justify-center text-gray-300 hover:text-white hover:bg-gray-700 transition-colors">
-                  <FaInstagram size={16} className="sm:w-5 sm:h-5" />
+                <button className="w-9 h-9 bg-gray-800 rounded-full flex items-center justify-center text-gray-300 hover:text-white hover:bg-gray-700 transition-colors">
+                  <FaInstagram size={14} />
                 </button>
               </div>
             </div>
@@ -135,50 +135,50 @@ export default function LoginForm({ onLogin }) {
       </div>
 
       {/* Right Section - Testimonial/Marketing */}
-      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8 order-1 lg:order-2">
-        <div className="relative max-w-md w-full">
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-4 order-1 lg:order-2">
+        <div className="relative max-w-sm w-full">
           {/* Main testimonial card */}
-          <div className="bg-gray-900 rounded-2xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+          <div className="bg-gray-900 rounded-2xl p-6 shadow-2xl relative overflow-hidden mb-16">
             {/* Cut-out corner effect */}
-            <div className="absolute top-0 right-0 w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-transparent to-gray-800 transform rotate-45 translate-x-6 -translate-y-6 sm:translate-x-8 sm:-translate-y-8"></div>
+            <div className="absolute top-0 right-0 w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-transparent to-gray-800 transform rotate-45 translate-x-5 -translate-y-5 sm:translate-x-6 sm:-translate-y-6"></div>
             
-            <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">Empowering Youth Ministry</h2>
+            <h2 className="text-lg sm:text-xl font-bold text-white mb-4">Empowering Youth Ministry</h2>
             
-            <div className="text-4xl sm:text-6xl text-gray-600 mb-4 sm:mb-6">"</div>
+            <div className="text-3xl sm:text-4xl text-gray-600 mb-4">"</div>
             
-            <p className="text-gray-300 text-base sm:text-lg leading-relaxed mb-4 sm:mb-6">
+            <p className="text-gray-300 text-sm sm:text-base leading-relaxed mb-4">
               "From Emmanuel to Liberty congregations, we're all connected through this system. It's not just attendance tracking - it's community building and growth monitoring."
             </p>
             
-            <div className="mb-4 sm:mb-6">
-              <p className="text-white font-semibold text-sm sm:text-base">Ahinsan District YPG</p>
-              <p className="text-gray-400 text-xs sm:text-sm">Youth Ministry Organization</p>
+            <div className="mb-4">
+              <p className="text-white font-semibold text-sm">Ahinsan District YPG</p>
+              <p className="text-gray-400 text-xs">Youth Ministry Organization</p>
             </div>
 
             {/* Navigation buttons */}
             <div className="flex space-x-2">
-              <button className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-800 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 transition-colors text-sm sm:text-base">
+              <button className="w-6 h-6 sm:w-7 sm:h-7 bg-gray-800 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 transition-colors text-xs">
                 ←
               </button>
-              <button className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-800 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 transition-colors text-sm sm:text-base">
+              <button className="w-6 h-6 sm:w-7 sm:h-7 bg-gray-800 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 transition-colors text-xs">
                 →
               </button>
             </div>
 
             {/* Abstract graphic */}
-            <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full opacity-20"></div>
+            <div className="absolute bottom-3 right-3 w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full opacity-20"></div>
           </div>
 
-          {/* Overlapping card */}
-          <div className="absolute -bottom-4 -right-4 sm:-bottom-6 sm:-right-6 bg-white rounded-xl p-4 sm:p-6 shadow-xl max-w-xs">
-            <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2">Connect all your congregations</h3>
-            <p className="text-gray-600 text-xs sm:text-sm mb-3 sm:mb-4">
+          {/* Overlapping card - now positioned below with proper spacing */}
+          <div className="absolute bottom-0 right-0 bg-white rounded-xl p-3 sm:p-4 shadow-xl max-w-xs">
+            <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-2">Connect all your congregations</h3>
+            <p className="text-gray-600 text-xs mb-3">
               Join the digital transformation of youth ministry attendance management with one unified platform.
             </p>
-            <div className="flex space-x-1 sm:space-x-2">
-              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-300 rounded-full"></div>
-              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-300 rounded-full"></div>
-              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-300 rounded-full"></div>
+            <div className="flex space-x-1">
+              <div className="w-5 h-5 sm:w-6 sm:h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">Y</div>
+              <div className="w-5 h-5 sm:w-6 sm:h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">P</div>
+              <div className="w-5 h-5 sm:w-6 sm:h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">G</div>
             </div>
           </div>
         </div>
