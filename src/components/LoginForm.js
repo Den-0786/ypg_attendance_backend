@@ -1,12 +1,14 @@
 'use client';
 import { useState } from 'react';
 import { HiEye, HiEyeOff } from 'react-icons/hi';
+import { FaFacebook, FaTiktok, FaInstagram } from 'react-icons/fa';
 
 export default function LoginForm({ onLogin }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [keepLoggedIn, setKeepLoggedIn] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,74 +23,166 @@ export default function LoginForm({ onLogin }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-6 rounded-lg shadow-md space-y-4 w-full max-w-sm"
-      >
-        <h2 className="text-2xl font-bold text-center text-gray-800">Admin Login</h2>
-        
-        <div className="space-y-2">
-          <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-            Username
-          </label>
-          <input
-            id="username"
-            type="text"
-            placeholder="Enter username"
-            className="w-full p-2 border border-gray-300 text-gray-800 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-            autoComplete="username"
-          />
-        </div>
+    <div className="min-h-screen flex flex-col lg:flex-row bg-gradient-to-br from-purple-600 via-pink-600 to-orange-500">
+      {/* Left Section - Login Form */}
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8 order-2 lg:order-1">
+        <div className="w-full max-w-md">
+          <div className="bg-gray-900 rounded-2xl p-6 sm:p-8 shadow-2xl">
+            <div className="text-center mb-6 sm:mb-8">
+              <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Welcome back</h1>
+              <p className="text-gray-300 text-sm sm:text-base">Please enter your account details</p>
+            </div>
 
-        <div className="space-y-2">
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-            Password
-          </label>
-          <div className="relative">
-            <input
-              id="password"
-              type={showPassword ? 'text' : 'password'}
-              placeholder="Enter password"
-              className="w-full p-2 border border-gray-300 text-gray-800 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              autoComplete="current-password"
-            />
-            <button
-              type="button"
-              className="absolute right-2 top-2 text-gray-500 hover:text-gray-700"
-              onClick={() => setShowPassword(!showPassword)}
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
-            >
-              {showPassword ? <HiEye size={20} /> : <HiEyeOff size={20} />}
-            </button>
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+              <div>
+                <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-2">
+                  Username
+                </label>
+                <input
+                  id="username"
+                  type="text"
+                  placeholder="Enter your username"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-gray-800 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-colors placeholder-gray-400 text-sm sm:text-base"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                  autoComplete="username"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+                  Password
+                </label>
+                <div className="relative">
+                  <input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Enter your password"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-gray-800 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-colors placeholder-gray-400 text-sm sm:text-base pr-12"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    autoComplete="current-password"
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <HiEye size={18} /> : <HiEyeOff size={18} />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={keepLoggedIn}
+                    onChange={(e) => setKeepLoggedIn(e.target.checked)}
+                    className="w-4 h-4 text-pink-600 bg-gray-800 border-gray-700 rounded focus:ring-pink-500 focus:ring-2"
+                  />
+                  <span className="ml-2 text-sm text-gray-300">Keep me logged in</span>
+                </label>
+                <a
+                  href="/forgot_password"
+                  className="text-sm text-pink-400 hover:text-pink-300 transition-colors"
+                >
+                  Forgot Password?
+                </a>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className={`w-full py-2 sm:py-3 px-4 rounded-lg text-white font-semibold text-base sm:text-lg transition-all duration-200 ${
+                  isLoading 
+                    ? 'bg-gray-600 cursor-not-allowed' 
+                    : 'bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600 transform hover:scale-105 shadow-lg'
+                }`}
+              >
+                {isLoading ? 'Signing in...' : 'Sign in'}
+              </button>
+            </form>
+
+            {/* Social Login */}
+            <div className="mt-6 sm:mt-8">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-700"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-gray-900 text-gray-400">Follow us on</span>
+                </div>
+              </div>
+
+              <div className="mt-4 sm:mt-6 flex justify-center space-x-3 sm:space-x-4">
+                <button className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-800 rounded-full flex items-center justify-center text-gray-300 hover:text-white hover:bg-gray-700 transition-colors">
+                  <FaFacebook size={16} className="sm:w-5 sm:h-5" />
+                </button>
+                <button className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-800 rounded-full flex items-center justify-center text-gray-300 hover:text-white hover:bg-gray-700 transition-colors">
+                  <FaTiktok size={16} className="sm:w-5 sm:h-5" />
+                </button>
+                <button className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-800 rounded-full flex items-center justify-center text-gray-300 hover:text-white hover:bg-gray-700 transition-colors">
+                  <FaInstagram size={16} className="sm:w-5 sm:h-5" />
+                </button>
+              </div>
+            </div>
           </div>
         </div>
+      </div>
 
-        <button
-          type="submit"
-          disabled={isLoading}
-          className={`w-full py-2 px-4 rounded-md text-white font-medium ${
-            isLoading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
-          } transition-colors`}
-        >
-          {isLoading ? 'Logging in...' : 'Login'}
-        </button>
-        <p className="text-sm text-center mt-4">
-        <a
-          href="/forgot_password"
-          className="text-blue-600 hover:underline"
-        >
-          Forgot Password?
-        </a>
-      </p>
-      </form>
-      
+      {/* Right Section - Testimonial/Marketing */}
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8 order-1 lg:order-2">
+        <div className="relative max-w-md w-full">
+          {/* Main testimonial card */}
+          <div className="bg-gray-900 rounded-2xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+            {/* Cut-out corner effect */}
+            <div className="absolute top-0 right-0 w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-transparent to-gray-800 transform rotate-45 translate-x-6 -translate-y-6 sm:translate-x-8 sm:-translate-y-8"></div>
+            
+            <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">Empowering Youth Ministry</h2>
+            
+            <div className="text-4xl sm:text-6xl text-gray-600 mb-4 sm:mb-6">"</div>
+            
+            <p className="text-gray-300 text-base sm:text-lg leading-relaxed mb-4 sm:mb-6">
+              "From Emmanuel to Liberty congregations, we're all connected through this system. It's not just attendance tracking - it's community building and growth monitoring."
+            </p>
+            
+            <div className="mb-4 sm:mb-6">
+              <p className="text-white font-semibold text-sm sm:text-base">Ahinsan District YPG</p>
+              <p className="text-gray-400 text-xs sm:text-sm">Youth Ministry Organization</p>
+            </div>
+
+            {/* Navigation buttons */}
+            <div className="flex space-x-2">
+              <button className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-800 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 transition-colors text-sm sm:text-base">
+                ←
+              </button>
+              <button className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-800 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 transition-colors text-sm sm:text-base">
+                →
+              </button>
+            </div>
+
+            {/* Abstract graphic */}
+            <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full opacity-20"></div>
+          </div>
+
+          {/* Overlapping card */}
+          <div className="absolute -bottom-4 -right-4 sm:-bottom-6 sm:-right-6 bg-white rounded-xl p-4 sm:p-6 shadow-xl max-w-xs">
+            <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2">Connect all your congregations</h3>
+            <p className="text-gray-600 text-xs sm:text-sm mb-3 sm:mb-4">
+              Join the digital transformation of youth ministry attendance management with one unified platform.
+            </p>
+            <div className="flex space-x-1 sm:space-x-2">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-300 rounded-full"></div>
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-300 rounded-full"></div>
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-300 rounded-full"></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
