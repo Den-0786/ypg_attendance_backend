@@ -208,51 +208,53 @@ export default function DistrictExecutiveChart({ attendanceData, darkMode }) {
       >
         <p className="font-bold text-lg mb-3 text-center">{label}</p>
         
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-gray-400">Total Meetings</p>
-            <p className="font-semibold text-lg">{data.totalMeetings}</p>
+        <div className="space-y-2 text-sm">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-gray-400">Total Meetings</p>
+              <p className="font-semibold text-lg">{data.totalMeetings}</p>
+            </div>
+            <div>
+              <p className="text-gray-400">Full Year Rate</p>
+              <p className="font-semibold text-lg">{data.attendanceRate}%</p>
+            </div>
           </div>
-          <div>
-            <p className="text-gray-400">Full Year Rate</p>
-            <p className="font-semibold text-lg">{data.attendanceRate}%</p>
-          </div>
-        </div>
-        <div className="mt-3 pt-3 border-t border-gray-700">
-          <p className="text-xs text-gray-400 mb-2">Monthly Breakdown:</p>
-          <div className="grid grid-cols-4 gap-1">
-            {months.map((month, index) => {
-              const hasAttendance =
-                data.monthlyAttendance && data.monthlyAttendance[index] > 0;
-              const isCurrentMonth =
-                selectedYear === currentYear && index === currentMonth;
-              const isFutureMonth =
-                selectedYear === currentYear && index > currentMonth;
-              return (
-                <div key={month} className="flex items-center gap-1">
-                  <div
-                    className={`w-2 h-2 rounded-full ${
-                      hasAttendance
-                        ? "bg-green-500"
-                        : isFutureMonth
-                          ? "bg-gray-600"
-                          : "bg-gray-600"
-                    }`}
-                  />
-                  <span
-                    className={`text-xs ${
-                      isCurrentMonth
-                        ? "font-bold text-blue-400"
-                        : isFutureMonth
-                          ? "text-gray-500"
-                          : "text-gray-300"
-                    }`}
-                  >
-                    {month.slice(0, 3)}
-                  </span>
-                </div>
-              );
-            })}
+          <div className="mt-3 pt-3 border-t border-gray-700">
+            <p className="text-xs text-gray-400 mb-2">Monthly Breakdown:</p>
+            <div className="grid grid-cols-4 gap-1">
+              {months.map((month, index) => {
+                const hasAttendance =
+                  data.monthlyAttendance && data.monthlyAttendance[index] > 0;
+                const isCurrentMonth =
+                  selectedYear === currentYear && index === currentMonth;
+                const isFutureMonth =
+                  selectedYear === currentYear && index > currentMonth;
+                return (
+                  <div key={month} className="flex items-center gap-1">
+                    <div
+                      className={`w-2 h-2 rounded-full ${
+                        hasAttendance
+                          ? "bg-green-500"
+                          : isFutureMonth
+                            ? "bg-gray-600"
+                            : "bg-gray-600"
+                      }`}
+                    />
+                    <span
+                      className={`text-xs ${
+                        isCurrentMonth
+                          ? "font-bold text-blue-400"
+                          : isFutureMonth
+                            ? "text-gray-500"
+                            : "text-gray-300"
+                      }`}
+                    >
+                      {month.slice(0, 3)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>

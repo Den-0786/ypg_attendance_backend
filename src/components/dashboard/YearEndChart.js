@@ -239,6 +239,7 @@ export default function YearEndChart({ attendanceData, darkMode }) {
       >
         <p className="font-bold text-lg mb-3 text-center">{label}</p>
         
+        <div className="space-y-2 text-sm">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-gray-400">Total Meetings</p>
