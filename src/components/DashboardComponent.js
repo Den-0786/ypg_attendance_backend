@@ -44,7 +44,7 @@ const Sidebar = ({
   setSelectedYear,
   currentUser,
 }) => {
-  const [menuOpen, setMenuOpen] = useState(!isMobile); // collapsed on mobile, expanded on desktop
+  // Revert to separate buttons for Local, District, and Records (no dropdown)
   return (
     <div className={cn(
       "fixed md:static z-50 h-screen w-64 p-4 border-r flex flex-col justify-between transition-transform duration-300 bg-white dark:bg-gray-900 text-gray-900 dark:text-white md:translate-x-0 max-h-screen overflow-y-auto pb-8",
@@ -72,62 +72,48 @@ const Sidebar = ({
           >
             Home
           </button>
-          {/* Collapsible Dropdown for Local, District, Records */}
           <button
-            onClick={() => setMenuOpen((open) => !open)}
-            className="w-full text-left px-4 py-2 rounded flex items-center justify-between bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700"
-            aria-expanded={menuOpen}
-            aria-controls="sidebar-dropdown"
+            onClick={() => {
+              setView("local");
+              if (isMobile) setShowSidebar(false);
+            }}
+            className={cn(
+              "w-full text-left px-4 py-2 rounded",
+              view === "local"
+                ? "bg-blue-600 text-white"
+                : "hover:bg-blue-100 dark:hover:bg-gray-800"
+            )}
           >
-            <span>Sections</span>
-            <span>{menuOpen ? '▲' : '▼'}</span>
+            Local
           </button>
-          {menuOpen && (
-            <div id="sidebar-dropdown" className="space-y-2 ml-4">
-              <button
-                onClick={() => {
-                  setView("local");
-                  if (isMobile) setShowSidebar(false);
-                }}
-                className={cn(
-                  "w-full text-left px-4 py-2 rounded",
-                  view === "local"
-                    ? "bg-blue-600 text-white"
-                    : "hover:bg-blue-100 dark:hover:bg-gray-800"
-                )}
-              >
-                Local
-              </button>
-              <button
-                onClick={() => {
-                  setView("district");
-                  if (isMobile) setShowSidebar(false);
-                }}
-                className={cn(
-                  "w-full text-left px-4 py-2 rounded",
-                  view === "district"
-                    ? "bg-blue-600 text-white"
-                    : "hover:bg-blue-100 dark:hover:bg-gray-800"
-                )}
-              >
-                District
-              </button>
-              <button
-                onClick={() => {
-                  setView("records");
-                  if (isMobile) setShowSidebar(false);
-                }}
-                className={cn(
-                  "w-full text-left px-4 py-2 rounded flex items-center gap-2",
-                  view === "records"
-                    ? "bg-blue-600 text-white"
-                    : "hover:bg-blue-100 dark:hover:bg-gray-800"
-                )}
-              >
-                <FaDatabase /> Records
-              </button>
-            </div>
-          )}
+          <button
+            onClick={() => {
+              setView("district");
+              if (isMobile) setShowSidebar(false);
+            }}
+            className={cn(
+              "w-full text-left px-4 py-2 rounded",
+              view === "district"
+                ? "bg-blue-600 text-white"
+                : "hover:bg-blue-100 dark:hover:bg-gray-800"
+            )}
+          >
+            District
+          </button>
+          <button
+            onClick={() => {
+              setView("records");
+              if (isMobile) setShowSidebar(false);
+            }}
+            className={cn(
+              "w-full text-left px-4 py-2 rounded flex items-center gap-2",
+              view === "records"
+                ? "bg-blue-600 text-white"
+                : "hover:bg-blue-100 dark:hover:bg-gray-800"
+            )}
+          >
+            <FaDatabase /> Records
+          </button>
         </div>
         <div className="space-y-3"> {/* Add bottom padding for sticky footer on mobile */}
           {/* Year Selector */}
