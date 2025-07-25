@@ -75,6 +75,7 @@ const NoMeetingToast = ({ onClose }) => {
 };
 
 export default function AdminPage() {
+  // All hooks must be at the top, before any return (to prevent React error #310)
   console.log('[AdminPage] render');
   const { checkSession, loggedIn, userRole, handleLogout } = useAuth();
   const router = useRouter();
