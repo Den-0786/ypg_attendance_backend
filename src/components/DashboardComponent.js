@@ -433,8 +433,8 @@ export default function Dashboard({ onLogout }) {
       if (res.ok) {
         toast.success("Meeting deactivated successfully!");
         setShowPINModal(false);
-        // Refresh the page to update meeting status
-        window.location.reload();
+        // Remove window.location.reload() to stay in dashboard
+        // Instead, just close the modal and stay on current page
       } else {
         const data = await res.json();
         toast.error(data.error || "Failed to deactivate meeting");
@@ -660,7 +660,7 @@ export default function Dashboard({ onLogout }) {
 
       {/* Manage Meeting Modal */}
       {showManageMeetingModal && (
-        <div className="fixed inset-0 bg-black text-white bg-opacity-40 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 p-6 rounded shadow-lg w-full max-w-md">
             <h2 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">
               Manage Meeting
