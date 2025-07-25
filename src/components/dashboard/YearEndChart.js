@@ -31,7 +31,8 @@ export default function YearEndChart({ attendanceData, darkMode }) {
   const [availableYears, setAvailableYears] = useState([]);
   const [hoveredBar, setHoveredBar] = useState(null);
   const [tooltipHovered, setTooltipHovered] = useState(false);
-  const chartContainerRef = useRef(null); // <-- for positioning
+  const chartContainerRef = useRef(null);
+  const tooltipRef = useRef(null);
 
   useEffect(() => {
     // Always process data to show all congregations, even if no attendance data
@@ -39,6 +40,25 @@ export default function YearEndChart({ attendanceData, darkMode }) {
     processData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [attendanceData, selectedYear]);
+
+  // Add click outside handler
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        tooltipRef.current && 
+        !tooltipRef.current.contains(event.target) &&
+        !chartContainerRef.current?.contains(event.target)
+      ) {
+        setHoveredBar(null);
+        setTooltipHovered(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const extractAvailableYears = () => {
     const years = new Set();
@@ -201,6 +221,7 @@ export default function YearEndChart({ attendanceData, darkMode }) {
     const currentMonth = currentDate.getMonth();
     return (
       <div
+        ref={tooltipRef}
         style={{
           position: "absolute",
           left: "50%",
@@ -217,7 +238,7 @@ export default function YearEndChart({ attendanceData, darkMode }) {
         onMouseLeave={() => setTooltipHovered(false)}
       >
         <p className="font-bold text-lg mb-3 text-center">{label}</p>
-        <div className="space-y-2 text-sm">
+        
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-gray-400">Total Meetings</p>
@@ -367,7 +388,9 @@ export default function YearEndChart({ attendanceData, darkMode }) {
               barGap={4}
               barCategoryGap={12}
               onMouseLeave={() => {
-                if (!tooltipHovered) setHoveredBar(null);
+                if (!tooltipHovered) {
+                  setHoveredBar(null);
+                }
               }}
             >
               <XAxis
@@ -404,6 +427,7 @@ export default function YearEndChart({ attendanceData, darkMode }) {
               />
               {/* Hide default tooltip */}
               <Tooltip content={() => null} />
+              
               {months.map((month, monthIndex) => (
                 <Bar
                   key={month}
@@ -413,6 +437,14 @@ export default function YearEndChart({ attendanceData, darkMode }) {
                   stackId="a"
                   onMouseOver={(_, barIndex) => {
                     // Find the data for the hovered bar
+                    const barData = chartData[barIndex];
+                    setHoveredBar({
+                      data: barData,
+                      label: barData.congregation,
+                    });
+                  }}
+                  onMouseEnter={(_, barIndex) => {
+                    // Immediate response on mouse enter
                     const barData = chartData[barIndex];
                     setHoveredBar({
                       data: barData,
@@ -462,6 +494,7 @@ export default function YearEndChart({ attendanceData, darkMode }) {
           <p>• Each bar shows congregation attendance for {selectedYear}</p>
           <p>• All 9 congregations displayed with monthly segments</p>
         </div>
+        
         {chartData.length > 0 && (
           <div className="mt-3 sm:mt-4 p-2 sm:p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 text-center text-xs">
