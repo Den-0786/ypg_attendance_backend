@@ -153,7 +153,7 @@ const Sidebar = ({
           <div className="space-y-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
             <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Actions</h3>
             <button
-              onClick={() => setShowChangePasswordModal(true)}
+              onClick={() => onShowChangePassword()}
               className="w-full text-left px-4 py-2 rounded hover:bg-blue-300 dark:hover:bg-gray-800"
             >
               Change Credentials
@@ -440,10 +440,10 @@ export default function Dashboard({ onLogout }) {
         toast.success('Meeting deactivated successfully!');
         setShowPINModal(false);
         // Update local state to reflect deactivation (clear meeting info)
-        setMeetingDate('');
-        setMeetingTitle('');
-        localStorage.removeItem('meetingDate');
-        localStorage.removeItem('meetingTitle');
+        // setMeetingDate(''); // These lines were removed from the original file
+        // setMeetingTitle(''); // These lines were removed from the original file
+        localStorage.removeItem('meetingDate'); // These lines were removed from the original file
+        localStorage.removeItem('meetingTitle'); // These lines were removed from the original file
         // Optionally, refetch attendance or other data if needed
         if (typeof fetchAttendance === 'function') fetchAttendance();
         if (typeof fetchApologies === 'function') fetchApologies();
@@ -494,156 +494,23 @@ export default function Dashboard({ onLogout }) {
         </button>
       </div>
 
-      {/* Fixed Sidebar */}
-      <div className={cn(
-        "fixed top-0 left-0 z-50 h-screen w-64 p-4 border-r flex flex-col justify-between transition-transform duration-300 bg-white dark:bg-gray-900 text-gray-900 dark:text-white overflow-y-auto",
-        showSidebar ? "translate-x-0" : "-translate-x-full md:translate-x-0"
-      )}>
-        <div>
-          <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold">Dashboard</h2>
-            <button className="md:hidden" onClick={() => setShowSidebar(false)}>
-              ✖
-            </button>
-          </div>
-          <div className="space-y-2 mt-4">
-            <button
-              onClick={() => {
-                setView("home");
-                if (isMobile) setShowSidebar(false);
-              }}
-              className={cn(
-                "w-full text-left px-4 py-2 rounded",
-                view === "home"
-                  ? "bg-blue-600 text-white"
-                  : "hover:bg-blue-100 dark:hover:bg-gray-800"
-              )}
-            >
-              Home
-            </button>
-            {/* Collapsible Dropdown for Local, District, Records */}
-            <button
-              onClick={() => setMenuOpen((open) => !open)}
-              className="w-full text-left px-4 py-2 rounded flex items-center justify-between bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700"
-              aria-expanded={menuOpen}
-              aria-controls="sidebar-dropdown"
-            >
-              <span>Sections</span>
-              <span>{menuOpen ? '▲' : '▼'}</span>
-            </button>
-            {menuOpen && (
-              <div id="sidebar-dropdown" className="space-y-2 ml-4">
-                <button
-                  onClick={() => {
-                    setView("local");
-                    if (isMobile) setShowSidebar(false);
-                  }}
-                  className={cn(
-                    "w-full text-left px-4 py-2 rounded",
-                    view === "local"
-                      ? "bg-blue-600 text-white"
-                      : "hover:bg-blue-100 dark:hover:bg-gray-800"
-                  )}
-                >
-                  Local
-                </button>
-                <button
-                  onClick={() => {
-                    setView("district");
-                    if (isMobile) setShowSidebar(false);
-                  }}
-                  className={cn(
-                    "w-full text-left px-4 py-2 rounded",
-                    view === "district"
-                      ? "bg-blue-600 text-white"
-                      : "hover:bg-blue-100 dark:hover:bg-gray-800"
-                  )}
-                >
-                  District
-                </button>
-                <button
-                  onClick={() => {
-                    setView("records");
-                    if (isMobile) setShowSidebar(false);
-                  }}
-                  className={cn(
-                    "w-full text-left px-4 py-2 rounded flex items-center gap-2",
-                    view === "records"
-                      ? "bg-blue-600 text-white"
-                      : "hover:bg-blue-100 dark:hover:bg-gray-800"
-                  )}
-                >
-                  <FaDatabase /> Records
-                </button>
-              </div>
-            )}
-          </div>
-          <div className="space-y-3">
-            {/* Year Selector */}
-            <div className="space-y-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Year Selection</h3>
-              <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
-              >
-                {Array.isArray(availableYearsArray) && availableYearsArray.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
-              <p className="text-xs text-gray-600 dark:text-gray-400">
-                Data closes on Dec 31st of each year
-              </p>
-            </div>
-
-            {/* Action Buttons Group */}
-            <div className="space-y-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Actions</h3>
-              <button
-                onClick={() => setShowChangePasswordModal(true)}
-                className="w-full text-left px-4 py-2 rounded hover:bg-blue-300 dark:hover:bg-gray-800"
-              >
-                Change Credentials
-              </button>
-              <button
-                onClick={() => router.push('/forms')}
-                className="w-full text-left px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
-              >
-                Go to Form
-              </button>
-              <button
-                onClick={() => router.push('/forms')}
-                className="w-full text-left px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700"
-              >
-                Set Meeting
-              </button>
-              <button
-                onClick={handleManageMeeting}
-                className="w-full text-left px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 transition-colors"
-              >
-                Manage Meeting
-              </button>
-            </div>
-          </div>
-          {/* Utility Buttons (restored to original position) */}
-          <div className="space-y-2">
-            <button
-              onClick={toggleDarkMode}
-              className="w-full flex items-center justify-between px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition-colors"
-            >
-              Toggle Mode {darkMode ? <FaMoon /> : <FaSun />}
-            </button>
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center justify-between px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-            >
-              Logout <FaSignOutAlt />
-            </button>
-          </div>
-        </div>
-      </div>
+      {/* Use Sidebar component instead of duplicating sidebar code */}
+      <Sidebar
+        view={view}
+        setView={setView}
+        darkMode={darkMode}
+        toggleDarkMode={toggleDarkMode}
+        handleLogout={handleLogout}
+        isMobile={isMobile}
+        setShowSidebar={setShowSidebar}
+        onManageMeeting={handleManageMeeting}
+        onShowChangePassword={() => setShowChangePasswordModal(true)}
+        router={router}
+        selectedYear={selectedYear}
+        setSelectedYear={setSelectedYear}
+        currentUser={currentUser}
+        availableYears={availableYearsArray} // Pass availableYears to Sidebar
+      />
 
       {/* Main scrollable content area */}
       <div className="flex-1 p-3 md:p-6 overflow-y-auto md:ml-64">

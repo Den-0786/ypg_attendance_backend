@@ -21,7 +21,19 @@ const NoMeetingToast = ({ onClose }) => {
       });
     }, 100);
 
-    return () => clearInterval(interval);
+    // Dismiss on any click or keydown
+    const handleDismiss = () => {
+      clearInterval(interval);
+      onClose();
+    };
+    window.addEventListener('click', handleDismiss);
+    window.addEventListener('keydown', handleDismiss);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('click', handleDismiss);
+      window.removeEventListener('keydown', handleDismiss);
+    };
   }, [onClose]);
 
   return (
@@ -36,10 +48,10 @@ const NoMeetingToast = ({ onClose }) => {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
-            No Active Meeting
+            No active meeting currently
           </p>
           <p className="text-sm text-blue-600 dark:text-blue-300 mt-1">
-            Please set up a meeting for council members to submit attendance
+            Please contact the admins to set a meeting
           </p>
           {/* Progress bar */}
           <div className="mt-3 bg-blue-200 dark:bg-blue-700 rounded-full h-1">
@@ -73,6 +85,7 @@ export default function AdminPage() {
   const [showMeetingForm, setShowMeetingForm] = useState(false);
   const [loadingMeeting, setLoadingMeeting] = useState(false);
   const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+  const [toastId, setToastId] = useState(null);
 
   // Check localStorage for toast state on mount
   useEffect(() => {
@@ -211,6 +224,15 @@ export default function AdminPage() {
       </div>
     );
   }
+
+  useEffect(() => {
+    if (showMeetingForm && !hasShownNoMeetingToast.current) {
+      const id = toast.custom((t) => <NoMeetingToast onClose={() => toast.dismiss(id)} />, { duration: 5000 });
+      setToastId(id);
+      hasShownNoMeetingToast.current = true;
+      localStorage.setItem('hasShownNoMeetingToast', 'true');
+    }
+  }, [showMeetingForm]);
 
   return <Dashboard onLogout={handleLogout} />;
 }

@@ -25,7 +25,19 @@ const NoMeetingToast = ({ onClose }) => {
       });
     }, 100);
 
-    return () => clearInterval(interval);
+    // Dismiss on any click or keydown
+    const handleDismiss = () => {
+      clearInterval(interval);
+      onClose();
+    };
+    window.addEventListener('click', handleDismiss);
+    window.addEventListener('keydown', handleDismiss);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('click', handleDismiss);
+      window.removeEventListener('keydown', handleDismiss);
+    };
   }, [onClose]);
 
   return (
@@ -40,10 +52,10 @@ const NoMeetingToast = ({ onClose }) => {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
-            No Active Meeting
+            No active meeting currently
           </p>
           <p className="text-sm text-blue-600 dark:text-blue-300 mt-1">
-            Please contact the executive to set up a meeting detail
+            Please contact the admins to set a meeting
           </p>
           {/* Progress bar */}
           <div className="mt-3 bg-blue-200 dark:bg-blue-700 rounded-full h-1">
@@ -81,6 +93,7 @@ export default function MeetingPage() {
   const [showMeetingForm, setShowMeetingForm] = useState(false);
   const [meetingSet, setMeetingSet] = useState(false);
   const hasShownNoMeetingToast = useRef(false);
+  const [toastId, setToastId] = useState(null);
 
   // Check localStorage for toast state on mount
   useEffect(() => {
@@ -130,6 +143,15 @@ export default function MeetingPage() {
         setLoadingMeeting(false);
       });
   }, [loggedIn, userRole, router]);
+
+  useEffect(() => {
+    if (showMeetingForm && !hasShownNoMeetingToast.current) {
+      const id = toast.custom((t) => <NoMeetingToast onClose={() => toast.dismiss(id)} />, { duration: 5000 });
+      setToastId(id);
+      hasShownNoMeetingToast.current = true;
+      localStorage.setItem('hasShownNoMeetingToast', 'true');
+    }
+  }, [showMeetingForm]);
 
   // Don't render anything until login state is confirmed
   if (!loggedIn || userRole === null) {
