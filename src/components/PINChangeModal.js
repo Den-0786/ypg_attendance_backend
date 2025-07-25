@@ -74,7 +74,7 @@ export default function PINChangeModal({ isOpen, onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="bg-white dark:bg-gray-900 p-3 rounded-2xl shadow-2xl max-w-[280px] w-full mx-2 border border-blue-200 dark:border-blue-700 relative animate-fadeIn">
         <button
           onClick={onClose}

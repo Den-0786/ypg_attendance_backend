@@ -29,7 +29,7 @@ export default function AutoLogoutWrapper() {
       if (typeof setUserRole === 'function') {
         setUserRole(null);
       }
-      window.location.href = '/login';
+      window.location.href = '/';
     }
   };
 

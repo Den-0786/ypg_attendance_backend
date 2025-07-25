@@ -35,6 +35,18 @@ export default function DistrictExecutiveChart({ attendanceData, darkMode }) {
     processData();
   }, [attendanceData, selectedYear]);
 
+  useEffect(() => {
+    if (!(hoveredBar || tooltipHovered)) return;
+    function handleClickOutside(event) {
+      if (chartContainerRef.current && !chartContainerRef.current.contains(event.target)) {
+        setHoveredBar(null);
+        setTooltipHovered(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [hoveredBar, tooltipHovered]);
+
   const extractAvailableYears = () => {
     const years = new Set();
     const currentYear = new Date().getFullYear();

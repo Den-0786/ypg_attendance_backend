@@ -8,8 +8,8 @@ export default function AutoLogout({ loggedIn, onLogout }) {
   const warningTimerRef = useRef(null);
   const [warningShown, setWarningShown] = useState(false);
   const [logoutPending, setLogoutPending] = useState(false);
-  const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 minutes
-  const WARNING_TIMEOUT = 9 * 60 * 1000; // 9 minutes (1 minute before logout)
+  const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+  const WARNING_TIMEOUT = 4 * 60 * 1000; // 4 minutes (1 minute before logout)
 
   const clearTimers = () => {
     if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);

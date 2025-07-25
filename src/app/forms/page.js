@@ -70,7 +70,12 @@ export default function MeetingPage() {
   const { loggedIn, userRole, handleLogout } = useAuth();
   const { meetingDate: contextMeetingDate, meetingTitle: contextMeetingTitle } = useMeetingDate();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('attendance');
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('formsActiveTab') || 'attendance';
+    }
+    return 'attendance';
+  });
   const [meetingInfo, setMeetingInfo] = useState(null);
   const [loadingMeeting, setLoadingMeeting] = useState(false);
   const [showMeetingForm, setShowMeetingForm] = useState(false);
@@ -84,6 +89,13 @@ export default function MeetingPage() {
       hasShownNoMeetingToast.current = true;
     }
   }, []);
+
+  // Persist activeTab in localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('formsActiveTab', activeTab);
+    }
+  }, [activeTab]);
 
   // Only admin and user roles are supported
   const allowedRoles = ['admin', 'user'];
