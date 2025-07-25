@@ -1,0 +1,191 @@
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom grid classes for attendance chart */
+.grid-cols-13 {
+  grid-template-columns: repeat(13, minmax(0, 1fr));
+}
+
+/* Responsive grid adjustments */
+@media (max-width: 768px) {
+  .grid-cols-13 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Responsive sidebar */
+@media (max-width: 768px) {
+  .sidebar-fixed {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 50;
+    height: 100vh;
+    width: 100%;
+    max-width: 280px;
+  }
+}
+
+/* Responsive chart containers */
+@media (max-width: 640px) {
+  .chart-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .chart-container table {
+    min-width: 600px;
+  }
+}
+
+/* Responsive text sizes */
+@media (max-width: 768px) {
+  .text-responsive {
+    font-size: 0.875rem;
+  }
+  
+  .text-responsive-lg {
+    font-size: 1rem;
+  }
+}
+
+/* Smooth transitions */
+.transition-all {
+  transition: all 0.3s ease;
+}
+
+/* Custom scrollbar for better UX */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Dark mode scrollbar */
+.dark .custom-scrollbar::-webkit-scrollbar-track {
+  background: #374151;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #6b7280;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Dashboard card responsiveness */
+@media (max-width: 768px) {
+  .dashboard-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+  
+  .dashboard-table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .dashboard-table {
+    min-width: 600px;
+  }
+}
+
+/* Animation for PIN Modal */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out;
+}
+
+
+.chart-container {
+  position: relative;
+  width: 100%;
+}
+
+.sticky-y-axis {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 60px;
+  z-index: 10;
+  background-color: inherit;
+  border-right: 1px solid #e5e7eb;
+}
+
+.dark .sticky-y-axis {
+  border-right-color: #374151;
+}
+
+.scrollable-chart {
+  margin-left: 60px;
+  overflow-x: auto;
+}
+
+.scrollable-chart::-webkit-scrollbar {
+  height: 8px;
+}
+
+.scrollable-chart::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.scrollable-chart::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.dark .scrollable-chart::-webkit-scrollbar-track {
+  background: #374151;
+}
+
+.dark .scrollable-chart::-webkit-scrollbar-thumb {
+  background: #6b7280;
+}
