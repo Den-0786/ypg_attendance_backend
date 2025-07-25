@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   FaCheckCircle,
   FaTimesCircle,
@@ -268,6 +268,27 @@ export default function Dashboard({ onLogout }) {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [currentUser, setCurrentUser] = useState(null);
   const router = useRouter();
+  const sidebarRef = useRef(null);
+
+  // Add click outside handler for sidebar
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        showSidebar && 
+        isMobile && 
+        sidebarRef.current && 
+        !sidebarRef.current.contains(event.target) &&
+        !event.target.closest('.sidebar-toggle-button') // Don't close if clicking the toggle button
+      ) {
+        setShowSidebar(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showSidebar, isMobile]);
 
   // Get available years from attendance data
   const getAvailableYears = () => {
@@ -469,7 +490,7 @@ export default function Dashboard({ onLogout }) {
       <div className="md:hidden fixed top-4 left-4 z-50">
         <button
           onClick={() => setShowSidebar(!showSidebar)}
-          className="text-2xl"
+          className="text-2xl sidebar-toggle-button"
         >
           <FaBars />
         </button>
@@ -481,6 +502,7 @@ export default function Dashboard({ onLogout }) {
           "fixed top-0 left-0 z-50 h-screen w-64 p-4 border-r flex flex-col justify-between transition-transform duration-300 bg-white dark:bg-gray-900 text-gray-900 dark:text-white overflow-y-auto",
           showSidebar ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         )}
+        ref={sidebarRef}
       >
         <div>
           <div className="flex justify-between items-center">
