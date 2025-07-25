@@ -14,7 +14,7 @@ const features = [
 export default function Page() {
   const router = useRouter();
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-end bg-gradient-to-br from-blue-200 via-blue-100 to-blue-300 relative overflow-hidden px-4 pb-20 md:py-4">
+    <main className="min-h-screen w-full flex flex-col items-center justify-end bg-gradient-to-br from-blue-200 via-blue-100 to-blue-300 relative overflow-hidden px-4 pb-20 md:py-4">
       
     
       <svg width="400" height="600" viewBox="0 0 400 600" className="absolute left-0 top-0 z-0 pointer-events-none" style={{height:'100vh', minHeight:'600px'}}>
@@ -104,6 +104,6 @@ export default function Page() {
       <div className="absolute bottom-2 left-0 right-0 text-center text-gray-900 text-xs z-20">
         &copy; {new Date().getFullYear()} Ahinsan District YPG. All rights reserved.
       </div>
-    </div>
+    </main>
   );
 }
