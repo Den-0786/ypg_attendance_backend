@@ -1,13 +1,13 @@
-'use client';
-import { useEffect, useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@components/hooks/useAuth';
-import { useMeetingDate } from '@components/MeetingDateContext';
-import MeetingDateForm from '@components/MeetingDateForm';
-import MainApp from '@components/MainApp';
-import { toast } from 'react-hot-toast';
+"use client";
+import { useEffect, useState, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@components/hooks/useAuth";
+import { useMeetingDate } from "@components/MeetingDateContext";
+import MeetingDateForm from "@components/MeetingDateForm";
+import MainApp from "@components/MainApp";
+import { toast } from "react-hot-toast";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 // Custom toast component for no meeting notification (same as in useAuth)
 const NoMeetingToast = ({ onClose }) => {
@@ -15,7 +15,7 @@ const NoMeetingToast = ({ onClose }) => {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setProgress(prev => {
+      setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(interval);
           setTimeout(onClose, 500); // Close after animation completes
@@ -33,8 +33,16 @@ const NoMeetingToast = ({ onClose }) => {
       <div className="flex items-start space-x-3">
         <div className="flex-shrink-0">
           <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            <svg
+              className="w-4 h-4 text-white"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                clipRule="evenodd"
+              />
             </svg>
           </div>
         </div>
@@ -47,7 +55,7 @@ const NoMeetingToast = ({ onClose }) => {
           </p>
           {/* Progress bar */}
           <div className="mt-3 bg-blue-200 dark:bg-blue-700 rounded-full h-1">
-            <div 
+            <div
               className="bg-blue-500 h-1 rounded-full transition-all duration-100 ease-linear"
               style={{ width: `${progress}%` }}
             />
@@ -58,7 +66,11 @@ const NoMeetingToast = ({ onClose }) => {
           className="flex-shrink-0 text-blue-400 hover:text-blue-600 dark:hover:text-blue-300"
         >
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+            <path
+              fillRule="evenodd"
+              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+              clipRule="evenodd"
+            />
           </svg>
         </button>
       </div>
@@ -68,9 +80,10 @@ const NoMeetingToast = ({ onClose }) => {
 
 export default function MeetingPage() {
   const { loggedIn, userRole, handleLogout } = useAuth();
-  const { meetingDate: contextMeetingDate, meetingTitle: contextMeetingTitle } = useMeetingDate();
+  const { meetingDate: contextMeetingDate, meetingTitle: contextMeetingTitle } =
+    useMeetingDate();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('attendance');
+  const [activeTab, setActiveTab] = useState("attendance");
   const [meetingInfo, setMeetingInfo] = useState(null);
   const [loadingMeeting, setLoadingMeeting] = useState(false);
   const [showMeetingForm, setShowMeetingForm] = useState(false);
@@ -79,30 +92,30 @@ export default function MeetingPage() {
 
   // Check localStorage for toast state on mount
   useEffect(() => {
-    const hasShown = localStorage.getItem('hasShownNoMeetingToast');
-    if (hasShown === 'true') {
+    const hasShown = localStorage.getItem("hasShownNoMeetingToast");
+    if (hasShown === "true") {
       hasShownNoMeetingToast.current = true;
     }
   }, []);
 
   // Only admin and user roles are supported
-  const allowedRoles = ['admin', 'user'];
+  const allowedRoles = ["admin", "user"];
 
   useEffect(() => {
     if (!loggedIn) {
-      router.replace('/');
+      router.replace("/");
     }
     // Remove the check that only shows set meeting form for admin
     // Always allow showing the set meeting form for both admin and user
     setLoadingMeeting(true);
-    const token = localStorage.getItem('access_token');
+    const token = localStorage.getItem("access_token");
     fetch(`${API_URL}/api/current-meeting`, {
       headers: {
-        'Authorization': token ? `Bearer ${token}` : undefined,
-      }
+        Authorization: token ? `Bearer ${token}` : undefined,
+      },
     })
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         if (data && !data.error) {
           setMeetingInfo(data);
           setShowMeetingForm(false);
@@ -126,10 +139,12 @@ export default function MeetingPage() {
 
   // Only show MeetingDateForm if user clicks 'Manage Meeting'
   if (showMeetingForm) {
-    return <MeetingDateForm 
-      onClose={() => setShowMeetingForm(false)}
-      onMeetingSet={() => setShowMeetingForm(false)}
-    />;
+    return (
+      <MeetingDateForm
+        onClose={() => setShowMeetingForm(false)}
+        onMeetingSet={() => setShowMeetingForm(false)}
+      />
+    );
   }
 
   // Always show MainApp after login, regardless of meeting state

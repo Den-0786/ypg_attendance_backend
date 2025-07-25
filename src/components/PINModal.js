@@ -1,34 +1,34 @@
-import React, { useState, useEffect } from 'react';
-import { toast } from 'react-hot-toast';
+import React, { useState, useEffect } from "react";
+import { toast } from "react-hot-toast";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
-export default function PINModal({ 
-  isOpen, 
-  onClose, 
-  onSuccess, 
-  title = "Enter Security PIN", 
-  message = "Please enter the 4-digit PIN to continue" 
+export default function PINModal({
+  isOpen,
+  onClose,
+  onSuccess,
+  title = "Enter Security PIN",
+  message = "Please enter the 4-digit PIN to continue",
 }) {
-  const [pin, setPin] = useState('');
+  const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (isOpen) {
-      setPin('');
+      setPin("");
     }
   }, [isOpen]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
       const res = await fetch(`${API_URL}/api/pin/verify/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pin }),
       });
 
@@ -38,11 +38,11 @@ export default function PINModal({
         onSuccess(pin);
         // Do not call onClose() here; let parent handle modal state after redirect
       } else {
-        setError(data.error || 'Invalid PIN');
+        setError(data.error || "Invalid PIN");
       }
     } catch (err) {
-      console.error('PIN verification error:', err);
-      setError('Network error. Please try again.');
+      console.error("PIN verification error:", err);
+      setError("Network error. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -67,8 +67,12 @@ export default function PINModal({
         >
           &times;
         </button>
-        <h2 className="text-base font-bold mb-1 text-center text-blue-700 dark:text-blue-300 tracking-wide">{title}</h2>
-        <p className="text-gray-500 dark:text-gray-300 mb-3 text-center text-xs">{message}</p>
+        <h2 className="text-base font-bold mb-1 text-center text-blue-700 dark:text-blue-300 tracking-wide">
+          {title}
+        </h2>
+        <p className="text-gray-500 dark:text-gray-300 mb-3 text-center text-xs">
+          {message}
+        </p>
         <form onSubmit={handleSubmit} className="space-y-2">
           <div>
             <input
@@ -81,10 +85,10 @@ export default function PINModal({
               maxLength={4}
               autoFocus
               disabled={loading}
-              style={{ letterSpacing: '0.2em' }}
+              style={{ letterSpacing: "0.2em" }}
             />
           </div>
-          
+
           <div className="flex gap-2 mt-3">
             <button
               type="button"
@@ -105,7 +109,7 @@ export default function PINModal({
                   <span>Verifying...</span>
                 </span>
               ) : (
-                'Verify'
+                "Verify"
               )}
             </button>
           </div>
@@ -113,4 +117,4 @@ export default function PINModal({
       </div>
     </div>
   );
-} 
+}
