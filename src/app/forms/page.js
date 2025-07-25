@@ -79,6 +79,7 @@ const NoMeetingToast = ({ onClose }) => {
 };
 
 export default function MeetingPage() {
+  console.log('[MeetingPage] render');
   const { loggedIn, userRole, handleLogout } = useAuth();
   const { meetingDate: contextMeetingDate, meetingTitle: contextMeetingTitle } = useMeetingDate();
   const router = useRouter();
@@ -95,16 +96,16 @@ export default function MeetingPage() {
   const hasShownNoMeetingToast = useRef(false);
   const [toastId, setToastId] = useState(null);
 
-  // Check localStorage for toast state on mount
   useEffect(() => {
+    console.log('[MeetingPage] useEffect: check localStorage for toast state');
     const hasShown = localStorage.getItem('hasShownNoMeetingToast');
     if (hasShown === 'true') {
       hasShownNoMeetingToast.current = true;
     }
   }, []);
 
-  // Persist activeTab in localStorage
   useEffect(() => {
+    console.log('[MeetingPage] useEffect: persist activeTab', activeTab);
     if (typeof window !== 'undefined') {
       localStorage.setItem('formsActiveTab', activeTab);
     }
@@ -114,11 +115,10 @@ export default function MeetingPage() {
   const allowedRoles = ['admin', 'user'];
 
   useEffect(() => {
+    console.log('[MeetingPage] useEffect: fetch current meeting, loggedIn:', loggedIn, 'userRole:', userRole);
     if (!loggedIn) {
       router.replace('/');
     }
-    // Remove the check that only shows set meeting form for admin
-    // Always allow showing the set meeting form for both admin and user
     setLoadingMeeting(true);
     const token = localStorage.getItem('access_token');
     fetch(`${API_URL}/api/current-meeting`, {
@@ -128,6 +128,7 @@ export default function MeetingPage() {
     })
       .then(res => res.json())
       .then(data => {
+        console.log('[MeetingPage] /api/current-meeting response:', data);
         if (data && !data.error) {
           setMeetingInfo(data);
           setShowMeetingForm(false);
@@ -137,7 +138,8 @@ export default function MeetingPage() {
         }
         setLoadingMeeting(false);
       })
-      .catch(() => {
+      .catch((err) => {
+        console.log('[MeetingPage] /api/current-meeting error:', err);
         setMeetingInfo(null);
         setShowMeetingForm(true);
         setLoadingMeeting(false);
@@ -146,6 +148,7 @@ export default function MeetingPage() {
 
   useEffect(() => {
     if (showMeetingForm && !hasShownNoMeetingToast.current) {
+      console.log('[MeetingPage] Showing NoMeetingToast');
       const id = toast.custom((t) => <NoMeetingToast onClose={() => toast.dismiss(id)} />, { duration: 5000 });
       setToastId(id);
       hasShownNoMeetingToast.current = true;
@@ -155,11 +158,13 @@ export default function MeetingPage() {
 
   // Don't render anything until login state is confirmed
   if (!loggedIn || userRole === null) {
+    console.log('[MeetingPage] Not logged in or userRole is null, returning null');
     return null;
   }
 
   // Only show MeetingDateForm if user clicks 'Manage Meeting'
   if (showMeetingForm) {
+    console.log('[MeetingPage] Showing MeetingDateForm');
     return <MeetingDateForm 
       onClose={() => setShowMeetingForm(false)}
       onMeetingSet={() => setShowMeetingForm(false)}
@@ -167,6 +172,7 @@ export default function MeetingPage() {
   }
 
   // Always show MainApp after login, regardless of meeting state
+  console.log('[MeetingPage] Showing MainApp');
   return (
     <MainApp
       activeTab={activeTab}
