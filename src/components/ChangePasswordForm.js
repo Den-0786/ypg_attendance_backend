@@ -277,7 +277,7 @@ export default function ChangePasswordForm({ onClose, currentUser: propCurrentUs
   // Only show for admins
   if (currentUser && currentUser.role !== 'admin') {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+      <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
         <div className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-sm shadow-xl">
           <div className="text-center">
             <FaTimes className="text-red-500 text-3xl mx-auto mb-4" />
@@ -303,7 +303,7 @@ export default function ChangePasswordForm({ onClose, currentUser: propCurrentUs
     <>
       {/* PIN Modal */}
       {showPINModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-900 rounded-lg p-3 w-full max-w-xs shadow-xl">
             {pinStatus === null ? (
               <div className="text-center py-4">
@@ -336,7 +336,7 @@ export default function ChangePasswordForm({ onClose, currentUser: propCurrentUs
 
       {/* Credentials Form */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-900 rounded-lg p-3 w-full max-w-xs shadow-xl">
             <div className="flex justify-between items-center mb-2">
               <h3 className="text-base font-bold text-blue-700 dark:text-blue-300">
