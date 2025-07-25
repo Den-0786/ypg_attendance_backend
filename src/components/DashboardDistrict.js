@@ -35,6 +35,7 @@ export default function DashboardDistrict({
   refetchAttendanceData,
   refetchApologyData,
 }) {
+  console.log('[DashboardDistrict] render');
   const [search, setSearch] = useState("");
   const [showType, setShowType] = useState('all'); // 'all' | 'attendance' | 'apology'
   const [editModal, setEditModal] = useState({ open: false, entry: null });

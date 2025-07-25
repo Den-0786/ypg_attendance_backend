@@ -250,6 +250,7 @@ function handleDeleteAttendance(id) {
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
 export default function Dashboard({ onLogout }) {
+  console.log('[Dashboard] render');
   const [view, setView] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('dashboardView') || 'home';
@@ -471,6 +472,58 @@ export default function Dashboard({ onLogout }) {
     );
   }
 
+  let mainContent = null;
+  if (view === "home") {
+    console.log('[Dashboard] Rendering DashboardHome');
+    mainContent = (
+      <DashboardHome 
+        darkMode={darkMode}
+        attendanceData={attendanceData}
+        apologyData={apologyData}
+        currentYear={selectedYear}
+        onEdit={handleEditAttendance}
+        onDelete={handleDeleteAttendance}
+        refetchAttendanceData={fetchAttendance}
+        refetchApologyData={fetchApologies}
+      />
+    );
+  } else if (view === "local") {
+    console.log('[Dashboard] Rendering DashboardLocal');
+    mainContent = (
+      <DashboardLocal 
+        darkMode={darkMode} 
+        attendanceData={attendanceData}
+        apologyData={apologyData}
+        onEdit={handleEditAttendance} 
+        onDelete={handleDeleteAttendance}
+        refetchAttendanceData={fetchAttendance}
+        refetchApologyData={fetchApologies}
+      />
+    );
+  } else if (view === "district") {
+    console.log('[Dashboard] Rendering DashboardDistrict');
+    mainContent = (
+      <DashboardDistrict 
+        darkMode={darkMode} 
+        attendanceData={attendanceData}
+        apologyData={apologyData}
+        onEdit={handleEditAttendance} 
+        onDelete={handleDeleteAttendance}
+        refetchAttendanceData={fetchAttendance}
+        refetchApologyData={fetchApologies}
+      />
+    );
+  } else if (view === "records") {
+    console.log('[Dashboard] Rendering RecordsLibrary');
+    mainContent = (
+      <RecordsLibrary 
+        darkMode={darkMode} 
+        attendanceData={attendanceData}
+        apologyData={apologyData}
+      />
+    );
+  }
+
   return (
     <div
       className={cn(
@@ -514,44 +567,7 @@ export default function Dashboard({ onLogout }) {
 
       {/* Main scrollable content area */}
       <div className="flex-1 p-3 md:p-6 overflow-y-auto md:ml-64">
-        {view === "home" ? (
-          <DashboardHome 
-            darkMode={darkMode}
-            attendanceData={attendanceData}
-            apologyData={apologyData}
-            currentYear={selectedYear}
-            onEdit={handleEditAttendance}
-            onDelete={handleDeleteAttendance}
-            refetchAttendanceData={fetchAttendance}
-            refetchApologyData={fetchApologies}
-          />
-        ) : view === "local" ? (
-          <DashboardLocal 
-            darkMode={darkMode} 
-            attendanceData={attendanceData}
-            apologyData={apologyData}
-            onEdit={handleEditAttendance} 
-            onDelete={handleDeleteAttendance}
-            refetchAttendanceData={fetchAttendance}
-            refetchApologyData={fetchApologies}
-          />
-        ) : view === "district" ? (
-          <DashboardDistrict 
-            darkMode={darkMode} 
-            attendanceData={attendanceData}
-            apologyData={apologyData}
-            onEdit={handleEditAttendance} 
-            onDelete={handleDeleteAttendance}
-            refetchAttendanceData={fetchAttendance}
-            refetchApologyData={fetchApologies}
-          />
-        ) : view === "records" ? (
-          <RecordsLibrary 
-            darkMode={darkMode} 
-            attendanceData={attendanceData}
-            apologyData={apologyData}
-          />
-        ) : null}
+        {mainContent}
       </div>
 
       {/* Manage Meeting Modal */}

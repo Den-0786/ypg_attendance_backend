@@ -26,15 +26,8 @@ function useIsMobile() {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
-export default function DashboardLocal({
-  attendanceData = [],
-  apologyData = [],
-  darkMode = false,
-  onEdit,
-  onDelete,
-  refetchAttendanceData,
-  refetchApologyData,
-}) {
+export default function DashboardLocal(props) {
+  console.log('[DashboardLocal] render');
   const [search, setSearch] = useState("");
   const [showType, setShowType] = useState('all'); // 'all' | 'attendance' | 'apology'
   const [editModal, setEditModal] = useState({ open: false, entry: null });

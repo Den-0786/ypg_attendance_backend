@@ -34,7 +34,8 @@ function capitalizeWords(str) {
     .join(' ');
 }
 
-export default function RecordsLibrary({ darkMode = false, attendanceData = [], apologyData = [] }) {
+export default function RecordsLibrary(props) {
+  console.log('[RecordsLibrary] render');
   const [tab, setTab] = useState("local");
   const [records, setRecords] = useState([]);
   const [search, setSearch] = useState("");

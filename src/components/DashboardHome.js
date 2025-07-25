@@ -169,6 +169,7 @@ export default function DashboardHome({
   refetchAttendanceData,
   refetchApologyData,
 }) {
+  console.log('[DashboardHome] render');
   // Move all hooks to the top
   const [search, setSearch] = useState("");
   const [showType, setShowType] = useState('all'); // 'all' | 'attendance' | 'apology'
