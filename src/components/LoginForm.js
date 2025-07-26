@@ -16,7 +16,7 @@ export default function LoginForm({ onLogin }) {
     try {
       await onLogin(username, password);
     } catch (err) {
-      // Error is already handled by toast in useAuth, so just catch it
+      
     } finally {
       setIsLoading(false);
     }
@@ -24,13 +24,13 @@ export default function LoginForm({ onLogin }) {
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-gradient-to-br from-purple-600 via-pink-600 to-orange-500">
-      {/* Left Section - Login Form */}
-      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-4 order-2 lg:order-1">
+    
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-4 lg:pr-2 order-2 lg:order-1">
         <div className="w-full max-w-sm">
           <div className="bg-gray-900 rounded-2xl p-6 sm:p-6 shadow-2xl">
             <div className="text-center mb-6">
               <h1 className="text-2xl sm:text-2xl font-bold text-white mb-2">Welcome back</h1>
-              <p className="text-gray-300 text-sm">Please enter your account details</p>
+              <p className="text-gray-300 text-sm">Please enter the credentials set by admin</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -76,7 +76,7 @@ export default function LoginForm({ onLogin }) {
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
+              <div className="flex items-center justify-between">
                 <label className="flex items-center">
                   <input
                     type="checkbox"
@@ -107,7 +107,7 @@ export default function LoginForm({ onLogin }) {
               </button>
             </form>
 
-            {/* Social Login */}
+
             <div className="mt-6">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
@@ -134,12 +134,12 @@ export default function LoginForm({ onLogin }) {
         </div>
       </div>
 
-      {/* Right Section - Testimonial/Marketing */}
-      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-4 order-1 lg:order-2">
+
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-4 lg:pl-2 order-1 lg:order-2">
         <div className="relative max-w-sm w-full">
-          {/* Main testimonial card */}
+          
           <div className="bg-gray-900 rounded-2xl p-6 shadow-2xl relative overflow-hidden mb-16">
-            {/* Cut-out corner effect */}
+            
             <div className="absolute top-0 right-0 w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-transparent to-gray-800 transform rotate-45 translate-x-5 -translate-y-5 sm:translate-x-6 sm:-translate-y-6"></div>
             
             <h2 className="text-lg sm:text-xl font-bold text-white mb-4">Empowering Youth Ministry</h2>
@@ -152,10 +152,8 @@ export default function LoginForm({ onLogin }) {
             
             <div className="mb-4">
               <p className="text-white font-semibold text-sm">Ahinsan District YPG</p>
-              <p className="text-gray-400 text-xs">Youth Ministry Organization</p>
+              <p className="text-gray-400 text-xs">We Practice Godliness!</p>
             </div>
-
-            {/* Navigation buttons */}
             <div className="flex space-x-2">
               <button className="w-6 h-6 sm:w-7 sm:h-7 bg-gray-800 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 transition-colors text-xs">
                 ←
@@ -164,16 +162,12 @@ export default function LoginForm({ onLogin }) {
                 →
               </button>
             </div>
-
-            {/* Abstract graphic */}
             <div className="absolute bottom-3 right-3 w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full opacity-20"></div>
           </div>
-
-          {/* Overlapping card - now positioned below with proper spacing */}
           <div className="absolute bottom-0 right-0 bg-white rounded-xl p-3 sm:p-4 shadow-xl max-w-xs">
-            <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-2">Connect all your congregations</h3>
+            <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-2">Connecting all Congregational Guilders</h3>
             <p className="text-gray-600 text-xs mb-3">
-              Join the digital transformation of youth ministry attendance management with one unified platform.
+              "With our digital transformation in attendance management, all guilders are now unified under one Canopy."
             </p>
             <div className="flex space-x-1">
               <div className="w-5 h-5 sm:w-6 sm:h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">Y</div>

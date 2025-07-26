@@ -35,8 +35,6 @@ export default function LoginPage() {
     }
   }, [setLoggedIn, setUserRole, setMeetingSet]);
 
-  // Remove the automatic redirect when already logged in
-  // Users should always see the login form and enter credentials
 
   const onLogin = async (username, password) => {
     setLoginLoading(true);
