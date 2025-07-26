@@ -188,7 +188,14 @@ export default function ChangePasswordForm({ onClose, currentUser: propCurrentUs
           setIsAdminMode(false);
           onClose();
         } else {
-          toast.error(data.error || "Failed to change credentials");
+          // Handle different types of error responses
+          if (response.status === 429) {
+            // Rate limited - show the specific error message
+            toast.error(data.error || "Too many PIN attempts. Please wait before trying again.");
+          } else {
+            // Regular error
+            toast.error(data.error || "Failed to change credentials");
+          }
         }
       } catch (error) {
         console.error("Error changing credentials:", error);
@@ -228,7 +235,14 @@ export default function ChangePasswordForm({ onClose, currentUser: propCurrentUs
           setFormData(prev => ({ ...prev, newPIN: "", confirmPIN: "", currentPIN: "" }));
           onClose();
         } else {
-          toast.error(data.error || "Failed to change PIN");
+          // Handle different types of error responses
+          if (response.status === 429) {
+            // Rate limited - show the specific error message
+            toast.error(data.error || "Too many PIN attempts. Please wait before trying again.");
+          } else {
+            // Regular PIN error
+            toast.error(data.error || "Failed to change PIN");
+          }
         }
       } catch (error) {
         console.error("Error changing PIN:", error);
@@ -728,7 +742,14 @@ function PINInput({ onSuccess, onCancel, pinStatus, onSetupPIN }) {
         if (res.ok && data.is_valid) {
           onSuccess();
         } else {
-          toast.error('Invalid PIN');
+          // Handle different types of error responses
+          if (res.status === 429) {
+            // Rate limited - show the specific error message
+            toast.error(data.error || 'Too many PIN attempts. Please wait before trying again.');
+          } else {
+            // Regular PIN error
+            toast.error(data.error || 'Invalid PIN');
+          }
         }
       }
     } catch (err) {

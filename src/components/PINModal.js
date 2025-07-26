@@ -38,7 +38,14 @@ export default function PINModal({
         onSuccess(pin);
         // Do not call onClose() here; let parent handle modal state after redirect
       } else {
-        setError(data.error || "Invalid PIN");
+        // Handle different types of error responses
+        if (res.status === 429) {
+          // Rate limited - show the specific error message
+          setError(data.error || "Too many PIN attempts. Please wait before trying again.");
+        } else {
+          // Regular PIN error
+          setError(data.error || "Invalid PIN");
+        }
       }
     } catch (err) {
       console.error("PIN verification error:", err);

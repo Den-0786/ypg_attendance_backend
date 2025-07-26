@@ -16,7 +16,8 @@ export default function LoginForm({ onLogin }) {
     try {
       await onLogin(username, password);
     } catch (err) {
-      
+      // Error handling is done in the onLogin function
+      console.error('Login error:', err);
     } finally {
       setIsLoading(false);
     }

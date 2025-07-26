@@ -202,8 +202,15 @@ export function useAuth() {
         }
         return role;
       } else {
-        toast.error(data.detail || 'Invalid credentials');
-        const error = new Error(data.detail || 'Invalid credentials');
+        // Handle different types of error responses
+        if (res.status === 429) {
+          // Rate limited - show the specific error message
+          toast.error(data.error || 'Too many login attempts. Please wait before trying again.');
+        } else {
+          // Regular login error
+          toast.error(data.error || data.detail || 'Invalid credentials');
+        }
+        const error = new Error(data.error || data.detail || 'Invalid credentials');
         error.isLoginError = true;
         throw error;
       }

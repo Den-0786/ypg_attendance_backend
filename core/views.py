@@ -485,9 +485,43 @@ def change_credentials(request):
     
     # --- PIN check here ---
     pin = request.data.get('pin')
-    from .models import SecurityPIN
-    if not pin or not SecurityPIN.verify_pin(pin):
-        return Response({'error': 'Valid PIN required to change credentials.'}, status=403)
+    from .models import SecurityPIN, LoginAttempt
+    
+    if not pin:
+        return Response({'error': 'PIN is required to change credentials.'}, status=400)
+    
+    # Get client IP for tracking PIN attempts
+    client_ip = request.META.get('REMOTE_ADDR', 'unknown')
+    
+    # Check for PIN attempt limits
+    pin_attempt = LoginAttempt.get_or_create_attempt(client_ip, 'pin')
+    
+    if pin_attempt.is_locked_out():
+        remaining_time = pin_attempt.get_remaining_lock_time()
+        return Response({
+            'error': f'Access denied. You have tried 3 times, the maximum number of attempts has been reached. Please wait for {remaining_time} minutes before trying again.'
+        }, status=429)
+    
+    is_valid = SecurityPIN.verify_pin(pin)
+    
+    if not is_valid:
+        # Record failed PIN attempt
+        pin_attempt.record_failed_attempt()
+        
+        # Check if this was the 3rd failed attempt
+        if pin_attempt.failed_attempts >= 3:
+            return Response({
+                'error': 'Access denied. You have tried 3 times, the maximum number of attempts has been reached. Please wait for 10 minutes before trying again.'
+            }, status=429)
+        
+        # Return generic error for failed attempts
+        attempts_remaining = 3 - pin_attempt.failed_attempts
+        return Response({
+            'error': f'Invalid PIN. {attempts_remaining} attempts remaining.'
+        }, status=403)
+    
+    # Reset failed attempts on successful PIN verification
+    pin_attempt.reset_attempts()
     
     try:
         current_user = Credential.objects.get(id=user_id)  # type: ignore
@@ -641,10 +675,22 @@ def login_view(request):
         if not username or not password:
             return Response({'error': 'Username and password are required'}, status=400)
 
+        # Check for login attempt limits
+        from .models import LoginAttempt
+        login_attempt = LoginAttempt.get_or_create_attempt(username, 'username_password')
+        
+        if login_attempt.is_locked_out():
+            remaining_time = login_attempt.get_remaining_lock_time()
+            return Response({
+                'error': 'Access denied. You have tried 3 times, the maximum number of attempts has been reached. Please wait for 10 minutes before trying again.'
+            }, status=429)
+
         # 1. Try executive login (Credential model)
         try:
             user = Credential.objects.get(username=username)
             if user.check_password(password):
+                # Reset failed attempts on successful login
+                login_attempt.reset_attempts()
                 
                 request.session.flush()
                 request.session['user_id'] = user.id
@@ -660,6 +706,9 @@ def login_view(request):
         # 2. Try meeting login (Meeting model, only active meeting)
         meeting = Meeting.objects.filter(is_active=True, login_username=username).order_by('-date').first()
         if meeting and meeting.check_password(password):
+            # Reset failed attempts on successful login
+            login_attempt.reset_attempts()
+            
             request.session.flush()
             request.session['meeting_id'] = meeting.id
             request.session['username'] = username
@@ -669,7 +718,20 @@ def login_view(request):
             
             return Response({'success': True, 'message': 'Login successful', 'role': 'meeting_user'})
 
-        return Response({'error': 'Invalid credentials'}, status=400)
+        # Record failed attempt
+        login_attempt.record_failed_attempt()
+        
+        # Check if this was the 3rd failed attempt
+        if login_attempt.failed_attempts >= 3:
+            return Response({
+                'error': 'Access denied. You have tried 3 times, the maximum number of attempts has been reached. Please wait for 10 minutes before trying again.'
+            }, status=429)
+        
+        # Return generic error for failed attempts
+        attempts_remaining = 3 - login_attempt.failed_attempts
+        return Response({
+            'error': f'Invalid credentials. {attempts_remaining} attempts remaining.'
+        }, status=400)
     
     except Exception as e:
         return Response({'error': 'Login failed. Please try again.'}, status=500)
@@ -1169,13 +1231,45 @@ def verify_pin(request):
     if not pin:
         return Response({'error': 'PIN is required'}, status=400)
     
+    # Get client IP for tracking PIN attempts
+    client_ip = request.META.get('REMOTE_ADDR', 'unknown')
+    
+    # Check for PIN attempt limits
+    from .models import LoginAttempt
+    pin_attempt = LoginAttempt.get_or_create_attempt(client_ip, 'pin')
+    
+    if pin_attempt.is_locked_out():
+        remaining_time = pin_attempt.get_remaining_lock_time()
+        return Response({
+            'error': 'Access denied. You have tried 3 times, the maximum number of attempts has been reached. Please wait for 10 minutes before trying again.'
+        }, status=429)
+    
     is_valid = SecurityPIN.verify_pin(pin)
     
-    serializer = PINVerificationSerializer(data={'pin': pin, 'is_valid': is_valid})
-    if serializer.is_valid():
-        return Response(serializer.data)
+    if is_valid:
+        # Reset failed attempts on successful PIN verification
+        pin_attempt.reset_attempts()
+        
+        serializer = PINVerificationSerializer(data={'pin': pin, 'is_valid': is_valid})
+        if serializer.is_valid():
+            return Response(serializer.data)
+        else:
+            return Response(serializer.errors, status=400)
     else:
-        return Response(serializer.errors, status=400)
+        # Record failed PIN attempt
+        pin_attempt.record_failed_attempt()
+        
+        # Check if this was the 3rd failed attempt
+        if pin_attempt.failed_attempts >= 3:
+            return Response({
+                'error': 'Access denied. You have tried 3 times, the maximum number of attempts has been reached. Please wait for 10 minutes before trying again.'
+            }, status=429)
+        
+        # Return generic error for failed attempts
+        attempts_remaining = 3 - pin_attempt.failed_attempts
+        return Response({
+            'error': f'Invalid PIN. {attempts_remaining} attempts remaining.'
+        }, status=400)
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -1186,9 +1280,40 @@ def change_pin(request):
         current_pin = serializer.validated_data['current_pin']
         new_pin = serializer.validated_data['new_pin']
         
+        # Get client IP for tracking PIN attempts
+        client_ip = request.META.get('REMOTE_ADDR', 'unknown')
+        
+        # Check for PIN attempt limits
+        from .models import LoginAttempt
+        pin_attempt = LoginAttempt.get_or_create_attempt(client_ip, 'pin')
+        
+        if pin_attempt.is_locked_out():
+            remaining_time = pin_attempt.get_remaining_lock_time()
+            return Response({
+                'error': 'Access denied. You have tried 3 times, the maximum number of attempts has been reached. Please wait for 10 minutes before trying again.'
+            }, status=429)
+        
         # Verify current PIN
-        if not SecurityPIN.verify_pin(current_pin):
-            return Response({'error': 'Current PIN is incorrect'}, status=400)
+        is_valid = SecurityPIN.verify_pin(current_pin)
+        
+        if not is_valid:
+            # Record failed PIN attempt
+            pin_attempt.record_failed_attempt()
+            
+            # Check if this was the 3rd failed attempt
+            if pin_attempt.failed_attempts >= 3:
+                return Response({
+                    'error': 'Access denied. You have tried 3 times, the maximum number of attempts has been reached. Please wait for 10 minutes before trying again.'
+                }, status=429)
+            
+            # Return generic error for failed attempts
+            attempts_remaining = 3 - pin_attempt.failed_attempts
+            return Response({
+                'error': f'Current PIN is incorrect. {attempts_remaining} attempts remaining.'
+            }, status=400)
+        
+        # Reset failed attempts on successful PIN verification
+        pin_attempt.reset_attempts()
         
         # Deactivate current PIN and create new one
         SecurityPIN.objects.filter(is_active=True).update(is_active=False)

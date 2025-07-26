@@ -53,7 +53,14 @@ export default function PINChangeModal({ isOpen, onClose }) {
         toast.success('PIN changed successfully');
         onClose();
       } else {
-        toast.error(data.error || 'Failed to change PIN');
+        // Handle different types of error responses
+        if (res.status === 429) {
+          // Rate limited - show the specific error message
+          toast.error(data.error || 'Too many PIN attempts. Please wait before trying again.');
+        } else {
+          // Regular PIN error
+          toast.error(data.error || 'Failed to change PIN');
+        }
       }
     } catch (err) {
       toast.error('Failed to change PIN');

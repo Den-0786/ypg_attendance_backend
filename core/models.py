@@ -173,3 +173,78 @@ class SecurityPIN(models.Model):
         
         result = active_pin.pin == pin
         return result
+
+# --- Login Attempt Tracking Model ---
+class LoginAttempt(models.Model):
+    ATTEMPT_TYPE_CHOICES = [
+        ('username_password', 'Username/Password'),
+        ('pin', 'PIN'),
+    ]
+    
+    identifier = models.CharField(max_length=150, help_text="Username or IP address for tracking")
+    attempt_type = models.CharField(max_length=20, choices=ATTEMPT_TYPE_CHOICES)
+    failed_attempts = models.IntegerField(default=0)
+    first_failed_attempt = models.DateTimeField(auto_now_add=True)
+    last_failed_attempt = models.DateTimeField(auto_now=True)
+    is_locked = models.BooleanField(default=False)
+    lock_expires_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        unique_together = ['identifier', 'attempt_type']
+    
+    def __str__(self):
+        return f"{self.identifier} - {self.attempt_type} ({self.failed_attempts} attempts)"
+    
+    @classmethod
+    def get_or_create_attempt(cls, identifier, attempt_type):
+        """Get or create a login attempt record"""
+        attempt, created = cls.objects.get_or_create(
+            identifier=identifier,
+            attempt_type=attempt_type,
+            defaults={'failed_attempts': 0}
+        )
+        return attempt
+    
+    def record_failed_attempt(self):
+        """Record a failed login attempt"""
+        self.failed_attempts += 1
+        self.last_failed_attempt = timezone.now()
+        
+        # Lock after 3 failed attempts for 10 minutes
+        if self.failed_attempts >= 3:
+            self.is_locked = True
+            self.lock_expires_at = timezone.now() + timezone.timedelta(minutes=10)
+        
+        self.save()
+    
+    def reset_attempts(self):
+        """Reset failed attempts after successful login"""
+        self.failed_attempts = 0
+        self.is_locked = False
+        self.lock_expires_at = None
+        self.save()
+    
+    def is_locked_out(self):
+        """Check if the identifier is currently locked out"""
+        if not self.is_locked:
+            return False
+        
+        # Check if lock has expired
+        if self.lock_expires_at and timezone.now() > self.lock_expires_at:
+            self.is_locked = False
+            self.lock_expires_at = None
+            self.save()
+            return False
+        
+        return True
+    
+    def get_remaining_lock_time(self):
+        """Get remaining lock time in minutes"""
+        if not self.is_locked or not self.lock_expires_at:
+            return 0
+        
+        remaining = self.lock_expires_at - timezone.now()
+        if remaining.total_seconds() <= 0:
+            return 0
+        
+        return int(remaining.total_seconds() / 60)
