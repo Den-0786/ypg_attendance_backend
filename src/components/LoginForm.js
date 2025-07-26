@@ -150,11 +150,11 @@ export default function LoginForm({ onLogin }) {
               "From Emmanuel to Liberty congregations, we're all connected through this system. It's not just attendance tracking - it's community building and growth monitoring."
             </p>
             
-            <div className="mb-4">
+            <div className="mb-6">
               <p className="text-white font-semibold text-sm">Ahinsan District YPG</p>
               <p className="text-gray-400 text-xs">We Practice Godliness!</p>
             </div>
-            <div className="flex space-x-2">
+            <div className="flex space-x-2 mb-8">
               <button className="w-6 h-6 sm:w-7 sm:h-7 bg-gray-800 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 transition-colors text-xs">
                 ←
               </button>
@@ -164,7 +164,7 @@ export default function LoginForm({ onLogin }) {
             </div>
             <div className="absolute bottom-3 right-3 w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full opacity-20"></div>
           </div>
-          <div className="absolute -bottom-2 -right-2 bg-white rounded-xl p-3 sm:p-4 shadow-xl max-w-xs">
+          <div className="absolute -bottom-4 -right-2 sm:bottom-4 bg-white rounded-xl p-3 sm:p-4 shadow-xl max-w-xs">
             <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-2">Connecting all Congregational Guilders</h3>
             <p className="text-gray-600 text-xs mb-3">
               "With our digital transformation in attendance management, all guilders are now unified under one Canopy."

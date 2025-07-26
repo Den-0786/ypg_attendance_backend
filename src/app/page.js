@@ -1,7 +1,7 @@
 'use client';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 const features = [
   { title: 'Easy Attendance', desc: 'Quickly log and track attendance for all meetings.' },
@@ -13,6 +13,24 @@ const features = [
 
 export default function Page() {
   const router = useRouter();
+  
+  // Clear any cached redirects on home page load
+  useEffect(() => {
+    // Clear any cached login redirects
+    if (typeof window !== 'undefined') {
+      // Force browser to not cache this page
+      window.history.replaceState(null, '', window.location.pathname);
+      
+      // Clear any localStorage that might be causing redirects
+      const currentPath = window.location.pathname;
+      if (currentPath === '/') {
+        // We're on home page, clear any cached login state
+        localStorage.removeItem('redirectToLogin');
+        sessionStorage.removeItem('redirectToLogin');
+      }
+    }
+  }, []);
+  
   return (
     <main className="min-h-screen w-full flex flex-col items-center justify-end bg-gradient-to-br from-blue-200 via-blue-100 to-blue-300 relative overflow-hidden px-4 pb-20 md:py-4">
       
