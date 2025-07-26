@@ -25,7 +25,30 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <head></head>
+      <head>
+        <meta httpEquiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+        <meta httpEquiv="Pragma" content="no-cache" />
+        <meta httpEquiv="Expires" content="0" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              // Prevent browser from caching pages
+              if (typeof window !== 'undefined') {
+                window.addEventListener('pageshow', function(event) {
+                  if (event.persisted) {
+                    window.location.reload();
+                  }
+                });
+                
+                // Force home page on refresh if on login page
+                if (window.location.pathname === '/login') {
+                  window.location.href = '/';
+                }
+              }
+            `,
+          }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

@@ -27,6 +27,17 @@ export default function Page() {
         // We're on home page, clear any cached login state
         localStorage.removeItem('redirectToLogin');
         sessionStorage.removeItem('redirectToLogin');
+        sessionStorage.removeItem('loginPage');
+        
+        // Force browser to remember this as the home page
+        if (window.history.state !== null) {
+          window.history.replaceState({ page: 'home' }, '', '/');
+        }
+        
+        // If somehow we're redirected to login, force back to home
+        if (window.location.pathname !== '/') {
+          window.location.href = '/';
+        }
       }
     }
   }, []);

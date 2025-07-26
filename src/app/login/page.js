@@ -12,6 +12,16 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 export default function LoginPage() {
   const { handleLogin, loggedIn, userRole } = useAuth();
   const store = useAuthStore();
+  
+  // Prevent browser from caching this page
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Clear any cached state
+      sessionStorage.removeItem('loginPage');
+      // Force fresh load
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  }, []);
 
 // sourcery skip: use-object-destructuring
   const setLoggedIn = store.setLoggedIn;
