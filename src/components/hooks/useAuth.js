@@ -152,7 +152,7 @@ export function useAuth() {
       if (typeof setUserRole === 'function') {
         setUserRole(null);
       }
-      router.replace('/login');
+      router.replace('/');
     }
   };
 

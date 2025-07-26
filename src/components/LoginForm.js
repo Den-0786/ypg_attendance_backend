@@ -25,7 +25,7 @@ export default function LoginForm({ onLogin }) {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-gradient-to-br from-purple-600 via-pink-600 to-orange-500">
     
-      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-4 lg:pr-2 order-2 lg:order-1">
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-4 lg:pr-8 order-2 lg:order-1">
         <div className="w-full max-w-sm">
           <div className="bg-gray-900 rounded-2xl p-6 sm:p-6 shadow-2xl">
             <div className="text-center mb-6">
@@ -135,10 +135,10 @@ export default function LoginForm({ onLogin }) {
       </div>
 
 
-      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-4 lg:pl-2 order-1 lg:order-2">
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-4 lg:pl-8 order-1 lg:order-2">
         <div className="relative max-w-sm w-full">
           
-          <div className="bg-gray-900 rounded-2xl p-6 shadow-2xl relative overflow-hidden mb-16">
+          <div className="bg-gray-900 rounded-2xl p-6 shadow-2xl relative overflow-hidden mb-20">
             
             <div className="absolute top-0 right-0 w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-transparent to-gray-800 transform rotate-45 translate-x-5 -translate-y-5 sm:translate-x-6 sm:-translate-y-6"></div>
             
@@ -164,7 +164,7 @@ export default function LoginForm({ onLogin }) {
             </div>
             <div className="absolute bottom-3 right-3 w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full opacity-20"></div>
           </div>
-          <div className="absolute bottom-0 right-0 bg-white rounded-xl p-3 sm:p-4 shadow-xl max-w-xs">
+          <div className="absolute -bottom-2 -right-2 bg-white rounded-xl p-3 sm:p-4 shadow-xl max-w-xs">
             <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-2">Connecting all Congregational Guilders</h3>
             <p className="text-gray-600 text-xs mb-3">
               "With our digital transformation in attendance management, all guilders are now unified under one Canopy."
