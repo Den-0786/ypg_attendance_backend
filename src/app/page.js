@@ -65,7 +65,7 @@ export default function Page() {
       </svg>
 
       {/* Content */}
-      <div className="flex flex-col relative lg:top-[8rem] md:flex-row items-center justify-center w-full max-w-6xl gap-6 z-10 md:items-start flex-1 ">
+      <div className="flex flex-col relative bottom-[4rem] lg:top-[8rem] md:flex-row items-center justify-center w-full max-w-6xl gap-6 z-10 md:items-start flex-1 ">
         {/* Logo Circle */}
         <div className="relative flex flex-col items-center justify-center w-36 h-36 md:w-52 md:h-52">
           <svg
@@ -164,7 +164,7 @@ export default function Page() {
       </div>
 
       {/* Simple login button */}
-      <div className="relative bottom-[5rem] z-20 flex flex-col items-center pb-0 ">
+      <div className="relative bottom-[9rem] z-20 flex flex-col items-center pb-0 ">
         <button
           className="px-8 py-2 bg-blue-600 hover:bg-blue-700 text-white text-base font-semibold rounded-full shadow-lg transition-colors"
           onClick={() => router.push("/login")}
