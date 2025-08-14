@@ -191,11 +191,11 @@ export default function Page() {
           </button>
         </div>
       </div>
-
+{/* 
       <div className="absolute bottom-[4rem] left-0 right-0 text-center text-gray-100 text-xs z-20">
         &copy; {new Date().getFullYear()} Ahinsan District YPG. All rights
         Reserved.
-      </div>
+      </div> */}
     </main>
   );
 }
