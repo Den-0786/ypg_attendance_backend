@@ -68,7 +68,7 @@ export default function Page() {
       </svg>
 
       <div className="flex flex-col md:flex-row items-center justify-center w-full max-w-6xl gap-8 z-10 md:items-start flex-1 mt-4 md:mt-8">
-        <div className="relative flex flex-col items-center justify-center w-40 h-40 md:w-60 md:h-60">
+        <div className="relative flex flex-col top-[6rem] items-center justify-center w-40 h-40 md:w-60 md:h-60">
           <svg
             width="100%"
             height="100%"
