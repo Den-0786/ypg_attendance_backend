@@ -167,16 +167,16 @@ export default function Page() {
       </div>
 
       {/* Footer with wave background */}
-      <div className="relative z-20 flex flex-col items-center gap-1 pb-2">
+      <div className="relative z-20 flex flex-col items-center gap-1 pb-1">
         {/* Wave SVG as background */}
         <svg
-          viewBox="0 0 1440 100"
+          viewBox="0 0 1440 60"
           preserveAspectRatio="none"
-          className="absolute left-0 bottom-0 w-full h-16 z-0"
+          className="absolute left-0 bottom-0 w-full h-12 z-0"
         >
-          <path d="M0,60 Q360,30 720,60 T1440,30 V120 H0 Z" fill="#2563eb" />
+          <path d="M0,40 Q360,20 720,40 T1440,20 V80 H0 Z" fill="#2563eb" />
           <path
-            d="M0,100 Q400,50 900,80 T1440,50 V120 H0 Z"
+            d="M0,60 Q400,30 900,50 T1440,30 V80 H0 Z"
             fill="#60a5fa"
             opacity="0.8"
           />
@@ -185,7 +185,7 @@ export default function Page() {
         {/* Footer content on top of wave */}
         <div className="relative z-10 flex flex-col items-center">
           <button
-            className="px-6 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-full shadow transition-colors"
+            className="px-6 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-full shadow transition-colors"
             onClick={() => router.push("/login")}
           >
             Login
