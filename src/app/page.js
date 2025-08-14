@@ -67,7 +67,7 @@ export default function Page() {
         />
       </svg>
 
-      <div className="flex flex-col md:flex-row items-center justify-center w-full max-w-6xl gap-8 z-10 md:items-start flex-1 mt-4 md:mt-8">
+      <div className="flex flex-col md:flex-row items-center relative bottom-[3rem] justify-center w-full max-w-6xl gap-8 z-10 md:items-start flex-1 mt-4 md:mt-8">
         <div className="relative flex flex-col top-[6rem] items-center justify-center w-40 h-40 md:w-60 md:h-60">
           <svg
             width="100%"
@@ -164,7 +164,7 @@ export default function Page() {
         </div>
       </div>
 
-      <div className="w-full z-10 flex flex-col items-center justify-center pb-8">
+      <div className="w-full z-10 flex flex-col relative bottom-[2rem] items-center justify-center pb-8">
         <svg
           viewBox="0 0 1440 300"
           width="100%"
@@ -192,7 +192,7 @@ export default function Page() {
         </div>
       </div>
 
-      <div className="absolute bottom-6 left-0 right-0 text-center text-gray-100 text-xs z-20">
+      <div className="absolute bottom-[4rem] left-0 right-0 text-center text-gray-100 text-xs z-20">
         &copy; {new Date().getFullYear()} Ahinsan District YPG. All rights
         Reserved.
       </div>
