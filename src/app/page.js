@@ -28,7 +28,6 @@ export default function Page() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      // Only clean up storage items, don't force redirects
       if (window.location.pathname === "/") {
         localStorage.removeItem("redirectToLogin");
         sessionStorage.removeItem("redirectToLogin");
@@ -38,7 +37,8 @@ export default function Page() {
   }, []);
 
   return (
-    <main className="h-screen w-full flex flex-col items-center justify-between bg-gradient-to-br from-blue-200 via-blue-100 to-blue-300 relative overflow-hidden px-4 py-2">
+    <main className="min-h-screen w-full flex flex-col justify-between bg-gradient-to-br from-blue-200 via-blue-100 to-blue-300 relative overflow-hidden px-4 py-2">
+      {/* Decorative top lines */}
       <svg
         width="400"
         height="600"
@@ -67,7 +67,9 @@ export default function Page() {
         />
       </svg>
 
+      {/* Content */}
       <div className="flex flex-col md:flex-row items-center justify-center w-full max-w-6xl gap-6 z-10 md:items-start flex-1">
+        {/* Logo Circle */}
         <div className="relative flex flex-col items-center justify-center w-36 h-36 md:w-52 md:h-52">
           <svg
             width="100%"
@@ -125,6 +127,8 @@ export default function Page() {
             />
           </div>
         </div>
+
+        {/* Features List */}
         <div className="flex flex-col gap-1 md:gap-2 w-full max-w-md">
           {features.map((f, i) => (
             <div key={i} className="flex items-center h-12 md:h-14">
@@ -162,13 +166,13 @@ export default function Page() {
         </div>
       </div>
 
-      <div className="w-full z-10 flex flex-col items-center justify-center pb-4">
+      {/* Footer with wave background */}
+      <div className="relative z-20 flex flex-col items-center gap-2 pb-3">
+        {/* Wave SVG as background */}
         <svg
           viewBox="0 0 1440 200"
-          width="100%"
-          height="200"
           preserveAspectRatio="none"
-          className="absolute left-0 bottom-0 w-full"
+          className="absolute left-0 bottom-0 w-full h-24 z-0"
         >
           <path
             d="M0,150 Q360,100 720,140 T1440,100 V220 H0 Z"
@@ -180,19 +184,19 @@ export default function Page() {
             opacity="0.8"
           />
         </svg>
-        <div className="relative z-20 flex flex-col items-center justify-center pt-4 pb-2">
+
+        {/* Footer content on top of wave */}
+        <div className="relative z-10 flex flex-col items-center">
           <button
-            className="px-6 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-full shadow transition-colors mb-2"
+            className="px-6 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-full shadow transition-colors"
             onClick={() => router.push("/login")}
           >
             Login
           </button>
+          <div className="text-gray-100 text-xs mt-1">
+            &copy; {new Date().getFullYear()} Ahinsan District YPG. All rights Reserved.
+          </div>
         </div>
-      </div>
-
-      <div className="absolute bottom-2 left-0 right-0 text-center text-gray-100 text-xs z-20">
-        &copy; {new Date().getFullYear()} Ahinsan District YPG. All rights
-        Reserved.
       </div>
     </main>
   );
