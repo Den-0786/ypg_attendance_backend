@@ -37,7 +37,7 @@ export default function Page() {
   }, []);
 
   return (
-    <main className="min-h-screen w-full flex flex-col justify-between bg-gradient-to-br from-blue-200 via-blue-100 to-blue-300 relative overflow-hidden px-4 py-2">
+    <main className="min-h-screen w-full flex flex-col justify-between bg-gradient-to-br from-blue-200 via-blue-100 to-blue-300 relative overflow-hidden px-4 py-0">
       {/* Background wave design */}
       <svg
         width="100%"
@@ -65,7 +65,7 @@ export default function Page() {
       </svg>
 
       {/* Content */}
-      <div className="flex flex-col md:flex-row items-center justify-center w-full max-w-6xl gap-6 z-10 md:items-start flex-1 mt-8">
+      <div className="flex flex-col relative lg:top-[8rem] md:flex-row items-center justify-center w-full max-w-6xl gap-6 z-10 md:items-start flex-1 ">
         {/* Logo Circle */}
         <div className="relative flex flex-col items-center justify-center w-36 h-36 md:w-52 md:h-52">
           <svg
@@ -164,7 +164,7 @@ export default function Page() {
       </div>
 
       {/* Simple login button */}
-      <div className="relative z-20 flex flex-col items-center pb-0 -mt-8">
+      <div className="relative bottom-[5rem] z-20 flex flex-col items-center pb-0 ">
         <button
           className="px-8 py-2 bg-blue-600 hover:bg-blue-700 text-white text-base font-semibold rounded-full shadow-lg transition-colors"
           onClick={() => router.push("/login")}
