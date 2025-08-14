@@ -167,19 +167,16 @@ export default function Page() {
       </div>
 
       {/* Footer with wave background */}
-      <div className="relative z-20 flex flex-col items-center gap-2 pb-3">
+      <div className="relative z-20 flex flex-col items-center gap-1 pb-2">
         {/* Wave SVG as background */}
         <svg
-          viewBox="0 0 1440 200"
+          viewBox="0 0 1440 100"
           preserveAspectRatio="none"
-          className="absolute left-0 bottom-0 w-full h-24 z-0"
+          className="absolute left-0 bottom-0 w-full h-16 z-0"
         >
+          <path d="M0,60 Q360,30 720,60 T1440,30 V120 H0 Z" fill="#2563eb" />
           <path
-            d="M0,150 Q360,100 720,140 T1440,100 V220 H0 Z"
-            fill="#2563eb"
-          />
-          <path
-            d="M0,200 Q400,120 900,180 T1440,120 V220 H0 Z"
+            d="M0,100 Q400,50 900,80 T1440,50 V120 H0 Z"
             fill="#60a5fa"
             opacity="0.8"
           />
@@ -194,7 +191,8 @@ export default function Page() {
             Login
           </button>
           <div className="text-gray-100 text-xs mt-1">
-            &copy; {new Date().getFullYear()} Ahinsan District YPG. All rights Reserved.
+            &copy; {new Date().getFullYear()} Ahinsan District YPG. All rights
+            Reserved.
           </div>
         </div>
       </div>
