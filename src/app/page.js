@@ -38,37 +38,34 @@ export default function Page() {
 
   return (
     <main className="min-h-screen w-full flex flex-col justify-between bg-gradient-to-br from-blue-200 via-blue-100 to-blue-300 relative overflow-hidden px-4 py-2">
-      {/* Decorative top lines */}
+      {/* Background wave design */}
       <svg
-        width="400"
-        height="600"
-        viewBox="0 0 400 600"
-        className="absolute left-0 top-0 z-0 pointer-events-none"
-        style={{ height: "100vh" }}
+        width="100%"
+        height="100%"
+        viewBox="0 0 1440 800"
+        className="absolute inset-0 z-0 pointer-events-none"
+        preserveAspectRatio="none"
       >
         <defs>
-          <linearGradient id="fadeArc" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#60a5fa" stopOpacity="0.5" />
-            <stop offset="80%" stopColor="#60a5fa" stopOpacity="0.15" />
-            <stop offset="100%" stopColor="#60a5fa" stopOpacity="0" />
+          <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#60a5fa" stopOpacity="0.3" />
+            <stop offset="50%" stopColor="#3b82f6" stopOpacity="0.2" />
+            <stop offset="100%" stopColor="#1d4ed8" stopOpacity="0.1" />
           </linearGradient>
         </defs>
         <path
-          d="M -50 80 Q 100 0 300 100"
-          stroke="url(#fadeArc)"
-          strokeWidth="5"
-          fill="none"
+          d="M0,600 Q360,500 720,650 T1440,550 V800 H0 Z"
+          fill="url(#bgGradient)"
         />
         <path
-          d="M -50 350 Q 120 500 350 400"
-          stroke="url(#fadeArc)"
-          strokeWidth="5"
-          fill="none"
+          d="M0,700 Q400,600 900,750 T1440,650 V800 H0 Z"
+          fill="#60a5fa"
+          opacity="0.1"
         />
       </svg>
 
       {/* Content */}
-      <div className="flex flex-col md:flex-row items-center justify-center w-full max-w-6xl gap-6 z-10 md:items-start flex-1">
+      <div className="flex flex-col md:flex-row items-center justify-center w-full max-w-6xl gap-6 z-10 md:items-start flex-1 mt-8">
         {/* Logo Circle */}
         <div className="relative flex flex-col items-center justify-center w-36 h-36 md:w-52 md:h-52">
           <svg
@@ -129,7 +126,7 @@ export default function Page() {
         </div>
 
         {/* Features List */}
-        <div className="flex flex-col gap-1 md:gap-2 w-full max-w-md">
+        <div className="flex flex-col gap-1 md:gap-2 w-full max-w-md -mt-14 md:-mt-12">
           {features.map((f, i) => (
             <div key={i} className="flex items-center h-12 md:h-14">
               <div className="flex-shrink-0 z-10 w-10 h-14 flex items-center justify-center -mr-2">
@@ -166,35 +163,14 @@ export default function Page() {
         </div>
       </div>
 
-      {/* Footer with wave background */}
-      <div className="relative z-20 flex flex-col items-center gap-1 pb-1">
-        {/* Wave SVG as background */}
-        <svg
-          viewBox="0 0 1440 60"
-          preserveAspectRatio="none"
-          className="absolute left-0 bottom-0 w-full h-12 z-0"
+      {/* Simple login button */}
+      <div className="relative z-20 flex flex-col items-center pb-0 -mt-8">
+        <button
+          className="px-8 py-2 bg-blue-600 hover:bg-blue-700 text-white text-base font-semibold rounded-full shadow-lg transition-colors"
+          onClick={() => router.push("/login")}
         >
-          <path d="M0,40 Q360,20 720,40 T1440,20 V80 H0 Z" fill="#2563eb" />
-          <path
-            d="M0,60 Q400,30 900,50 T1440,30 V80 H0 Z"
-            fill="#60a5fa"
-            opacity="0.8"
-          />
-        </svg>
-
-        {/* Footer content on top of wave */}
-        <div className="relative z-10 flex flex-col items-center">
-          <button
-            className="px-6 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-full shadow transition-colors"
-            onClick={() => router.push("/login")}
-          >
-            Login
-          </button>
-          <div className="text-gray-100 text-xs mt-1">
-            &copy; {new Date().getFullYear()} Ahinsan District YPG. All rights
-            Reserved.
-          </div>
-        </div>
+          Login
+        </button>
       </div>
     </main>
   );
