@@ -38,7 +38,7 @@ export default function Page() {
   }, []);
 
   return (
-    <main className="h-screen w-full flex flex-col items-center justify-between bg-gradient-to-br from-blue-200 via-blue-100 to-blue-300 relative overflow-hidden px-4">
+    <main className="h-screen w-full flex flex-col items-center justify-between bg-gradient-to-br from-blue-200 via-blue-100 to-blue-300 relative overflow-hidden px-4 py-2">
       <svg
         width="400"
         height="600"
@@ -67,8 +67,8 @@ export default function Page() {
         />
       </svg>
 
-      <div className="flex flex-col md:flex-row items-center relative bottom-[3rem] justify-center w-full max-w-6xl gap-8 z-10 md:items-start flex-1 mt-4 md:mt-8">
-        <div className="relative flex flex-col top-[6rem] items-center justify-center w-40 h-40 md:w-60 md:h-60">
+      <div className="flex flex-col md:flex-row items-center justify-center w-full max-w-6xl gap-6 z-10 md:items-start flex-1">
+        <div className="relative flex flex-col items-center justify-center w-36 h-36 md:w-52 md:h-52">
           <svg
             width="100%"
             height="100%"
@@ -115,19 +115,19 @@ export default function Page() {
             </text>
           </svg>
 
-          <div className="absolute z-1 w-20 h-20 md:w-20 md:h-20 rounded-full bg-white flex items-center justify-center shadow-2xl border-4 border-blue-300">
+          <div className="absolute z-1 w-16 h-16 md:w-18 md:h-18 rounded-full bg-white flex items-center justify-center shadow-2xl border-4 border-blue-300">
             <Image
               src="/ypg.jpeg"
               alt="YPG Logo"
               width={80}
               height={80}
-              className="object-cover w-16 h-16 md:w-16 md:h-16 rounded-full"
+              className="object-cover w-12 h-12 md:w-14 md:h-14 rounded-full"
             />
           </div>
         </div>
-        <div className="flex flex-col gap-2 md:gap-3 w-full max-w-md">
+        <div className="flex flex-col gap-1 md:gap-2 w-full max-w-md">
           {features.map((f, i) => (
-            <div key={i} className="flex items-center h-14 md:h-16">
+            <div key={i} className="flex items-center h-12 md:h-14">
               <div className="flex-shrink-0 z-10 w-10 h-14 flex items-center justify-center -mr-2">
                 <svg
                   width="44"
@@ -152,11 +152,9 @@ export default function Page() {
               </div>
 
               <div className="flex-1 relative">
-                <div className="flex flex-col justify-center h-full bg-white/90 rounded-lg shadow px-4 py-2 border-l-4 border-blue-400 text-sm md:text-base">
+                <div className="flex flex-col justify-center h-full bg-white/90 rounded-lg shadow px-3 py-1 border-l-4 border-blue-400 text-xs md:text-sm">
                   <div className="font-bold text-blue-700">{f.title}</div>
-                  <div className="text-gray-600 text-xs md:text-sm">
-                    {f.desc}
-                  </div>
+                  <div className="text-gray-600 text-xs">{f.desc}</div>
                 </div>
               </div>
             </div>
@@ -164,38 +162,38 @@ export default function Page() {
         </div>
       </div>
 
-      <div className="w-full z-10 flex flex-col relative bottom-[2rem] items-center justify-center pb-8">
+      <div className="w-full z-10 flex flex-col items-center justify-center pb-4">
         <svg
-          viewBox="0 0 1440 300"
+          viewBox="0 0 1440 200"
           width="100%"
-          height="300"
+          height="200"
           preserveAspectRatio="none"
           className="absolute left-0 bottom-0 w-full"
         >
           <path
-            d="M0,250 Q360,180 720,240 T1440,180 V320 H0 Z"
+            d="M0,150 Q360,100 720,140 T1440,100 V220 H0 Z"
             fill="#2563eb"
           />
           <path
-            d="M0,300 Q400,220 900,280 T1440,220 V320 H0 Z"
+            d="M0,200 Q400,120 900,180 T1440,120 V220 H0 Z"
             fill="#60a5fa"
             opacity="0.8"
           />
         </svg>
-        <div className="relative z-20 flex flex-col items-center justify-center pt-8 pb-4">
+        <div className="relative z-20 flex flex-col items-center justify-center pt-4 pb-2">
           <button
-            className="px-8 py-2 bg-blue-600 hover:bg-blue-700 text-white text-base font-semibold rounded-full shadow transition-colors mb-4"
+            className="px-6 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-full shadow transition-colors mb-2"
             onClick={() => router.push("/login")}
           >
             Login
           </button>
         </div>
       </div>
-{/* 
-      <div className="absolute bottom-[4rem] left-0 right-0 text-center text-gray-100 text-xs z-20">
+
+      <div className="absolute bottom-2 left-0 right-0 text-center text-gray-100 text-xs z-20">
         &copy; {new Date().getFullYear()} Ahinsan District YPG. All rights
         Reserved.
-      </div> */}
+      </div>
     </main>
   );
 }
