@@ -14,10 +14,10 @@ const NoMeetingToast = ({ onClose }) => {
       setProgress(prev => {
         if (prev >= 100) {
           clearInterval(interval);
-          setTimeout(onClose, 500); // Close after animation completes
+          setTimeout(onClose, 500); 
           return 100;
         }
-        return prev + 2; // Increment by 2% every 100ms for 5 second duration
+        return prev + 2; 
       });
     }, 100);
 
@@ -91,14 +91,14 @@ export default function AdminPage() {
     }
   }, []);
 
-  // List of executive roles that can access dashboard
+ 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const executiveRoles = [
     'admin', 'President', "President's Rep", 'Secretary', 'Assistant Secretary',
     'Financial Secretary', 'Treasurer', 'Bible Studies Coordinator', 'Organizer'
   ];
 
-  // Check if there's an active meeting
+  
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const checkActiveMeeting = async () => {
     try {
@@ -107,7 +107,7 @@ export default function AdminPage() {
       });
       const data = await res.json();
       
-      // Show notification if no meeting is set and we haven't shown it yet
+      
       if ((!data || data.error) && !hasShownNoMeetingToast.current) {
         toast.custom((t) => (
           <NoMeetingToast onClose={() => toast.dismiss(t.id)} />
@@ -127,7 +127,7 @@ export default function AdminPage() {
     }
   };
 
-  // 1. Check session on mount only if not already logged in and we haven't checked yet
+
   useEffect(() => {
     if (!hasCheckedSession.current) {
       hasCheckedSession.current = true;

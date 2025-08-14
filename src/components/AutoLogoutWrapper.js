@@ -1,37 +1,39 @@
-'use client';
+"use client";
 
-import { useAuthStore } from './store/authStore';
-import AutoLogout from './AutoLogout';
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "./store/authStore";
+import AutoLogout from "./AutoLogout";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 export default function AutoLogoutWrapper() {
+  const router = useRouter();
   const store = useAuthStore();
   const loggedIn = store.loggedIn;
   const setLoggedIn = store.setLoggedIn;
   const setUserRole = store.setUserRole;
-  
+
   const handleLogout = async () => {
     try {
-      const token = localStorage.getItem('access_token');
+      const token = localStorage.getItem("access_token");
       await fetch(`${API_URL}/api/logout`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': token ? `Bearer ${token}` : undefined,
-        }
+          Authorization: token ? `Bearer ${token}` : undefined,
+        },
       });
     } catch (err) {
-      console.error('Logout error:', err);
+      console.error("Logout error:", err);
     } finally {
-      if (typeof setLoggedIn === 'function') {
+      if (typeof setLoggedIn === "function") {
         setLoggedIn(false);
       }
-      if (typeof setUserRole === 'function') {
+      if (typeof setUserRole === "function") {
         setUserRole(null);
       }
-      window.location.href = '/';
+      router.replace("/");
     }
   };
 
   return <AutoLogout loggedIn={loggedIn} onLogout={handleLogout} />;
-} 
+}

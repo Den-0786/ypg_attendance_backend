@@ -71,19 +71,17 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
         setAdminPassword('');
         setAuthError('');
         
-        // Do NOT call onClose() or navigate away
-        // Optionally, you can close the modal if you use one, but do not redirect
-        // Optionally, refresh meeting info in parent if needed
+       
         if (typeof onMeetingSet === 'function') {
           setTimeout(() => {
             onMeetingSet();
-            // Removed window.location.reload() for Chrome to prevent unnecessary reload
+            
           }, 500);
         }
       } else {
-        // Check if it's the duplicate meeting error
+        
         if (data.error && data.error.includes('Cannot set two meetings same day')) {
-          // Show special toast with loading bar
+
           toast.custom((t) => (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 max-w-sm mx-auto">
               <div className="flex items-center justify-between mb-2">
@@ -186,7 +184,7 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
       handleDeactivateWithPIN(pin);
     }
     setPendingAction(null);
-    setShowPINModal(false); // Close the PIN modal
+    setShowPINModal(false); 
   };
 
   return (

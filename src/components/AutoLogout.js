@@ -123,20 +123,50 @@ export default function AutoLogout({ loggedIn, onLogout }) {
       "scroll",
       "touchstart",
       "click",
+      "keydown",
     ];
+
+    const handleActivity = (event) => {
+      // Only check for toast clicks on mouse events, not on scroll/key events
+      if (event.type === "click" || event.type === "mousedown") {
+        // Prevent handling if clicking on the toast itself
+        if (
+          event.target &&
+          event.target.closest &&
+          event.target.closest(".toast")
+        ) {
+          return;
+        }
+      }
+
+      if (warningShown) {
+        // If warning was shown and user interacts, cancel logout and reset everything
+        setWarningShown(false);
+        setLogoutPending(false);
+        clearTimers();
+        toast.dismiss(); // Dismiss all toasts on user activity
+        resetInactivityTimer();
+      } else {
+        // If no warning, just reset timer as usual
+        resetInactivityTimer();
+      }
+    };
+
     events.forEach((event) => {
-      document.addEventListener(event, handleUserActivity, true);
+      document.addEventListener(event, handleActivity, true);
     });
+
     if (loggedIn) {
       resetInactivityTimer();
     }
+
     return () => {
       events.forEach((event) => {
-        document.removeEventListener(event, handleUserActivity, true);
+        document.removeEventListener(event, handleActivity, true);
       });
       clearTimers();
     };
-  }, [loggedIn]);
+  }, [loggedIn, warningShown]);
 
   // This component doesn't render anything
   return null;

@@ -498,9 +498,14 @@ def change_credentials(request):
     
     if pin_attempt.is_locked_out():
         remaining_time = pin_attempt.get_remaining_lock_time()
-        return Response({
-            'error': f'Access denied. You have tried 3 times, the maximum number of attempts has been reached. Please wait for {remaining_time} minutes before trying again.'
-        }, status=429)
+        if pin_attempt.failed_attempts >= 6:
+            return Response({
+                'error': f'Maximum attempts reached. Please try again in the next 24 hours.'
+            }, status=429)
+        else:
+            return Response({
+                'error': f'Maximum attempts reached. Please try again in the next 30 minutes.'
+            }, status=429)
     
     is_valid = SecurityPIN.verify_pin(pin)
     
@@ -508,10 +513,14 @@ def change_credentials(request):
         # Record failed PIN attempt
         pin_attempt.record_failed_attempt()
         
-        # Check if this was the 3rd failed attempt
-        if pin_attempt.failed_attempts >= 3:
+        # Check if this was the 3rd or 6th failed attempt
+        if pin_attempt.failed_attempts >= 6:
             return Response({
-                'error': 'Access denied. You have tried 3 times, the maximum number of attempts has been reached. Please wait for 10 minutes before trying again.'
+                'error': 'Maximum attempts reached. Please try again in the next 24 hours.'
+            }, status=429)
+        elif pin_attempt.failed_attempts >= 3:
+            return Response({
+                'error': 'Maximum attempts reached. Please try again in the next 30 minutes.'
             }, status=429)
         
         # Return generic error for failed attempts
@@ -598,10 +607,25 @@ def change_credentials(request):
         if Credential.objects.filter(username=new_username).exclude(id=current_user.id).exists():  # type: ignore
             return Response({'error': 'Username already exists'}, status=400)
         
+        # Check for credential reuse (temporarily disabled to fix fetch errors)
+        # from .models import CredentialHistory
+        
+        # # Check username reuse
+        # if CredentialHistory.check_reuse('username', new_username, current_user.id):
+        #     return Response({'error': 'Username has been used before. Please choose a different username.'}, status=400)
+        
+        # # Check password reuse
+        # if CredentialHistory.check_reuse('password', new_password, current_user.id):
+        #     return Response({'error': 'Password has been used before. Please choose a different password.'}, status=400)
+        
         # Update username and password
         current_user.username = new_username
         current_user.set_password(new_password)
         current_user.save()
+        
+        # Record the new credentials (temporarily disabled)
+        # CredentialHistory.record_credential('username', new_username, current_user.id)
+        # CredentialHistory.record_credential('password', new_password, current_user.id)
         
         # Update session with new username
         request.session['username'] = new_username
@@ -681,9 +705,14 @@ def login_view(request):
         
         if login_attempt.is_locked_out():
             remaining_time = login_attempt.get_remaining_lock_time()
-            return Response({
-                'error': 'Access denied. You have tried 3 times, the maximum number of attempts has been reached. Please wait for 10 minutes before trying again.'
-            }, status=429)
+            if login_attempt.failed_attempts >= 6:
+                return Response({
+                    'error': f'Maximum attempts reached. Please try again in the next 24 hours.'
+                }, status=429)
+            else:
+                return Response({
+                    'error': f'Maximum attempts reached. Please try again in the next 30 minutes.'
+                }, status=429)
 
         # 1. Try executive login (Credential model)
         try:
@@ -721,10 +750,14 @@ def login_view(request):
         # Record failed attempt
         login_attempt.record_failed_attempt()
         
-        # Check if this was the 3rd failed attempt
-        if login_attempt.failed_attempts >= 3:
+        # Check if this was the 3rd or 6th failed attempt
+        if login_attempt.failed_attempts >= 6:
             return Response({
-                'error': 'Access denied. You have tried 3 times, the maximum number of attempts has been reached. Please wait for 10 minutes before trying again.'
+                'error': 'Maximum attempts reached. Please try again in the next 24 hours.'
+            }, status=429)
+        elif login_attempt.failed_attempts >= 3:
+            return Response({
+                'error': 'Maximum attempts reached. Please try again in the next 30 minutes.'
             }, status=429)
         
         # Return generic error for failed attempts
@@ -1289,9 +1322,14 @@ def change_pin(request):
         
         if pin_attempt.is_locked_out():
             remaining_time = pin_attempt.get_remaining_lock_time()
-            return Response({
-                'error': 'Access denied. You have tried 3 times, the maximum number of attempts has been reached. Please wait for 10 minutes before trying again.'
-            }, status=429)
+            if pin_attempt.failed_attempts >= 6:
+                return Response({
+                    'error': 'Maximum attempts reached. Please try again in the next 24 hours.'
+                }, status=429)
+            else:
+                return Response({
+                    'error': 'Maximum attempts reached. Please try again in the next 30 minutes.'
+                }, status=429)
         
         # Verify current PIN
         is_valid = SecurityPIN.verify_pin(current_pin)
@@ -1300,10 +1338,14 @@ def change_pin(request):
             # Record failed PIN attempt
             pin_attempt.record_failed_attempt()
             
-            # Check if this was the 3rd failed attempt
-            if pin_attempt.failed_attempts >= 3:
+            # Check if this was the 3rd or 6th failed attempt
+            if pin_attempt.failed_attempts >= 6:
                 return Response({
-                    'error': 'Access denied. You have tried 3 times, the maximum number of attempts has been reached. Please wait for 10 minutes before trying again.'
+                    'error': 'Maximum attempts reached. Please try again in the next 24 hours.'
+                }, status=429)
+            elif pin_attempt.failed_attempts >= 3:
+                return Response({
+                    'error': 'Maximum attempts reached. Please try again in the next 30 minutes.'
                 }, status=429)
             
             # Return generic error for failed attempts
@@ -1315,9 +1357,21 @@ def change_pin(request):
         # Reset failed attempts on successful PIN verification
         pin_attempt.reset_attempts()
         
+        # Check for PIN reuse (temporarily disabled)
+        # from .models import CredentialHistory
+        
+        # # Get current user ID (assuming admin user)
+        # admin_user_id = 1  # Default admin user ID, adjust as needed
+        
+        # if CredentialHistory.check_reuse('pin', new_pin, admin_user_id):
+        #     return Response({'error': 'PIN has been used before. Please choose a different PIN.'}, status=400)
+        
         # Deactivate current PIN and create new one
         SecurityPIN.objects.filter(is_active=True).update(is_active=False)
         SecurityPIN.objects.create(pin=new_pin, is_active=True)
+        
+        # Record the new PIN (temporarily disabled)
+        # CredentialHistory.record_credential('pin', new_pin, admin_user_id)
         
         return Response({'message': 'PIN changed successfully'})
     return Response(serializer.errors, status=400)
@@ -1471,10 +1525,11 @@ def clear_all_data(request):
         return Response({'error': f'Failed to clear data: {str(e)}'}, status=500)
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def get_all_users(request):
     """Get list of all users (admin only) for credential management"""
-    user_id = request.session.get('user_id')
+    # Get user from JWT token
+    user_id = request.user.id
     
     if not user_id:
         return Response({'error': 'Authentication required'}, status=401)

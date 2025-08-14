@@ -1,8 +1,8 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Toaster } from 'react-hot-toast';
-import { MeetingDateProvider } from '@components/MeetingDateContext';
-import AutoLogoutWrapper from '../components/AutoLogoutWrapper';
+import { Toaster } from "react-hot-toast";
+import { MeetingDateProvider } from "@components/MeetingDateContext";
+import AutoLogoutWrapper from "../components/AutoLogoutWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,37 +17,21 @@ const geistMono = Geist_Mono({
 export const metadata = {
   title: "YPG Attendance App",
   description: "Ahinsan District YPG Attendance Management System",
-  'Cache-Control': 'no-cache, no-store, must-revalidate',
-  'Pragma': 'no-cache',
-  'Expires': '0',
+  "Cache-Control": "no-cache, no-store, must-revalidate",
+  Pragma: "no-cache",
+  Expires: "0",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
-        <meta httpEquiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+        <meta
+          httpEquiv="Cache-Control"
+          content="no-cache, no-store, must-revalidate"
+        />
         <meta httpEquiv="Pragma" content="no-cache" />
         <meta httpEquiv="Expires" content="0" />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              // Prevent browser from caching pages
-              if (typeof window !== 'undefined') {
-                window.addEventListener('pageshow', function(event) {
-                  if (event.persisted) {
-                    window.location.reload();
-                  }
-                });
-                
-                // Force home page on refresh if on login page
-                if (window.location.pathname === '/login') {
-                  window.location.href = '/';
-                }
-              }
-            `,
-          }}
-        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

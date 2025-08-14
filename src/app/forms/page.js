@@ -18,10 +18,10 @@ const NoMeetingToast = ({ onClose }) => {
       setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(interval);
-          setTimeout(onClose, 500); // Close after animation completes
+          setTimeout(onClose, 500);
           return 100;
         }
-        return prev + 2; // Increment by 2% every 100ms for 5 second duration
+        return prev + 2;
       });
     }, 100);
 
@@ -98,15 +98,13 @@ export default function MeetingPage() {
     }
   }, []);
 
-  // Only admin and user roles are supported
   const allowedRoles = ["admin", "user"];
 
   useEffect(() => {
     if (!loggedIn) {
       router.replace("/");
     }
-    // Remove the check that only shows set meeting form for admin
-    // Always allow showing the set meeting form for both admin and user
+    
     setLoadingMeeting(true);
     const token = localStorage.getItem("access_token");
     fetch(`${API_URL}/api/current-meeting`, {
@@ -132,12 +130,11 @@ export default function MeetingPage() {
       });
   }, [loggedIn, userRole, router]);
 
-  // Don't render anything until login state is confirmed
+  
   if (!loggedIn || userRole === null) {
     return null;
   }
 
-  // Only show MeetingDateForm if user clicks 'Manage Meeting'
   if (showMeetingForm) {
     return (
       <MeetingDateForm
@@ -147,7 +144,6 @@ export default function MeetingPage() {
     );
   }
 
-  // Always show MainApp after login, regardless of meeting state
   return (
     <MainApp
       activeTab={activeTab}

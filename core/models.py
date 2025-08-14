@@ -206,14 +206,19 @@ class LoginAttempt(models.Model):
         return attempt
     
     def record_failed_attempt(self):
-        """Record a failed login attempt"""
+        """Record a failed login attempt with progressive blocking"""
         self.failed_attempts += 1
         self.last_failed_attempt = timezone.now()
         
-        # Lock after 3 failed attempts for 10 minutes
-        if self.failed_attempts >= 3:
+        # Progressive blocking system
+        if self.failed_attempts >= 6:
+            # After 6 failed attempts, block for 24 hours
             self.is_locked = True
-            self.lock_expires_at = timezone.now() + timezone.timedelta(minutes=10)
+            self.lock_expires_at = timezone.now() + timezone.timedelta(hours=24)
+        elif self.failed_attempts >= 3:
+            # After 3 failed attempts, block for 30 minutes
+            self.is_locked = True
+            self.lock_expires_at = timezone.now() + timezone.timedelta(minutes=30)
         
         self.save()
     
@@ -248,3 +253,70 @@ class LoginAttempt(models.Model):
             return 0
         
         return int(remaining.total_seconds() / 60)
+
+# --- Credential History Model for Reuse Prevention ---
+class CredentialHistory(models.Model):
+    """Track used credentials to prevent reuse"""
+    credential_type = models.CharField(max_length=20, choices=[
+        ('username', 'Username'),
+        ('password', 'Password'),
+        ('pin', 'PIN'),
+    ])
+    credential_value = models.CharField(max_length=255)  # Hashed for passwords
+    user_id = models.IntegerField()  # ID of the user who used this credential
+    used_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)  # Current credential is active
+    
+    class Meta:
+        unique_together = ['credential_type', 'credential_value', 'user_id']
+        indexes = [
+            models.Index(fields=['credential_type', 'user_id']),
+        ]
+    
+    def __str__(self):
+        return f"{self.credential_type} for user {self.user_id} at {self.used_at}"
+    
+    @classmethod
+    def check_reuse(cls, credential_type, credential_value, user_id):
+        """Check if credential has been used before by this user"""
+        if credential_type == 'password':
+            # For passwords, we need to check against hashed values
+            from django.contrib.auth.hashers import make_password
+            hashed_value = make_password(credential_value)
+            return cls.objects.filter(
+                credential_type=credential_type,
+                credential_value=hashed_value,
+                user_id=user_id
+            ).exists()
+        else:
+            # For username and PIN, check exact match
+            return cls.objects.filter(
+                credential_type=credential_type,
+                credential_value=credential_value,
+                user_id=user_id
+            ).exists()
+    
+    @classmethod
+    def record_credential(cls, credential_type, credential_value, user_id):
+        """Record a new credential usage"""
+        if credential_type == 'password':
+            # Hash password before storing
+            from django.contrib.auth.hashers import make_password
+            hashed_value = make_password(credential_value)
+        else:
+            hashed_value = credential_value
+        
+        # Deactivate previous active credential of same type for this user
+        cls.objects.filter(
+            credential_type=credential_type,
+            user_id=user_id,
+            is_active=True
+        ).update(is_active=False)
+        
+        # Create new record
+        cls.objects.create(
+            credential_type=credential_type,
+            credential_value=hashed_value,
+            user_id=user_id,
+            is_active=True
+        )

@@ -17,14 +17,7 @@ export function toTitleCase(str) {
     .join(' ');
 }
 
-/**
- * Validates password according to specific requirements:
- * - Exactly 8 characters
- * - At least 1 uppercase letter
- * - At least 1 lowercase letter
- * - At least 1 number
- * - At least 1 special character
- */
+
 export function validatePassword(password) {
   // Check exact length of 8 characters
   if (password.length !== 8) {

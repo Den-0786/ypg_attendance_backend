@@ -1,11 +1,11 @@
-'use client';
-import { useRouter } from 'next/navigation'; 
-import { useAuthStore } from '@components/store/authStore';
-import { toast } from 'react-hot-toast';
-import { useState, useEffect, useRef } from 'react';
-import { useMeetingDate } from '../MeetingDateContext';
+"use client";
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "@components/store/authStore";
+import { toast } from "react-hot-toast";
+import { useState, useEffect, useRef } from "react";
+import { useMeetingDate } from "../MeetingDateContext";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 // Custom toast component for no meeting notification
 const NoMeetingToast = ({ onClose }) => {
@@ -13,7 +13,7 @@ const NoMeetingToast = ({ onClose }) => {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setProgress(prev => {
+      setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(interval);
           setTimeout(onClose, 500); // Close after animation completes
@@ -31,8 +31,16 @@ const NoMeetingToast = ({ onClose }) => {
       <div className="flex items-start space-x-3">
         <div className="flex-shrink-0">
           <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            <svg
+              className="w-4 h-4 text-white"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                clipRule="evenodd"
+              />
             </svg>
           </div>
         </div>
@@ -45,7 +53,7 @@ const NoMeetingToast = ({ onClose }) => {
           </p>
           {/* Progress bar */}
           <div className="mt-3 bg-blue-200 dark:bg-blue-700 rounded-full h-1">
-            <div 
+            <div
               className="bg-blue-500 h-1 rounded-full transition-all duration-100 ease-linear"
               style={{ width: `${progress}%` }}
             />
@@ -56,7 +64,11 @@ const NoMeetingToast = ({ onClose }) => {
           className="flex-shrink-0 text-blue-400 hover:text-blue-600 dark:hover:text-blue-300"
         >
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+            <path
+              fillRule="evenodd"
+              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+              clipRule="evenodd"
+            />
           </svg>
         </button>
       </div>
@@ -64,11 +76,11 @@ const NoMeetingToast = ({ onClose }) => {
   );
 };
 
-const TOKEN_KEY = 'access_token';
-const REFRESH_KEY = 'refresh_token';
+const TOKEN_KEY = "access_token";
+const REFRESH_KEY = "refresh_token";
 
 export function useAuth() {
-  const router = useRouter(); 
+  const router = useRouter();
   const store = useAuthStore();
   const loggedIn = store.loggedIn;
   const setLoggedIn = store.setLoggedIn;
@@ -76,7 +88,9 @@ export function useAuth() {
   const setMeetingSet = store.setMeetingSet;
   const userRole = store.userRole;
   const meetingSet = store.meetingSet;
-  const { setMeetingDate, setMeetingTitle } = useMeetingDate ? useMeetingDate() : { setMeetingDate: () => {}, setMeetingTitle: () => {} };
+  const { setMeetingDate, setMeetingTitle } = useMeetingDate
+    ? useMeetingDate()
+    : { setMeetingDate: () => {}, setMeetingTitle: () => {} };
 
   const [loading, setLoading] = useState(true);
 
@@ -84,47 +98,50 @@ export function useAuth() {
     try {
       // Check if API_URL is set
       if (!API_URL) {
-        console.error('API_URL is not set. Please check your environment variables.');
-        throw new Error('API_URL not configured');
+        console.error(
+          "API_URL is not set. Please check your environment variables."
+        );
+        throw new Error("API_URL not configured");
       }
       const token = localStorage.getItem(TOKEN_KEY);
       const res = await fetch(`${API_URL}/api/session-status`, {
         headers: {
-          'Accept': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : undefined,
-        }
+          Accept: "application/json",
+          Authorization: token ? `Bearer ${token}` : undefined,
+        },
       });
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}: ${res.statusText}`);
       }
       const data = await res.json();
       if (data.loggedIn) {
-        if (typeof setLoggedIn === 'function') {
+        if (typeof setLoggedIn === "function") {
           setLoggedIn(true);
         }
-        if (typeof setUserRole === 'function') {
+        if (typeof setUserRole === "function") {
           setUserRole(data.role);
         }
       } else {
-        if (typeof setLoggedIn === 'function') {
+        if (typeof setLoggedIn === "function") {
           setLoggedIn(false);
         }
-        if (typeof setUserRole === 'function') {
+        if (typeof setUserRole === "function") {
           setUserRole(null);
         }
       }
     } catch (err) {
-      console.error('Session check failed:', err);
+      console.error("Session check failed:", err);
       // Don't automatically set loggedIn to false on network errors
       // Only set to false if we get a clear response that user is not logged in
-      if (err.message.includes('401') || err.message.includes('403')) {
-        if (typeof setLoggedIn === 'function') {
+      if (err.message.includes("401") || err.message.includes("403")) {
+        if (typeof setLoggedIn === "function") {
           setLoggedIn(false);
         }
-        if (typeof setUserRole === 'function') {
+        if (typeof setUserRole === "function") {
           setUserRole(null);
         }
       }
+      // Don't show error toast for session checks - they're expected to fail when not logged in
     } finally {
       setLoading(false);
     }
@@ -133,35 +150,35 @@ export function useAuth() {
   const handleLogout = async () => {
     try {
       await fetch(`${API_URL}/api/logout`, {
-        method: 'POST',
-        credentials: 'include'
+        method: "POST",
+        credentials: "include",
       });
-      toast.success('Logged out successfully');
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('hasShownNoMeetingToast');
+      toast.success("Logged out successfully");
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("hasShownNoMeetingToast");
         localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(REFRESH_KEY);
       }
     } catch (err) {
-      console.error('Logout error:', err);
-      toast.error('Logout failed');
+      console.error("Logout error:", err);
+      toast.error("Logout failed");
     } finally {
-      if (typeof setLoggedIn === 'function') {
+      if (typeof setLoggedIn === "function") {
         setLoggedIn(false);
       }
-      if (typeof setUserRole === 'function') {
+      if (typeof setUserRole === "function") {
         setUserRole(null);
       }
-      router.replace('/');
+      router.replace("/");
     }
   };
 
   const handleLogin = async (username, password) => {
     try {
       const res = await fetch(`${API_URL}/api/token`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ username, password }),
       });
@@ -169,77 +186,86 @@ export function useAuth() {
       if (res.ok && data.access) {
         localStorage.setItem(TOKEN_KEY, data.access);
         localStorage.setItem(REFRESH_KEY, data.refresh);
-        if (typeof setLoggedIn === 'function') {
+        if (typeof setLoggedIn === "function") {
           setLoggedIn(true);
         }
-        // Get role from session-status endpoint
-        let role = 'user';
-        try {
-          const sessionRes = await fetch(`${API_URL}/api/session-status`, {
-            headers: {
-              'Authorization': `Bearer ${data.access}`,
-              'Accept': 'application/json',
-            },
-          });
-          if (sessionRes.ok) {
-            const sessionData = await sessionRes.json();
-            if (sessionData.role) {
-              role = sessionData.role;
-              if (typeof setUserRole === 'function') {
-                setUserRole(role);
-              }
-            }
+
+        // Get role directly from token response (no need for second API call)
+        let role = "user";
+        if (data.user && data.user.role) {
+          role = data.user.role;
+          if (typeof setUserRole === "function") {
+            setUserRole(role);
           }
-        } catch (e) {
-          // fallback to default role
         }
-        toast.success('Login successful');
+
+        toast.success("Login successful");
         // Redirect based on role
-        if (role === 'admin') {
-          router.replace('/dashboard');
+        if (role === "admin") {
+          router.replace("/dashboard");
         } else {
-          router.replace('/forms');
+          router.replace("/forms");
         }
         return role;
       } else {
         // Handle different types of error responses
         if (res.status === 429) {
           // Rate limited - show the specific error message
-          toast.error(data.error || 'Too many login attempts. Please wait before trying again.');
+          toast.error(
+            data.error ||
+              "Too many login attempts. Please wait before trying again."
+          );
         } else {
           // Regular login error
-          toast.error(data.error || data.detail || 'Invalid credentials');
+          toast.error(data.error || data.detail || "Invalid credentials");
         }
-        const error = new Error(data.error || data.detail || 'Invalid credentials');
+        const error = new Error(
+          data.error || data.detail || "Invalid credentials"
+        );
         error.isLoginError = true;
         throw error;
       }
     } catch (err) {
-      toast.error('Login failed. Please try again.');
+      toast.error("Login failed. Please try again.");
       err.isLoginError = true;
       throw err;
     }
   };
 
   useEffect(() => {
-    checkSession();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Only check session if we're not on the login page
+    if (
+      typeof window !== "undefined" &&
+      !window.location.pathname.includes("/login")
+    ) {
+      checkSession();
+    } else {
+      setLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return { loggedIn, userRole, loading, handleLogout, handleLogin, checkSession };
+  return {
+    loggedIn,
+    userRole,
+    loading,
+    handleLogout,
+    handleLogin,
+    checkSession,
+  };
 }
 
 // Utility: fetch with JWT refresh
 export async function fetchWithAuth(url, options = {}, logoutCallback) {
-  const TOKEN_KEY = 'access_token';
-  const REFRESH_KEY = 'refresh_token';
+  const TOKEN_KEY = "access_token";
+  const REFRESH_KEY = "refresh_token";
   let access = localStorage.getItem(TOKEN_KEY);
   let refresh = localStorage.getItem(REFRESH_KEY);
 
   // Helper to actually do the fetch
   async function doFetch(token) {
     const headers = { ...(options.headers || {}) };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
+    if (token) headers["Authorization"] = `Bearer ${token}`;
     return fetch(url, { ...options, headers });
   }
 
@@ -249,8 +275,8 @@ export async function fetchWithAuth(url, options = {}, logoutCallback) {
   // Try refresh if 401 and refresh token exists
   if (refresh) {
     const refreshRes = await fetch(`${API_URL}/api/token/refresh`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refresh }),
     });
     if (refreshRes.ok) {
@@ -264,13 +290,13 @@ export async function fetchWithAuth(url, options = {}, logoutCallback) {
       }
     } else {
       // Refresh failed, log out
-      if (typeof logoutCallback === 'function') logoutCallback();
+      if (typeof logoutCallback === "function") logoutCallback();
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(REFRESH_KEY);
     }
   } else {
     // No refresh token, log out
-    if (typeof logoutCallback === 'function') logoutCallback();
+    if (typeof logoutCallback === "function") logoutCallback();
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(REFRESH_KEY);
   }

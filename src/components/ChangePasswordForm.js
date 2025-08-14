@@ -1,14 +1,24 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { FaEye, FaEyeSlash, FaSave, FaTimes, FaUsers, FaCrown } from "react-icons/fa";
+import {
+  FaEye,
+  FaEyeSlash,
+  FaSave,
+  FaTimes,
+  FaUsers,
+  FaCrown,
+} from "react-icons/fa";
 import toast from "react-hot-toast";
 import PasswordInput from "./PasswordInput";
 import { getPasswordStrength } from "../lib/utils";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
-export default function ChangePasswordForm({ onClose, currentUser: propCurrentUser }) {
+export default function ChangePasswordForm({
+  onClose,
+  currentUser: propCurrentUser,
+}) {
   const [formData, setFormData] = useState({
     currentUsername: "",
     currentPassword: "",
@@ -33,7 +43,7 @@ export default function ChangePasswordForm({ onClose, currentUser: propCurrentUs
   const [currentUser, setCurrentUser] = useState(propCurrentUser || null);
   const [isNewPasswordValid, setIsNewPasswordValid] = useState(false);
   const [pinStatus, setPinStatus] = useState(null);
-  const [activeTab, setActiveTab] = useState('credentials');
+  const [activeTab, setActiveTab] = useState("credentials");
   const [users, setUsers] = useState([]);
   const [selectedTargetUser, setSelectedTargetUser] = useState(null);
   const [isAdminMode, setIsAdminMode] = useState(false);
@@ -41,24 +51,28 @@ export default function ChangePasswordForm({ onClose, currentUser: propCurrentUs
   useEffect(() => {
     if (propCurrentUser) {
       setCurrentUser(propCurrentUser);
-      if (propCurrentUser.role === 'admin') {
+      if (propCurrentUser.role === "admin") {
         fetchAllUsers();
       }
     } else {
       fetchCurrentUser();
     }
     checkPINStatus();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [propCurrentUser]);
 
   const fetchCurrentUser = async () => {
     try {
+      const token = localStorage.getItem("access_token");
       const response = await fetch(`${API_URL}/api/session-status`, {
-        credentials: 'include'
+        headers: {
+          Authorization: token ? `Bearer ${token}` : undefined,
+          Accept: "application/json",
+        },
       });
       const data = await response.json();
       setCurrentUser(data);
-      if (data.role === 'admin') {
+      if (data.role === "admin") {
         fetchAllUsers();
       }
     } catch (err) {
@@ -68,55 +82,64 @@ export default function ChangePasswordForm({ onClose, currentUser: propCurrentUs
 
   const fetchAllUsers = async () => {
     try {
+      const token = localStorage.getItem("access_token");
       const response = await fetch(`${API_URL}/api/get-all-users`, {
-        credentials: 'include'
+        headers: {
+          Authorization: token ? `Bearer ${token}` : undefined,
+          Accept: "application/json",
+        },
       });
       const data = await response.json();
-      
+
       if (response.ok) {
         // Sort users: admin first, then others
         const sortedUsers = data.users.sort((a, b) => {
-          if (a.role === 'admin' && b.role !== 'admin') return -1;
-          if (a.role !== 'admin' && b.role === 'admin') return 1;
+          if (a.role === "admin" && b.role !== "admin") return -1;
+          if (a.role !== "admin" && b.role === "admin") return 1;
           return a.username.localeCompare(b.username);
         });
         setUsers(sortedUsers);
       } else {
-        console.error('Failed to fetch users:', data.error);
+        console.error("Failed to fetch users:", data.error);
       }
     } catch (err) {
+      console.error("Failed to fetch users:", err);
       setUsers([]);
     }
   };
 
   const checkPINStatus = async () => {
     try {
+      const token = localStorage.getItem("access_token");
       const response = await fetch(`${API_URL}/api/pin/status/`, {
-        credentials: 'include'
+        headers: {
+          Authorization: token ? `Bearer ${token}` : undefined,
+          Accept: "application/json",
+        },
       });
       const data = await response.json();
-      setPinStatus(data.pin_setup ? 'exists' : 'not_setup');
+      setPinStatus(data.pin_setup ? "exists" : "not_setup");
     } catch (err) {
-      console.error('Error checking PIN status:', err);
-      setPinStatus('not_setup');
+      console.error("Error checking PIN status:", err);
+      setPinStatus("not_setup");
     }
   };
 
   const setupInitialPIN = async (pin) => {
     try {
       const response = await fetch(`${API_URL}/api/pin/setup/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pin }),
       });
       const data = await response.json();
       if (data.message) {
-        setPinStatus('exists');
+        setPinStatus("exists");
       }
     } catch (err) {
-      console.error('Error setting PIN:', err);
-      toast.error('Network error occurred');
-      setPinStatus('not_setup');
+      console.error("Error setting PIN:", err);
+      toast.error("Network error occurred");
+      setPinStatus("not_setup");
     }
   };
 
@@ -127,8 +150,8 @@ export default function ChangePasswordForm({ onClose, currentUser: propCurrentUs
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (activeTab === 'credentials') {
+
+    if (activeTab === "credentials") {
       if (formData.newPassword !== formData.confirmPassword) {
         toast.error("New passwords do not match");
         return;
@@ -157,12 +180,12 @@ export default function ChangePasswordForm({ onClose, currentUser: propCurrentUs
           requestBody.target_user_id = selectedTargetUser.id;
         }
 
-        const token = localStorage.getItem('access_token');
+        const token = localStorage.getItem("access_token");
         const response = await fetch(`${API_URL}/api/change-credentials`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": token ? `Bearer ${token}` : undefined,
+            Authorization: token ? `Bearer ${token}` : undefined,
           },
           body: JSON.stringify(requestBody),
         });
@@ -170,9 +193,10 @@ export default function ChangePasswordForm({ onClose, currentUser: propCurrentUs
         const data = await response.json();
 
         if (response.ok) {
-          const successMessage = isAdminMode && selectedTargetUser 
-            ? `Successfully updated credentials for ${data.updated_user?.username || selectedTargetUser.username}`
-            : "Credentials changed successfully";
+          const successMessage =
+            isAdminMode && selectedTargetUser
+              ? `Successfully updated credentials for ${data.updated_user?.username || selectedTargetUser.username}`
+              : "Credentials changed successfully";
           toast.success(successMessage);
           setFormData({
             currentUsername: "",
@@ -191,7 +215,10 @@ export default function ChangePasswordForm({ onClose, currentUser: propCurrentUs
           // Handle different types of error responses
           if (response.status === 429) {
             // Rate limited - show the specific error message
-            toast.error(data.error || "Too many PIN attempts. Please wait before trying again.");
+            toast.error(
+              data.error ||
+                "Too many PIN attempts. Please wait before trying again."
+            );
           } else {
             // Regular error
             toast.error(data.error || "Failed to change credentials");
@@ -232,13 +259,21 @@ export default function ChangePasswordForm({ onClose, currentUser: propCurrentUs
 
         if (response.ok) {
           toast.success("PIN changed successfully");
-          setFormData(prev => ({ ...prev, newPIN: "", confirmPIN: "", currentPIN: "" }));
+          setFormData((prev) => ({
+            ...prev,
+            newPIN: "",
+            confirmPIN: "",
+            currentPIN: "",
+          }));
           onClose();
         } else {
           // Handle different types of error responses
           if (response.status === 429) {
             // Rate limited - show the specific error message
-            toast.error(data.error || "Too many PIN attempts. Please wait before trying again.");
+            toast.error(
+              data.error ||
+                "Too many PIN attempts. Please wait before trying again."
+            );
           } else {
             // Regular PIN error
             toast.error(data.error || "Failed to change PIN");
@@ -254,9 +289,9 @@ export default function ChangePasswordForm({ onClose, currentUser: propCurrentUs
   };
 
   const togglePasswordVisibility = (field) => {
-    setShowPasswords(prev => ({
+    setShowPasswords((prev) => ({
       ...prev,
-      [field]: !prev[field]
+      [field]: !prev[field],
     }));
   };
 
@@ -271,7 +306,7 @@ export default function ChangePasswordForm({ onClose, currentUser: propCurrentUs
   const handleUserSelect = (user) => {
     setSelectedTargetUser(user);
     setIsAdminMode(true);
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       currentUsername: user.username,
       newUsername: user.username,
@@ -289,7 +324,7 @@ export default function ChangePasswordForm({ onClose, currentUser: propCurrentUs
   }, [formData.newPassword, passwordStrength.isValid]);
 
   // Only show for admins
-  if (currentUser && currentUser.role !== 'admin') {
+  if (currentUser && currentUser.role !== "admin") {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
         <div className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-sm shadow-xl">
@@ -322,21 +357,22 @@ export default function ChangePasswordForm({ onClose, currentUser: propCurrentUs
             {pinStatus === null ? (
               <div className="text-center py-4">
                 <div className="inline-block w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mb-2"></div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Checking PIN status...</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Checking PIN status...
+                </p>
               </div>
             ) : (
               <>
                 <h2 className="text-lg font-bold mb-2 text-center text-blue-700 dark:text-blue-300">
-                  {pinStatus === 'not_setup' ? 'Setup PIN' : 'Enter PIN'}
+                  {pinStatus === "not_setup" ? "Setup PIN" : "Enter PIN"}
                 </h2>
                 <p className="text-gray-500 dark:text-gray-300 mb-4 text-center text-sm">
-                  {pinStatus === 'not_setup' 
-                    ? 'Setup a 4-digit PIN for credential changes' 
-                    : 'Enter 4-digit PIN to access credential change'
-                  }
+                  {pinStatus === "not_setup"
+                    ? "Setup a 4-digit PIN for credential changes"
+                    : "Enter 4-digit PIN to access credential change"}
                 </p>
-                
-                <PINInput 
+
+                <PINInput
                   onSuccess={handlePINSuccess}
                   onCancel={handleClose}
                   pinStatus={pinStatus}
@@ -378,17 +414,25 @@ export default function ChangePasswordForm({ onClose, currentUser: propCurrentUs
                       className="w-full text-left p-1.5 bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 hover:bg-blue-50 dark:hover:bg-gray-600 transition"
                     >
                       <div className="flex items-center gap-2">
-                        <div className={`w-5 h-5 text-white rounded-full flex items-center justify-center text-xs font-bold ${
-                          user.role === 'admin' ? 'bg-purple-500' : 'bg-blue-500'
-                        }`}>
-                          {user.role === 'admin' ? <FaCrown className="text-xs" /> : user.username.charAt(0).toUpperCase()}
+                        <div
+                          className={`w-5 h-5 text-white rounded-full flex items-center justify-center text-xs font-bold ${
+                            user.role === "admin"
+                              ? "bg-purple-500"
+                              : "bg-blue-500"
+                          }`}
+                        >
+                          {user.role === "admin" ? (
+                            <FaCrown className="text-xs" />
+                          ) : (
+                            user.username.charAt(0).toUpperCase()
+                          )}
                         </div>
                         <div>
                           <p className="text-xs font-medium text-gray-900 dark:text-white">
                             {user.username}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {user.role === 'admin' ? 'Administrator' : 'User'}
+                            {user.role === "admin" ? "Administrator" : "User"}
                           </p>
                         </div>
                       </div>
@@ -402,7 +446,11 @@ export default function ChangePasswordForm({ onClose, currentUser: propCurrentUs
             {isAdminMode && selectedTargetUser && (
               <div className="mb-2 p-1.5 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-700">
                 <p className="text-xs text-blue-700 dark:text-blue-300">
-                  <strong>Managing:</strong> {selectedTargetUser.username} ({selectedTargetUser.role === 'admin' ? 'Administrator' : 'User'})
+                  <strong>Managing:</strong> {selectedTargetUser.username} (
+                  {selectedTargetUser.role === "admin"
+                    ? "Administrator"
+                    : "User"}
+                  )
                 </p>
               </div>
             )}
@@ -411,22 +459,22 @@ export default function ChangePasswordForm({ onClose, currentUser: propCurrentUs
             <div className="flex gap-1 mb-2 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
               <button
                 type="button"
-                onClick={() => setActiveTab('credentials')}
+                onClick={() => setActiveTab("credentials")}
                 className={`flex-1 px-2 py-1 text-xs rounded-md transition ${
-                  activeTab === 'credentials'
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  activeTab === "credentials"
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                 }`}
               >
                 Username/Password
               </button>
               <button
                 type="button"
-                onClick={() => setActiveTab('pin')}
+                onClick={() => setActiveTab("pin")}
                 className={`flex-1 px-2 py-1 text-xs rounded-md transition ${
-                  activeTab === 'pin'
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  activeTab === "pin"
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                 }`}
               >
                 PIN
@@ -434,7 +482,7 @@ export default function ChangePasswordForm({ onClose, currentUser: propCurrentUs
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-1.5">
-              {activeTab === 'credentials' ? (
+              {activeTab === "credentials" ? (
                 <>
                   <div>
                     <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -443,7 +491,12 @@ export default function ChangePasswordForm({ onClose, currentUser: propCurrentUs
                     <input
                       type="text"
                       value={formData.currentUsername}
-                      onChange={(e) => setFormData(prev => ({ ...prev, currentUsername: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          currentUsername: e.target.value,
+                        }))
+                      }
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 dark:text-white text-sm bg-gray-50 dark:bg-gray-700"
                       placeholder="Current username"
                       required
@@ -458,14 +511,19 @@ export default function ChangePasswordForm({ onClose, currentUser: propCurrentUs
                       <input
                         type={showPasswords.current ? "text" : "password"}
                         value={formData.currentPassword}
-                        onChange={(e) => setFormData(prev => ({ ...prev, currentPassword: e.target.value }))}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            currentPassword: e.target.value,
+                          }))
+                        }
                         className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 dark:text-white text-sm bg-gray-50 dark:bg-gray-700"
                         placeholder="Current password"
                         required
                       />
                       <button
                         type="button"
-                        onClick={() => togglePasswordVisibility('current')}
+                        onClick={() => togglePasswordVisibility("current")}
                         className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                       >
                         {showPasswords.current ? <FaEye /> : <FaEyeSlash />}
@@ -480,7 +538,12 @@ export default function ChangePasswordForm({ onClose, currentUser: propCurrentUs
                     <input
                       type="text"
                       value={formData.newUsername}
-                      onChange={(e) => setFormData(prev => ({ ...prev, newUsername: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          newUsername: e.target.value,
+                        }))
+                      }
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 dark:text-white text-sm bg-gray-50 dark:bg-gray-700"
                       placeholder="New username"
                       required
@@ -495,20 +558,25 @@ export default function ChangePasswordForm({ onClose, currentUser: propCurrentUs
                       <input
                         type={showPasswords.new ? "text" : "password"}
                         value={formData.newPassword}
-                        onChange={(e) => setFormData(prev => ({ ...prev, newPassword: e.target.value }))}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            newPassword: e.target.value,
+                          }))
+                        }
                         className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 dark:text-white text-sm bg-gray-50 dark:bg-gray-700"
                         placeholder="New password"
                         required
                       />
                       <button
                         type="button"
-                        onClick={() => togglePasswordVisibility('new')}
+                        onClick={() => togglePasswordVisibility("new")}
                         className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                       >
                         {showPasswords.new ? <FaEye /> : <FaEyeSlash />}
                       </button>
                     </div>
-                    
+
                     {/* Password Strength Indicator */}
                     {formData.newPassword && (
                       <div className="mt-1">
@@ -520,29 +588,38 @@ export default function ChangePasswordForm({ onClose, currentUser: propCurrentUs
                                 className={`h-1.5 flex-1 rounded ${
                                   passwordStrength.score >= level
                                     ? passwordStrength.score <= 2
-                                      ? 'bg-red-500'
+                                      ? "bg-red-500"
                                       : passwordStrength.score <= 3
-                                      ? 'bg-yellow-500'
-                                      : passwordStrength.score <= 4
-                                      ? 'bg-green-400'
-                                      : 'bg-green-600'
-                                    : 'bg-gray-300 dark:bg-gray-600'
+                                        ? "bg-yellow-500"
+                                        : passwordStrength.score <= 4
+                                          ? "bg-green-400"
+                                          : "bg-green-600"
+                                    : "bg-gray-300 dark:bg-gray-600"
                                 }`}
                               />
                             ))}
                           </div>
-                          <span className={`text-xs font-medium ${
-                            passwordStrength.score <= 2 ? 'text-red-600' :
-                            passwordStrength.score <= 3 ? 'text-yellow-600' :
-                            passwordStrength.score <= 4 ? 'text-green-500' :
-                            'text-green-700'
-                          }`}>
+                          <span
+                            className={`text-xs font-medium ${
+                              passwordStrength.score <= 2
+                                ? "text-red-600"
+                                : passwordStrength.score <= 3
+                                  ? "text-yellow-600"
+                                  : passwordStrength.score <= 4
+                                    ? "text-green-500"
+                                    : "text-green-700"
+                            }`}
+                          >
                             {passwordStrength.score}/5
                           </span>
                         </div>
-                        <p className={`text-xs ${
-                          passwordStrength.isValid ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-                        }`}>
+                        <p
+                          className={`text-xs ${
+                            passwordStrength.isValid
+                              ? "text-green-600 dark:text-green-400"
+                              : "text-red-600 dark:text-red-400"
+                          }`}
+                        >
                           {passwordStrength.message}
                         </p>
                       </div>
@@ -557,17 +634,22 @@ export default function ChangePasswordForm({ onClose, currentUser: propCurrentUs
                       <input
                         type={showPasswords.confirm ? "text" : "password"}
                         value={formData.confirmPassword}
-                        onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            confirmPassword: e.target.value,
+                          }))
+                        }
                         className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 dark:text-white text-sm bg-gray-50 dark:bg-gray-700"
                         placeholder="Confirm new password"
                         required
                       />
                       <button
                         type="button"
-                        onClick={() => togglePasswordVisibility('confirm')}
+                        onClick={() => togglePasswordVisibility("confirm")}
                         className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                       >
-                        {showPasswords.confirm ? <FaEye/> : < FaEyeSlash/>}
+                        {showPasswords.confirm ? <FaEye /> : <FaEyeSlash />}
                       </button>
                     </div>
                   </div>
@@ -609,8 +691,13 @@ export default function ChangePasswordForm({ onClose, currentUser: propCurrentUs
                     <div className="relative">
                       <input
                         type={showPasswords.currentPin ? "text" : "password"}
-                        value={formData.currentPIN || ''}
-                        onChange={(e) => setFormData(prev => ({ ...prev, currentPIN: e.target.value }))}
+                        value={formData.currentPIN || ""}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            currentPIN: e.target.value,
+                          }))
+                        }
                         className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 dark:text-white text-sm bg-gray-50 dark:bg-gray-700"
                         placeholder="Enter current 4-digit PIN"
                         maxLength={4}
@@ -618,7 +705,7 @@ export default function ChangePasswordForm({ onClose, currentUser: propCurrentUs
                       />
                       <button
                         type="button"
-                        onClick={() => togglePasswordVisibility('currentPin')}
+                        onClick={() => togglePasswordVisibility("currentPin")}
                         className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                       >
                         {showPasswords.currentPin ? <FaEyeSlash /> : <FaEye />}
@@ -633,7 +720,12 @@ export default function ChangePasswordForm({ onClose, currentUser: propCurrentUs
                       <input
                         type={showPasswords.pin ? "text" : "password"}
                         value={formData.newPIN}
-                        onChange={(e) => setFormData(prev => ({ ...prev, newPIN: e.target.value }))}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            newPIN: e.target.value,
+                          }))
+                        }
                         className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 dark:text-white text-sm bg-gray-50 dark:bg-gray-700"
                         placeholder="4-digit PIN"
                         maxLength={4}
@@ -641,7 +733,7 @@ export default function ChangePasswordForm({ onClose, currentUser: propCurrentUs
                       />
                       <button
                         type="button"
-                        onClick={() => togglePasswordVisibility('pin')}
+                        onClick={() => togglePasswordVisibility("pin")}
                         className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                       >
                         {showPasswords.pin ? <FaEyeSlash /> : <FaEye />}
@@ -656,7 +748,12 @@ export default function ChangePasswordForm({ onClose, currentUser: propCurrentUs
                       <input
                         type={showPasswords.confirmPin ? "text" : "password"}
                         value={formData.confirmPIN}
-                        onChange={(e) => setFormData(prev => ({ ...prev, confirmPIN: e.target.value }))}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            confirmPIN: e.target.value,
+                          }))
+                        }
                         className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 dark:text-white text-sm bg-gray-50 dark:bg-gray-700"
                         placeholder="Confirm 4-digit PIN"
                         maxLength={4}
@@ -664,7 +761,7 @@ export default function ChangePasswordForm({ onClose, currentUser: propCurrentUs
                       />
                       <button
                         type="button"
-                        onClick={() => togglePasswordVisibility('confirmPin')}
+                        onClick={() => togglePasswordVisibility("confirmPin")}
                         className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                       >
                         {showPasswords.confirmPin ? <FaEyeSlash /> : <FaEye />}
@@ -710,19 +807,19 @@ export default function ChangePasswordForm({ onClose, currentUser: propCurrentUs
 
 // PIN Input Component
 function PINInput({ onSuccess, onCancel, pinStatus, onSetupPIN }) {
-  const [pin, setPin] = useState('');
+  const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (pin.length !== 4) {
-      toast.error('PIN must be 4 digits');
+      toast.error("PIN must be 4 digits");
       return;
     }
 
     setLoading(true);
     try {
-      if (pinStatus === 'not_setup') {
+      if (pinStatus === "not_setup") {
         // Setup initial PIN
         const success = await onSetupPIN(pin);
         if (success) {
@@ -731,29 +828,32 @@ function PINInput({ onSuccess, onCancel, pinStatus, onSetupPIN }) {
       } else {
         // Verify existing PIN
         const res = await fetch(`${API_URL}/api/pin/verify/`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify({ pin }),
         });
 
         const data = await res.json();
-        
+
         if (res.ok && data.is_valid) {
           onSuccess();
         } else {
           // Handle different types of error responses
           if (res.status === 429) {
             // Rate limited - show the specific error message
-            toast.error(data.error || 'Too many PIN attempts. Please wait before trying again.');
+            toast.error(
+              data.error ||
+                "Too many PIN attempts. Please wait before trying again."
+            );
           } else {
             // Regular PIN error
-            toast.error(data.error || 'Invalid PIN');
+            toast.error(data.error || "Invalid PIN");
           }
         }
       }
     } catch (err) {
-      toast.error('Failed to verify PIN');
+      toast.error("Failed to verify PIN");
     } finally {
       setLoading(false);
     }
@@ -770,11 +870,13 @@ function PINInput({ onSuccess, onCancel, pinStatus, onSetupPIN }) {
       return (
         <span className="flex items-center gap-1">
           <span className="inline-block w-3 h-3 border-2 border-white border-t-blue-500 rounded-full animate-spin"></span>
-          <span>{pinStatus === 'not_setup' ? 'Setting up...' : 'Verifying...'}</span>
+          <span>
+            {pinStatus === "not_setup" ? "Setting up..." : "Verifying..."}
+          </span>
         </span>
       );
     }
-    return pinStatus === 'not_setup' ? 'Setup PIN' : 'Verify PIN';
+    return pinStatus === "not_setup" ? "Setup PIN" : "Verify PIN";
   };
 
   return (
@@ -790,10 +892,10 @@ function PINInput({ onSuccess, onCancel, pinStatus, onSetupPIN }) {
           maxLength={4}
           autoFocus
           disabled={loading}
-          style={{ letterSpacing: '0.2em' }}
+          style={{ letterSpacing: "0.2em" }}
         />
       </div>
-      
+
       <div className="flex gap-2 mt-3">
         <button
           type="button"
@@ -813,4 +915,4 @@ function PINInput({ onSuccess, onCancel, pinStatus, onSetupPIN }) {
       </div>
     </form>
   );
-} 
+}
