@@ -164,7 +164,7 @@ export default function Page() {
       </div>
 
       {/* Simple login button */}
-      <div className="relative bottom-[9rem] z-20 flex flex-col items-center pb-0 ">
+      <div className="relative bottom-[9rem] lg:bottom-[4rem] z-20 flex flex-col items-center pb-0 ">
         <button
           className="px-8 py-2 bg-blue-600 hover:bg-blue-700 text-white text-base font-semibold rounded-full shadow-lg transition-colors"
           onClick={() => router.push("/login")}
