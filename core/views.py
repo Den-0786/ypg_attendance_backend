@@ -1259,50 +1259,54 @@ def audit_log_list(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def verify_pin(request):
-    pin = request.data.get('pin')
-    
-    if not pin:
-        return Response({'error': 'PIN is required'}, status=400)
-    
-    # Get client IP for tracking PIN attempts
-    client_ip = request.META.get('REMOTE_ADDR', 'unknown')
-    
-    # Check for PIN attempt limits
-    from .models import LoginAttempt
-    pin_attempt = LoginAttempt.get_or_create_attempt(client_ip, 'pin')
-    
-    if pin_attempt.is_locked_out():
-        remaining_time = pin_attempt.get_remaining_lock_time()
-        return Response({
-            'error': 'Access denied. You have tried 3 times, the maximum number of attempts has been reached. Please wait for 10 minutes before trying again.'
-        }, status=429)
-    
-    is_valid = SecurityPIN.verify_pin(pin)
-    
-    if is_valid:
-        # Reset failed attempts on successful PIN verification
-        pin_attempt.reset_attempts()
+    try:
+        pin = request.data.get('pin')
         
-        serializer = PINVerificationSerializer(data={'pin': pin, 'is_valid': is_valid})
-        if serializer.is_valid():
-            return Response(serializer.data)
-        else:
-            return Response(serializer.errors, status=400)
-    else:
-        # Record failed PIN attempt
-        pin_attempt.record_failed_attempt()
+        if not pin:
+            return Response({'error': 'PIN is required'}, status=400)
         
-        # Check if this was the 3rd failed attempt
-        if pin_attempt.failed_attempts >= 3:
+        # Get client IP for tracking PIN attempts
+        client_ip = request.META.get('REMOTE_ADDR', 'unknown')
+        
+        # Check for PIN attempt limits
+        from .models import LoginAttempt
+        pin_attempt = LoginAttempt.get_or_create_attempt(client_ip, 'pin')
+        
+        if pin_attempt.is_locked_out():
+            remaining_time = pin_attempt.get_remaining_lock_time()
             return Response({
                 'error': 'Access denied. You have tried 3 times, the maximum number of attempts has been reached. Please wait for 10 minutes before trying again.'
             }, status=429)
         
-        # Return generic error for failed attempts
-        attempts_remaining = 3 - pin_attempt.failed_attempts
-        return Response({
-            'error': f'Invalid PIN. {attempts_remaining} attempts remaining.'
-        }, status=400)
+        is_valid = SecurityPIN.verify_pin(pin)
+        
+        if is_valid:
+            # Reset failed attempts on successful PIN verification
+            pin_attempt.reset_attempts()
+            
+            serializer = PINVerificationSerializer(data={'pin': pin, 'is_valid': is_valid})
+            if serializer.is_valid():
+                return Response(serializer.data)
+            else:
+                return Response(serializer.errors, status=400)
+        else:
+            # Record failed PIN attempt
+            pin_attempt.record_failed_attempt()
+            
+            # Check if this was the 3rd failed attempt
+            if pin_attempt.failed_attempts >= 3:
+                return Response({
+                    'error': 'Access denied. You have tried 3 times, the maximum number of attempts has been reached. Please wait for 10 minutes before trying again.'
+                }, status=429)
+            
+            # Return generic error for failed attempts
+            attempts_remaining = 3 - pin_attempt.failed_attempts
+            return Response({
+                'error': f'Invalid PIN. {attempts_remaining} attempts remaining.'
+            }, status=400)
+    except Exception as e:
+        logger.error(f"Error in verify_pin: {str(e)}")
+        return Response({'error': 'Internal server error'}, status=500)
 
 @api_view(['POST'])
 @permission_classes([AllowAny])

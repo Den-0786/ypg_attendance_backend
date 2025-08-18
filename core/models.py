@@ -167,12 +167,18 @@ class SecurityPIN(models.Model):
     @classmethod
     def verify_pin(cls, pin):
         """Verify if the provided PIN matches the active PIN"""
-        active_pin = cls.objects.filter(is_active=True).first()
-        if not active_pin:
+        try:
+            active_pin = cls.objects.filter(is_active=True).first()
+            if not active_pin:
+                return False
+            
+            result = active_pin.pin == pin
+            return result
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error in SecurityPIN.verify_pin: {str(e)}")
             return False
-        
-        result = active_pin.pin == pin
-        return result
 
 # --- Login Attempt Tracking Model ---
 class LoginAttempt(models.Model):
