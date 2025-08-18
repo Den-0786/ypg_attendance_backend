@@ -1419,6 +1419,9 @@ def change_pin(request):
         # CredentialHistory.record_credential('pin', new_pin, admin_user_id)
         
         return Response({'message': 'PIN changed successfully'})
+    except Exception as e:
+        logger.error(f"Error in change_pin: {str(e)}")
+        return Response({'error': 'Internal server error'}, status=500)
     return Response(serializer.errors, status=400)
 
 @api_view(['GET'])
