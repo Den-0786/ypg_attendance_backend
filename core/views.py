@@ -1265,24 +1265,35 @@ def verify_pin(request):
         if not pin:
             return Response({'error': 'PIN is required'}, status=400)
         
-        # Get client IP for tracking PIN attempts
-        client_ip = request.META.get('REMOTE_ADDR', 'unknown')
-        
-        # Check for PIN attempt limits
-        from .models import LoginAttempt
-        pin_attempt = LoginAttempt.get_or_create_attempt(client_ip, 'pin')
-        
-        if pin_attempt.is_locked_out():
-            remaining_time = pin_attempt.get_remaining_lock_time()
-            return Response({
-                'error': 'Access denied. You have tried 3 times, the maximum number of attempts has been reached. Please wait for 10 minutes before trying again.'
-            }, status=429)
+        # Temporarily disable LoginAttempt tracking to avoid migration issues
+        # TODO: Re-enable once LoginAttempt migration is applied in production
+        try:
+            # Get client IP for tracking PIN attempts
+            client_ip = request.META.get('REMOTE_ADDR', 'unknown')
+            
+            # Check for PIN attempt limits
+            from .models import LoginAttempt
+            pin_attempt = LoginAttempt.get_or_create_attempt(client_ip, 'pin')
+            
+            if pin_attempt.is_locked_out():
+                remaining_time = pin_attempt.get_remaining_lock_time()
+                return Response({
+                    'error': 'Access denied. You have tried 3 times, the maximum number of attempts has been reached. Please wait for 10 minutes before trying again.'
+                }, status=429)
+        except Exception as e:
+            # If LoginAttempt table doesn't exist, continue without tracking
+            logger.warning(f"LoginAttempt tracking disabled: {str(e)}")
+            pin_attempt = None
         
         is_valid = SecurityPIN.verify_pin(pin)
         
         if is_valid:
             # Reset failed attempts on successful PIN verification
-            pin_attempt.reset_attempts()
+            if pin_attempt:
+                try:
+                    pin_attempt.reset_attempts()
+                except Exception as e:
+                    logger.warning(f"Could not reset attempts: {str(e)}")
             
             serializer = PINVerificationSerializer(data={'pin': pin, 'is_valid': is_valid})
             if serializer.is_valid():
@@ -1291,18 +1302,27 @@ def verify_pin(request):
                 return Response(serializer.errors, status=400)
         else:
             # Record failed PIN attempt
-            pin_attempt.record_failed_attempt()
+            if pin_attempt:
+                try:
+                    pin_attempt.record_failed_attempt()
+                    
+                    # Check if this was the 3rd failed attempt
+                    if pin_attempt.failed_attempts >= 3:
+                        return Response({
+                            'error': 'Access denied. You have tried 3 times, the maximum number of attempts has been reached. Please wait for 10 minutes before trying again.'
+                        }, status=429)
+                    
+                    # Return generic error for failed attempts
+                    attempts_remaining = 3 - pin_attempt.failed_attempts
+                    return Response({
+                        'error': f'Invalid PIN. {attempts_remaining} attempts remaining.'
+                    }, status=400)
+                except Exception as e:
+                    logger.warning(f"Could not record failed attempt: {str(e)}")
             
-            # Check if this was the 3rd failed attempt
-            if pin_attempt.failed_attempts >= 3:
-                return Response({
-                    'error': 'Access denied. You have tried 3 times, the maximum number of attempts has been reached. Please wait for 10 minutes before trying again.'
-                }, status=429)
-            
-            # Return generic error for failed attempts
-            attempts_remaining = 3 - pin_attempt.failed_attempts
+            # Fallback error message if LoginAttempt tracking fails
             return Response({
-                'error': f'Invalid PIN. {attempts_remaining} attempts remaining.'
+                'error': 'Invalid PIN.'
             }, status=400)
     except Exception as e:
         logger.error(f"Error in verify_pin: {str(e)}")
@@ -1312,54 +1332,75 @@ def verify_pin(request):
 @permission_classes([AllowAny])
 def change_pin(request):
     """Change the security PIN"""
-    serializer = PINChangeSerializer(data=request.data)
-    if serializer.is_valid():
-        current_pin = serializer.validated_data['current_pin']
-        new_pin = serializer.validated_data['new_pin']
-        
-        # Get client IP for tracking PIN attempts
-        client_ip = request.META.get('REMOTE_ADDR', 'unknown')
-        
-        # Check for PIN attempt limits
-        from .models import LoginAttempt
-        pin_attempt = LoginAttempt.get_or_create_attempt(client_ip, 'pin')
-        
-        if pin_attempt.is_locked_out():
-            remaining_time = pin_attempt.get_remaining_lock_time()
-            if pin_attempt.failed_attempts >= 6:
-                return Response({
-                    'error': 'Maximum attempts reached. Please try again in the next 24 hours.'
-                }, status=429)
-            else:
-                return Response({
-                    'error': 'Maximum attempts reached. Please try again in the next 30 minutes.'
-                }, status=429)
-        
-        # Verify current PIN
-        is_valid = SecurityPIN.verify_pin(current_pin)
-        
-        if not is_valid:
-            # Record failed PIN attempt
-            pin_attempt.record_failed_attempt()
+    try:
+        serializer = PINChangeSerializer(data=request.data)
+        if serializer.is_valid():
+            current_pin = serializer.validated_data['current_pin']
+            new_pin = serializer.validated_data['new_pin']
             
-            # Check if this was the 3rd or 6th failed attempt
-            if pin_attempt.failed_attempts >= 6:
-                return Response({
-                    'error': 'Maximum attempts reached. Please try again in the next 24 hours.'
-                }, status=429)
-            elif pin_attempt.failed_attempts >= 3:
-                return Response({
-                    'error': 'Maximum attempts reached. Please try again in the next 30 minutes.'
-                }, status=429)
+            # Temporarily disable LoginAttempt tracking to avoid migration issues
+            # TODO: Re-enable once LoginAttempt migration is applied in production
+            try:
+                # Get client IP for tracking PIN attempts
+                client_ip = request.META.get('REMOTE_ADDR', 'unknown')
+                
+                # Check for PIN attempt limits
+                from .models import LoginAttempt
+                pin_attempt = LoginAttempt.get_or_create_attempt(client_ip, 'pin')
+                
+                if pin_attempt.is_locked_out():
+                    remaining_time = pin_attempt.get_remaining_lock_time()
+                    if pin_attempt.failed_attempts >= 6:
+                        return Response({
+                            'error': 'Maximum attempts reached. Please try again in the next 24 hours.'
+                        }, status=429)
+                    else:
+                        return Response({
+                            'error': 'Maximum attempts reached. Please try again in the next 30 minutes.'
+                        }, status=429)
+            except Exception as e:
+                # If LoginAttempt table doesn't exist, continue without tracking
+                logger.warning(f"LoginAttempt tracking disabled in change_pin: {str(e)}")
+                pin_attempt = None
             
-            # Return generic error for failed attempts
-            attempts_remaining = 3 - pin_attempt.failed_attempts
-            return Response({
-                'error': f'Current PIN is incorrect. {attempts_remaining} attempts remaining.'
-            }, status=400)
-        
-        # Reset failed attempts on successful PIN verification
-        pin_attempt.reset_attempts()
+            # Verify current PIN
+            is_valid = SecurityPIN.verify_pin(current_pin)
+            
+            if not is_valid:
+                # Record failed PIN attempt
+                if pin_attempt:
+                    try:
+                        pin_attempt.record_failed_attempt()
+                        
+                        # Check if this was the 3rd or 6th failed attempt
+                        if pin_attempt.failed_attempts >= 6:
+                            return Response({
+                                'error': 'Maximum attempts reached. Please try again in the next 24 hours.'
+                            }, status=429)
+                        elif pin_attempt.failed_attempts >= 3:
+                            return Response({
+                                'error': 'Maximum attempts reached. Please try again in the next 30 minutes.'
+                            }, status=429)
+                        
+                        # Return generic error for failed attempts
+                        attempts_remaining = 3 - pin_attempt.failed_attempts
+                        return Response({
+                            'error': f'Current PIN is incorrect. {attempts_remaining} attempts remaining.'
+                        }, status=400)
+                    except Exception as e:
+                        logger.warning(f"Could not record failed attempt in change_pin: {str(e)}")
+                
+                # Fallback error message if LoginAttempt tracking fails
+                return Response({
+                    'error': 'Current PIN is incorrect.'
+                }, status=400)
+            
+            # Reset failed attempts on successful PIN verification
+            if pin_attempt:
+                try:
+                    pin_attempt.reset_attempts()
+                except Exception as e:
+                    logger.warning(f"Could not reset attempts in change_pin: {str(e)}")
         
         # Check for PIN reuse (temporarily disabled)
         # from .models import CredentialHistory
