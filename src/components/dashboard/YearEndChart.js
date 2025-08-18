@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import {
   BarChart,
   Bar,
@@ -37,7 +37,6 @@ export default function YearEndChart({ attendanceData, darkMode }) {
   useEffect(() => {
     // Always process data to show all congregations, even if no attendance data
     extractAvailableYears();
-    processData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [attendanceData, selectedYear]);
 
@@ -45,7 +44,7 @@ export default function YearEndChart({ attendanceData, darkMode }) {
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
-        tooltipRef.current && 
+        tooltipRef.current &&
         !tooltipRef.current.contains(event.target) &&
         !chartContainerRef.current?.contains(event.target)
       ) {
@@ -54,9 +53,9 @@ export default function YearEndChart({ attendanceData, darkMode }) {
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
@@ -84,7 +83,7 @@ export default function YearEndChart({ attendanceData, darkMode }) {
     }
   };
 
-  const processData = () => {
+  const processData = useMemo(() => {
     // Get current date
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
@@ -130,11 +129,11 @@ export default function YearEndChart({ attendanceData, darkMode }) {
     const data = congregationsList.map((congregation) => {
       const monthlyData = congregationMap.get(congregation);
 
-// sourcery skip: inline-immediately-returned-variable
+      // sourcery skip: inline-immediately-returned-variable
       const barData = {
         congregation: congregation,
         // Each month gets its own data point for the bar - fill up to current month
-// sourcery skip: flip-comparison
+        // sourcery skip: flip-comparison
         january: selectedYear === currentYear && 0 <= currentMonth ? 1 : 0,
         february: selectedYear === currentYear && 1 <= currentMonth ? 1 : 0,
         march: selectedYear === currentYear && 2 <= currentMonth ? 1 : 0,
@@ -175,13 +174,10 @@ export default function YearEndChart({ attendanceData, darkMode }) {
       (a, b) => parseFloat(b.attendanceRate) - parseFloat(a.attendanceRate)
     );
 
-    // Only set chart data if we have attendance data or if this is the initial load
-    if (attendanceData?.length > 0 || chartData.length === 0) {
-      setChartData(data);
-    }
-  };
+    return data;
+  }, [attendanceData, selectedYear]);
 
-  const getBarColor = (monthIndex, data) => {
+  const getBarColor = useCallback((monthIndex, data) => {
     // Check if this month has attendance data
     const hasAttendance =
       data.monthlyAttendance && data.monthlyAttendance[monthIndex] > 0;
@@ -202,97 +198,100 @@ export default function YearEndChart({ attendanceData, darkMode }) {
         "#14B8A6", // Teal - November
         "#F43F5E", // Rose - December
       ];
-// sourcery skip: inline-immediately-returned-variable
+      // sourcery skip: inline-immediately-returned-variable
       const color = attendanceColors[monthIndex];
       return color;
     } else {
       // Ash/Gray for months with no attendance (instead of black)
-// sourcery skip: inline-immediately-returned-variable
+      // sourcery skip: inline-immediately-returned-variable
       const color = "#D1D5DB"; // Light gray/ash color
       return color;
     }
-  };
+  }, []);
 
   // Custom top-centered modal for hovered bar
-  const TopCenterTooltip = ({ data, label }) => {
-    if (!data) return null;
-    const currentDate = new Date();
-    const currentYear = currentDate.getFullYear();
-    const currentMonth = currentDate.getMonth();
-    return (
-      <div
-        ref={tooltipRef}
-        style={{
-          position: "absolute",
-          left: "50%",
-          top: 0,
-          transform: "translateX(-50%)",
-          zIndex: 50,
-          width: "min(320px, 95vw)",
-          pointerEvents: "auto",
-        }}
-        className={
-          "p-4 rounded-xl shadow-2xl border backdrop-blur-sm bg-gray-900 border-gray-700 text-white mt-2"
-        }
-        onMouseEnter={() => setTooltipHovered(true)}
-        onMouseLeave={() => setTooltipHovered(false)}
-      >
-        <p className="font-bold text-lg mb-3 text-center">{label}</p>
-        
-        <div className="space-y-2 text-sm">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-gray-400">Total Meetings</p>
-              <p className="font-semibold text-lg">{data.totalMeetings}</p>
+  const TopCenterTooltip = useCallback(
+    ({ data, label }) => {
+      if (!data) return null;
+      const currentDate = new Date();
+      const currentYear = currentDate.getFullYear();
+      const currentMonth = currentDate.getMonth();
+      return (
+        <div
+          ref={tooltipRef}
+          style={{
+            position: "absolute",
+            left: "50%",
+            top: 0,
+            transform: "translateX(-50%)",
+            zIndex: 50,
+            width: "min(320px, 95vw)",
+            pointerEvents: "auto",
+          }}
+          className={
+            "p-4 rounded-xl shadow-2xl border backdrop-blur-sm bg-gray-900 border-gray-700 text-white mt-2"
+          }
+          onMouseEnter={() => setTooltipHovered(true)}
+          onMouseLeave={() => setTooltipHovered(false)}
+        >
+          <p className="font-bold text-lg mb-3 text-center">{label}</p>
+
+          <div className="space-y-2 text-sm">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-gray-400">Total Meetings</p>
+                <p className="font-semibold text-lg">{data.totalMeetings}</p>
+              </div>
+              <div>
+                <p className="text-gray-400">Full Year Rate</p>
+                <p className="font-semibold text-lg">{data.attendanceRate}%</p>
+              </div>
             </div>
-            <div>
-              <p className="text-gray-400">Full Year Rate</p>
-              <p className="font-semibold text-lg">{data.attendanceRate}%</p>
-            </div>
-          </div>
-          <div className="mt-3 pt-3 border-t border-gray-700">
-            <p className="text-xs text-gray-400 mb-2">Monthly Breakdown:</p>
-            <div className="grid grid-cols-4 gap-1">
-              {months.map((month, index) => {
-                const hasAttendance =
-                  data.monthlyAttendance && data.monthlyAttendance[index] > 0;
-                const isCurrentMonth =
-                  selectedYear === currentYear && index === currentMonth;
-                const isFutureMonth =
-                  selectedYear === currentYear && index > currentMonth;
-                return (
-                  <div key={month} className="flex items-center gap-1">
-                    <div
-                      className={`w-2 h-2 rounded-full ${
-                        hasAttendance
-                          ? "bg-green-500"
-                          : isFutureMonth
-                            ? "bg-gray-600"
-                            : "bg-gray-600"
-                      }`}
-                    />
-                    <span
-                      className={`text-xs ${
-                        isCurrentMonth
-                          ? "font-bold text-blue-400"
-                          : isFutureMonth
-                            ? "text-gray-500"
-                            : "text-gray-300"
-                      }`}
-                    >
-                      {month.slice(0, 3)}
-                    </span>
-                  </div>
-                );
-              })}
+            <div className="mt-3 pt-3 border-t border-gray-700">
+              <p className="text-xs text-gray-400 mb-2">Monthly Breakdown:</p>
+              <div className="grid grid-cols-4 gap-1">
+                {months.map((month, index) => {
+                  const hasAttendance =
+                    data.monthlyAttendance && data.monthlyAttendance[index] > 0;
+                  const isCurrentMonth =
+                    selectedYear === currentYear && index === currentMonth;
+                  const isFutureMonth =
+                    selectedYear === currentYear && index > currentMonth;
+                  return (
+                    <div key={month} className="flex items-center gap-1">
+                      <div
+                        className={`w-2 h-2 rounded-full ${
+                          hasAttendance
+                            ? "bg-green-500"
+                            : isFutureMonth
+                              ? "bg-gray-600"
+                              : "bg-gray-600"
+                        }`}
+                      />
+                      <span
+                        className={`text-xs ${
+                          isCurrentMonth
+                            ? "font-bold text-blue-400"
+                            : isFutureMonth
+                              ? "text-gray-500"
+                              : "text-gray-300"
+                        }`}
+                      >
+                        {month.slice(0, 3)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    );
-  };
+      );
+    },
+    [selectedYear]
+  );
 
-  const exportData = () => {
+  const exportData = useCallback(() => {
     const csvContent = [
       [
         "Congregation",
@@ -302,7 +301,7 @@ export default function YearEndChart({ attendanceData, darkMode }) {
         "Absent Months",
         ...months,
       ],
-      ...chartData.map((data) => {
+      ...processData.map((data) => {
         const presentMonths = months.filter(
           (month) => data[month.toLowerCase()] === 1
         ).length;
@@ -331,9 +330,9 @@ export default function YearEndChart({ attendanceData, darkMode }) {
     a.click();
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
-  };
+  }, [processData, selectedYear]);
 
-  if (!chartData.length) {
+  if (!processData.length) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 md:p-6">
         <div className="flex justify-center items-center h-64">
@@ -378,13 +377,13 @@ export default function YearEndChart({ attendanceData, darkMode }) {
         <div className="min-w-[700px]">
           <ResponsiveContainer width="100%" height={500}>
             <BarChart
-              data={chartData}
+              data={processData}
               layout="horizontal"
               margin={{
                 top: 20,
                 right: 20,
                 left: 0,
-                bottom: chartData.length > 5 ? 100 : 60,
+                bottom: processData.length > 5 ? 100 : 60,
               }}
               barGap={4}
               barCategoryGap={12}
@@ -401,7 +400,7 @@ export default function YearEndChart({ attendanceData, darkMode }) {
                 fontSize={8}
                 angle={-45}
                 textAnchor="end"
-                height={chartData.length > 5 ? 140 : 100}
+                height={processData.length > 5 ? 140 : 100}
                 interval={0}
                 tick={{ fontSize: 8 }}
                 axisLine={true}
@@ -428,7 +427,7 @@ export default function YearEndChart({ attendanceData, darkMode }) {
               />
               {/* Hide default tooltip */}
               <Tooltip content={() => null} />
-              
+
               {months.map((month, monthIndex) => (
                 <Bar
                   key={month}
@@ -436,24 +435,16 @@ export default function YearEndChart({ attendanceData, darkMode }) {
                   barSize={8}
                   radius={[2, 2, 2, 2]}
                   stackId="a"
-                  onMouseOver={(_, barIndex) => {
-                    // Find the data for the hovered bar
-                    const barData = chartData[barIndex];
-                    setHoveredBar({
-                      data: barData,
-                      label: barData.congregation,
-                    });
-                  }}
                   onMouseEnter={(_, barIndex) => {
                     // Immediate response on mouse enter
-                    const barData = chartData[barIndex];
+                    const barData = processData[barIndex];
                     setHoveredBar({
                       data: barData,
                       label: barData.congregation,
                     });
                   }}
                 >
-                  {chartData.map((entry, index) => (
+                  {processData.map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
                       fill={getBarColor(monthIndex, entry)}
@@ -495,13 +486,13 @@ export default function YearEndChart({ attendanceData, darkMode }) {
           <p>• Each bar shows congregation attendance for {selectedYear}</p>
           <p>• All 9 congregations displayed with monthly segments</p>
         </div>
-        
-        {chartData.length > 0 && (
+
+        {processData.length > 0 && (
           <div className="mt-3 sm:mt-4 p-2 sm:p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 text-center text-xs">
               <div>
                 <p className="font-semibold text-gray-900 dark:text-white text-sm">
-                  {chartData.length}
+                  {processData.length}
                 </p>
                 <p className="text-gray-600 dark:text-gray-400 text-xs">
                   Congregations
@@ -509,7 +500,10 @@ export default function YearEndChart({ attendanceData, darkMode }) {
               </div>
               <div>
                 <p className="font-semibold text-gray-900 dark:text-white text-sm">
-                  {chartData.reduce((sum, data) => sum + data.totalMeetings, 0)}
+                  {processData.reduce(
+                    (sum, data) => sum + data.totalMeetings,
+                    0
+                  )}
                 </p>
                 <p className="text-gray-600 dark:text-gray-400 text-xs">
                   Meetings
@@ -518,10 +512,10 @@ export default function YearEndChart({ attendanceData, darkMode }) {
               <div>
                 <p className="font-semibold text-gray-900 dark:text-white text-sm">
                   {(
-                    chartData.reduce(
+                    processData.reduce(
                       (sum, data) => sum + parseFloat(data.attendanceRate),
                       0
-                    ) / chartData.length
+                    ) / processData.length
                   ).toFixed(1)}
                   %
                 </p>
@@ -532,7 +526,7 @@ export default function YearEndChart({ attendanceData, darkMode }) {
               <div>
                 <p className="font-semibold text-gray-900 dark:text-white text-sm">
                   {
-                    chartData.filter(
+                    processData.filter(
                       (data) => parseFloat(data.attendanceRate) === 100
                     ).length
                   }
