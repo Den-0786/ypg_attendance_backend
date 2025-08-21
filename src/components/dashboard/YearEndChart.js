@@ -201,7 +201,6 @@ export default function YearEndChart({ attendanceData, darkMode }) {
         (item) => item.congregation === label
       );
 
-     
       const isMobile = window.innerWidth < 768;
 
       let tooltipPosition = "center";

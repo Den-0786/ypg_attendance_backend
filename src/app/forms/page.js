@@ -9,7 +9,7 @@ import { toast } from "react-hot-toast";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
-// Custom toast component for no meeting notification (same as in useAuth)
+
 const NoMeetingToast = ({ onClose }) => {
   const [progress, setProgress] = useState(0);
 
