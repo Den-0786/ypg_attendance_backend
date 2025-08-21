@@ -21,7 +21,6 @@ export default function LoginPage() {
     }
   }, []);
 
-
   const setLoggedIn = store.setLoggedIn;
   const setUserRole = store.setUserRole;
   const setMeetingSet = store.setMeetingSet;
@@ -76,5 +75,12 @@ export default function LoginPage() {
     );
   }
 
-  return <LoginForm onLogin={onLogin} />;
+  return (
+    <div className="relative">
+      <LoginForm onLogin={onLogin} />
+      {loginLoading && (
+        <div className="absolute inset-0 z-50 bg-gradient-to-br from-sky-500/10 via-blue-600/10 to-cyan-600/10 backdrop-blur-md" />
+      )}
+    </div>
+  );
 }

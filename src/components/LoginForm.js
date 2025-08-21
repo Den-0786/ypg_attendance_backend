@@ -23,21 +23,6 @@ export default function LoginForm({ onLogin }) {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-400 via-blue-500 to-cyan-600 p-4 relative overflow-hidden">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 bg-gradient-to-br from-sky-400 via-blue-500 to-cyan-600 animate-pulse opacity-20"></div>
-      <div className="absolute top-0 left-0 w-72 h-72 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
-      <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
-      <div className="absolute -bottom-8 left-20 w-72 h-72 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
-
-      {isLoading && (
-        <div className="absolute inset-0 backdrop-blur-md bg-gradient-to-br from-sky-500/10 via-blue-600/10 to-cyan-600/10 flex items-center justify-center z-20">
-          <div className="bg-white/10 rounded-xl px-6 py-4 border border-white/20 shadow-xl text-white flex items-center">
-            <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent mr-3"></div>
-            Signing in...
-          </div>
-        </div>
-      )}
-
       <div className="w-full max-w-sm relative z-10">
         <div className="backdrop-blur-lg bg-white/10 rounded-3xl p-8 shadow-2xl border border-white/20">
           <div className="text-center mb-8">
