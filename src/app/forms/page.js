@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@components/hooks/useAuth";
 import { useMeetingDate } from "@components/MeetingDateContext";
-import MeetingDateForm from "@components/MeetingDateForm";
+import MeetingConfigForm from "@components/MeetingConfigForm";
 import MainApp from "@components/MainApp";
 import { toast } from "react-hot-toast";
 
@@ -137,9 +137,8 @@ export default function MeetingPage() {
 
   if (showMeetingForm) {
     return (
-      <MeetingDateForm
-        onClose={() => setShowMeetingForm(false)}
-        onMeetingSet={() => setShowMeetingForm(false)}
+      <MeetingConfigForm
+        onMeetingConfigured={() => setShowMeetingForm(false)}
       />
     );
   }

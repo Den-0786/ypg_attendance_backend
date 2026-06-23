@@ -89,7 +89,8 @@ export default function DashboardLocal({
 
   // Filter attendance data by selected year
   const filteredAttendanceData = attendanceData.filter((entry) => {
-    if (!entry.meeting_date || !selectedYear) return false;
+    if (!entry.meeting_date) return false;
+    if (!selectedYear) return true; // Show all data if no year selected
     const entryYear = new Date(entry.meeting_date).getFullYear();
     return entryYear === selectedYear;
   });
@@ -110,7 +111,8 @@ export default function DashboardLocal({
 
   // Filter combined data by selected year
   const filteredData = combinedData.filter((entry) => {
-    if (!entry.meeting_date || !selectedYear) return false;
+    if (!entry.meeting_date) return false;
+    if (!selectedYear) return true; // Show all data if no year selected
     const entryYear = new Date(entry.meeting_date).getFullYear();
     return entryYear === selectedYear;
   });
@@ -120,7 +122,7 @@ export default function DashboardLocal({
   filteredData.forEach((entry) => {
     if (showType === "attendance" && isApologyEntry(entry)) return;
     if (showType === "apology" && !isApologyEntry(entry)) return;
-    if (entry.type !== "district") {
+    if (entry.type === "local") {
       const cong = entry.congregation;
       const meeting = entry.meeting_title
         ? toTitleCase(entry.meeting_title)
@@ -136,7 +138,7 @@ export default function DashboardLocal({
   filteredData.forEach((entry) => {
     if (showType === "attendance" && isApologyEntry(entry)) return;
     if (showType === "apology" && !isApologyEntry(entry)) return;
-    if (entry.type !== "district") {
+    if (entry.type === "local") {
       if (!summary[entry.congregation]) {
         summary[entry.congregation] = [];
       }

@@ -107,8 +107,15 @@ class PasswordResetToken(models.Model):
         return f"{self.user.username} - {self.token}"
 
 class Meeting(models.Model):
+    MEETING_TYPE_CHOICES = [
+        ('general', 'General Meeting'),
+        ('council', 'Council Meeting'),
+        ('emergency', 'Emergency Meeting'),
+    ]
     title = models.CharField(max_length=200)
     date = models.DateField()
+    meeting_type = models.CharField(max_length=20, choices=MEETING_TYPE_CHOICES, default='general')
+    custom_participant_limit = models.IntegerField(null=True, blank=True, help_text="Custom limit per local. If null, uses default: General=5, Council=2, Emergency=unlimited")
     is_active = models.BooleanField(default=True)
     login_username = models.CharField(max_length=150)
     login_password = models.CharField(max_length=128)  # stores hashed password

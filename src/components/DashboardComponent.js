@@ -274,19 +274,19 @@ export default function Dashboard({ onLogout }) {
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
-        showSidebar && 
-        isMobile && 
-        sidebarRef.current && 
+        showSidebar &&
+        isMobile &&
+        sidebarRef.current &&
         !sidebarRef.current.contains(event.target) &&
-        !event.target.closest('.sidebar-toggle-button') // Don't close if clicking the toggle button
+        !event.target.closest(".sidebar-toggle-button") // Don't close if clicking the toggle button
       ) {
         setShowSidebar(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showSidebar, isMobile]);
 
@@ -414,6 +414,22 @@ export default function Dashboard({ onLogout }) {
     };
 
     fetchAllData();
+  }, []);
+
+  // Listen for data changes from forms
+  useEffect(() => {
+    const handleDataChange = () => {
+      fetchAttendance();
+      fetchApologies();
+    };
+
+    window.addEventListener("attendanceDataChanged", handleDataChange);
+    window.addEventListener("apologyDataChanged", handleDataChange);
+
+    return () => {
+      window.removeEventListener("attendanceDataChanged", handleDataChange);
+      window.removeEventListener("apologyDataChanged", handleDataChange);
+    };
   }, []);
 
   const toggleDarkMode = () => setDarkMode((prev) => !prev);

@@ -47,12 +47,12 @@ def submit_attendance(request):
     user_id = request.user.id
     if not user_id:
         return Response({'error': 'Authentication required'}, status=401)
-    
+
     try:
         user = Credential.objects.get(id=user_id)
     except Credential.DoesNotExist:
         return Response({'error': 'User not found'}, status=401)
-    
+
     serializer = AttendanceEntrySerializer(data=request.data, many=True)
 
     if serializer.is_valid():
@@ -94,6 +94,41 @@ def submit_attendance(request):
                 return Response({
                     'error': f"Phone number {phone} has already been used for {existing_phone.congregation} in this meeting."
                 }, status=400)
+
+            # 🔒 Check member-per-local cap based on meeting type or custom limit
+            try:
+                meeting = Meeting.objects.get(date=item['meeting_date'])
+                
+                # Determine the limit to use
+                if meeting.custom_participant_limit is not None:
+                    # Use custom limit if set
+                    limit = meeting.custom_participant_limit
+                    limit_type = "custom"
+                elif meeting.meeting_type == 'general':
+                    limit = 5
+                    limit_type = "General"
+                elif meeting.meeting_type == 'council':
+                    limit = 2
+                    limit_type = "Council"
+                else:
+                    # Emergency meetings have no cap
+                    limit = None
+                
+                # Apply limit if set
+                if limit is not None:
+                    congregation_count = AttendanceEntry.objects.filter(
+                        meeting_date=item['meeting_date'],
+                        congregation=item['congregation'],
+                        is_deleted=False
+                    ).count()
+
+                    if congregation_count >= limit:
+                        return Response({
+                            'error': f"Maximum attendance limit of {limit} members reached for {item['congregation']} for this {limit_type} Meeting."
+                        }, status=400)
+            except Meeting.DoesNotExist:
+                # If no meeting found, proceed without cap check
+                pass
 
             # Optional: Remove timestamp from item if you're auto-generating it
             item.pop('timestamp', None)
@@ -851,15 +886,19 @@ def set_meeting(request):
         meeting = Meeting.objects.create(
             title=request.data.get('title'),
             date=request.data.get('date'),
+            meeting_type=request.data.get('meeting_type', 'general'),
+            custom_participant_limit=request.data.get('custom_participant_limit'),
             is_active=True
         )
-        
+
         return Response({
             'message': 'Meeting set successfully',
             'meeting': {
                 'id': meeting.id,
                 'title': meeting.title,
-                'date': meeting.date
+                'date': meeting.date,
+                'meeting_type': meeting.meeting_type,
+                'custom_participant_limit': meeting.custom_participant_limit
             }
         }, status=201)
     except Exception as e:

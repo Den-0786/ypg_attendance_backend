@@ -14,6 +14,7 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
   const router = useRouter();
   const [dateInput, setDateInput] = useState('');
   const [titleInput, setTitleInput] = useState('');
+  const [meetingType, setMeetingType] = useState('general');
   const [adminUsername, setAdminUsername] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -50,6 +51,7 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
         body: JSON.stringify({
           title: titleInput,
           date: dateInput,
+          meeting_type: meetingType,
           admin_username: adminUsername,
           admin_password: adminPassword,
         }),
@@ -188,102 +190,145 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-yellow-50 to-white py-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-4">
       <form
         onSubmit={handleSubmit}
-        className="bg-white p-4 rounded-2xl shadow-xl w-full max-w-md space-y-6 border-2 border-yellow-400"
+        className="modern-card max-w-lg w-full space-y-6"
         autoComplete="off"
       >
-        <h2 className="text-2xl font-bold text-center text-yellow-700 mb-2">Set Meeting Details</h2>
-        <p className="text-center text-gray-500 mb-4">Please enter the details for the new meeting</p>
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl shadow-lg mb-3">
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-1">Set Meeting Details</h2>
+          <p className="text-gray-600 text-sm">Configure the new meeting parameters</p>
+        </div>
 
         {/* Deactivate Current Meeting Button */}
-        <div className="text-center space-y-2">
+        <div className="flex items-center justify-center gap-3 p-4 bg-red-50 rounded-xl border border-red-100">
           <button
             type="button"
             onClick={handleDeactivateMeeting}
             disabled={deactivating}
-            className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition disabled:bg-red-400"
+            className="flex-1 bg-red-500 text-white px-4 py-2.5 rounded-lg hover:bg-red-600 transition disabled:bg-red-400 disabled:cursor-not-allowed font-medium text-sm"
           >
             {deactivating ? 'Deactivating...' : 'Deactivate Current Meeting'}
           </button>
           
-          {/* Navigation button aligned with deactivate */}
-          <div className="flex justify-center">
-            <button
-              type="button"
-              onClick={handleBackToForms}
-              className="bg-gray-500 text-white px-3 py-1 rounded text-sm hover:bg-gray-600 transition cursor-pointer"
-            >
-              Back to Forms
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={handleBackToForms}
+            className="px-4 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium text-sm"
+          >
+            Back to Forms
+          </button>
         </div>
 
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">Meeting Title</label>
-          <input
-            type="text"
-            value={titleInput}
-            onChange={(e) => setTitleInput(toTitleCase(e.target.value))}
-            placeholder="e.g. Emergency Meeting"
-            className="w-full p-1 border border-yellow-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition"
-            required
-            autoComplete="off"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">Meeting Date</label>
-          <input
-            type="date"
-            value={dateInput}
-            onChange={(e) => setDateInput(e.target.value)}
-            className="w-full p-1 border border-yellow-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition"
-            required
-            min={new Date().toISOString().split('T')[0]}
-            autoComplete="off"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">Admin Username</label>
-          <input
-            type="text"
-            value={adminUsername}
-            onChange={(e) => setAdminUsername(e.target.value)}
-            placeholder="Admin username"
-            className="w-full p-1 border border-yellow-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition"
-            required
-          />
-        </div>
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">Admin Password</label>
-          <div className="relative">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Meeting Title</label>
             <input
-              type={showPassword ? 'text' : 'password'}
-              value={adminPassword}
-              onChange={(e) => setAdminPassword(e.target.value)}
-              placeholder="Admin password"
-              className="w-full p-1 border border-yellow-300 rounded-xl text-gray-900 pr-10 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition"
+              type="text"
+              value={titleInput}
+              onChange={(e) => setTitleInput(toTitleCase(e.target.value))}
+              placeholder="e.g. Emergency Meeting"
+              className="modern-input w-full"
+              required
+              autoComplete="off"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Meeting Date</label>
+            <input
+              type="date"
+              value={dateInput}
+              onChange={(e) => setDateInput(e.target.value)}
+              className="modern-input w-full"
+              required
+              min={new Date().toISOString().split('T')[0]}
+              autoComplete="off"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Meeting Type</label>
+            <select
+              value={meetingType}
+              onChange={(e) => setMeetingType(e.target.value)}
+              className="modern-input w-full cursor-pointer"
+              required
+            >
+              <option value="general">General Meeting (5 members per local cap)</option>
+              <option value="council">Council Meeting (2 members per local cap)</option>
+              <option value="emergency">Emergency Meeting (no cap)</option>
+            </select>
+            <p className="text-xs text-gray-500 mt-2 flex items-start gap-2">
+              <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {meetingType === 'general' 
+                ? 'General meetings have a 5-member limit per local congregation.' 
+                : meetingType === 'council'
+                ? 'Council meetings have a 2-member limit per local congregation.'
+                : 'Emergency meetings have no attendance limits.'}
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Admin Username</label>
+            <input
+              type="text"
+              value={adminUsername}
+              onChange={(e) => setAdminUsername(e.target.value)}
+              placeholder="Admin username"
+              className="modern-input w-full"
               required
             />
-            <button
-              type="button"
-              className="absolute right-3 top-2 text-gray-500 hover:text-yellow-600"
-              onClick={() => setShowPassword(!showPassword)}
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
-            >
-              {showPassword ? <HiEye size={20} /> : <HiEyeOff size={20} />}
-            </button>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Admin Password</label>
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={adminPassword}
+                onChange={(e) => setAdminPassword(e.target.value)}
+                placeholder="Admin password"
+                className="modern-input w-full pr-10"
+                required
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-indigo-600 transition-colors"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <HiEye size={20} /> : <HiEyeOff size={20} />}
+              </button>
+            </div>
           </div>
         </div>
-        {authError && <p className="text-red-500 text-sm mt-1">{authError}</p>}
+
+        {authError && (
+          <div className="flex items-center gap-2 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
+            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {authError}
+          </div>
+        )}
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-1 rounded-xl text-white font-semibold bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 shadow-lg transition-colors text-base mt-2"
+          className={`w-full py-3 px-6 rounded-xl text-white font-bold text-base transition-all duration-300 ${
+            loading
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 hover:from-indigo-700 hover:via-purple-700 hover:to-pink-600 transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
+          }`}
         >
           {loading ? 'Setting...' : 'Continue'}
         </button>
