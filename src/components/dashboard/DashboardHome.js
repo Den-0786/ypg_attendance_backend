@@ -80,6 +80,8 @@ export default function DashboardHome({
   const [pendingAction, setPendingAction] = useState(null);
   const [pendingEntry, setPendingEntry] = useState(null);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear()); // Default to current year
+  const [showAttendanceForm, setShowAttendanceForm] = useState(false);
+  const [showApologyForm, setShowApologyForm] = useState(false);
   // Add state for admin credentials modal
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [adminUsername, setAdminUsername] = useState("");
