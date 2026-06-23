@@ -530,6 +530,7 @@ export default function DashboardHome({
       <TopLists
         filteredData={filteredData}
         selectedYear={selectedYear}
+        darkMode={darkMode}
       />
 
       <DashboardModals

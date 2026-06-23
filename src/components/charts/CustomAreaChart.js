@@ -17,8 +17,8 @@ const CustomAreaChart = ({ data, seriesConfig, title, darkMode = true }) => {
     if (!active || !payload || !payload.length) return null;
 
     return (
-      <div className="bg-gray-900 p-3 rounded-lg shadow-xl border border-amber-500/50 text-white min-w-[180px] max-h-[400px] overflow-y-auto">
-        <p className="text-xs font-semibold text-gray-300 mb-2 border-b border-gray-700 pb-2">
+      <div className={`p-3 rounded-lg shadow-xl border min-w-[180px] max-h-[400px] overflow-y-auto ${darkMode ? 'bg-gray-900 border-amber-500/50 text-white' : 'bg-white border-gray-300 text-gray-900'}`}>
+        <p className={`text-xs font-semibold mb-2 border-b pb-2 ${darkMode ? 'text-gray-300 border-gray-700' : 'text-gray-700 border-gray-300'}`}>
           {label}
         </p>
         <div className="space-y-1.5">
@@ -31,16 +31,16 @@ const CustomAreaChart = ({ data, seriesConfig, title, darkMode = true }) => {
                     className="w-2 h-2 rounded-full"
                     style={{ backgroundColor: entry.color }}
                   />
-                  <span className="text-[10px] text-gray-300">{config?.label || entry.dataKey}</span>
+                  <span className={`text-[10px] ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{config?.label || entry.dataKey}</span>
                 </div>
                 <div className="text-right">
-                  <div className="text-[11px] font-semibold text-white">{entry.value}</div>
+                  <div className={`text-[11px] font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{entry.value}</div>
                   {config?.showChange && entry.payload[`${entry.dataKey}Change`] && (
                     <div
                       className={`text-[9px] ${
                         entry.payload[`${entry.dataKey}Change`] >= 0
-                          ? 'text-green-400'
-                          : 'text-red-400'
+                          ? 'text-green-600'
+                          : 'text-red-600'
                       }`}
                     >
                       {entry.payload[`${entry.dataKey}Change`] >= 0 ? '+$' : '-$'}

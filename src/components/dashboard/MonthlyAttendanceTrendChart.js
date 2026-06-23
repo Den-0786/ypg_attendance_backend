@@ -22,24 +22,29 @@ function getMonthlyStats(attendanceData, year) {
 
 export default function MonthlyAttendanceTrendChart({ attendanceData, previousYearData, darkMode }) {
   const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth();
   const prevYear = currentYear - 1;
   const currentStats = getMonthlyStats(attendanceData, currentYear);
   const prevStats = previousYearData ? getMonthlyStats(previousYearData, prevYear) : null;
 
-  const totalAttendance = currentStats.reduce((sum, s) => sum + s.total, 0);
-  const totalUnique = currentStats.reduce((sum, s) => sum + s.unique, 0);
-  const prevTotalAttendance = prevStats ? prevStats.reduce((sum, s) => sum + s.total, 0) : 0;
-  const avgMonthly = currentStats.length > 0 ? (totalAttendance / currentStats.length).toFixed(1) : 0;
+  // Filter stats to only show up to current month
+  const filteredCurrentStats = currentStats.slice(0, currentMonth + 1);
+  const filteredPrevStats = prevStats ? prevStats.slice(0, currentMonth + 1) : null;
 
-  // Prepare data for Area Chart
-  const chartData = currentStats.map((stat, index) => {
+  const totalAttendance = filteredCurrentStats.reduce((sum, s) => sum + s.total, 0);
+  const totalUnique = filteredCurrentStats.reduce((sum, s) => sum + s.unique, 0);
+  const prevTotalAttendance = filteredPrevStats ? filteredPrevStats.reduce((sum, s) => sum + s.total, 0) : 0;
+  const avgMonthly = filteredCurrentStats.length > 0 ? (totalAttendance / filteredCurrentStats.length).toFixed(1) : 0;
+
+  // Prepare data for Area Chart - only up to current month
+  const chartData = filteredCurrentStats.map((stat, index) => {
     const dataPoint = {
       name: stat.month,
       'Current Year': stat.total,
-      'Current Year Change': prevStats ? stat.total - prevStats[index].total : 0,
+      'Current Year Change': filteredPrevStats ? stat.total - filteredPrevStats[index].total : 0,
     };
-    if (prevStats) {
-      dataPoint['Previous Year'] = prevStats[index].total;
+    if (filteredPrevStats) {
+      dataPoint['Previous Year'] = filteredPrevStats[index].total;
       dataPoint['Previous Year Change'] = 0;
     }
     return dataPoint;
