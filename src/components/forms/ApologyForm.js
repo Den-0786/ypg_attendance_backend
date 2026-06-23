@@ -11,7 +11,7 @@ import {
   FaTimes,
 } from "react-icons/fa";
 import PINModal from "../auth/PINModal";
-import { capitalizeFirst } from "../lib/utils";
+import { capitalizeFirst } from "../../lib/utils";
 
 const congregations = [
   "Emmanuel Congregation Ahinsan",

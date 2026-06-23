@@ -5,7 +5,7 @@ import { useMeetingDate } from "../context/MeetingDateContext";
 import { MdMoreVert, MdEdit, MdDelete } from "react-icons/md";
 import toast from "react-hot-toast";
 import { FaExclamationCircle } from "react-icons/fa";
-import { capitalizeFirst } from "../lib/utils";
+import { capitalizeFirst } from "../../lib/utils";
 
 const congregations = [
   "Emmanuel Congregation Ahinsan",

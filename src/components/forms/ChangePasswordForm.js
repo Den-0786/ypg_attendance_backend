@@ -11,7 +11,7 @@ import {
 } from "react-icons/fa";
 import toast from "react-hot-toast";
 import PasswordInput from "./PasswordInput";
-import { getPasswordStrength } from "../lib/utils";
+import { getPasswordStrength } from "../../lib/utils";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 

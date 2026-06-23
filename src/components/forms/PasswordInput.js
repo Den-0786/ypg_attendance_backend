@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { HiEye, HiEyeOff } from 'react-icons/hi';
-import { validatePassword, getPasswordStrength } from '../lib/utils';
+import { validatePassword, getPasswordStrength } from '../../lib/utils';
 
 export default function PasswordInput({
   value,

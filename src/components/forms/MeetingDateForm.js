@@ -4,7 +4,7 @@ import { useMeetingDate } from '../context/MeetingDateContext';
 import { toast } from 'react-hot-toast';
 import { HiEye, HiEyeOff } from 'react-icons/hi';
 import { useRouter } from 'next/navigation';
-import { capitalizeFirst, toTitleCase } from '../lib/utils';
+import { capitalizeFirst, toTitleCase } from '../../lib/utils';
 import PINModal from '../auth/PINModal';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
