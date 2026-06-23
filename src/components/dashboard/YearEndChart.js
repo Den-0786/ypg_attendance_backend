@@ -232,30 +232,30 @@ export default function YearEndChart({ attendanceData, darkMode }) {
 
       return (
         <div
-          className={`p-3 sm:p-4 rounded-xl shadow-2xl border backdrop-blur-sm bg-gray-900 border-gray-700 text-white ${getPositionClasses()}`}
+          className={`p-3 sm:p-4 rounded-xl shadow-2xl border backdrop-blur-sm text-white ${darkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-300 text-gray-900'} ${getPositionClasses()}`}
           style={getPositionStyle()}
         >
-          <p className="font-bold text-base sm:text-lg mb-2 sm:mb-3 text-center break-words">
+          <p className={`font-bold text-base sm:text-lg mb-2 sm:mb-3 text-center break-words ${darkMode ? 'text-white' : 'text-gray-900'}`}>
             {label}
           </p>
 
           <div className="space-y-2 text-xs sm:text-sm">
             <div className="grid grid-cols-2 gap-2 sm:gap-4">
               <div>
-                <p className="text-gray-400 text-xs">Total Meetings</p>
-                <p className="font-semibold text-sm sm:text-lg">
+                <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Meetings</p>
+                <p className={`font-semibold text-sm sm:text-lg ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                   {congregationData.totalMeetings}
                 </p>
               </div>
               <div>
-                <p className="text-gray-400 text-xs">Full Year Rate</p>
-                <p className="font-semibold text-sm sm:text-lg">
+                <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Full Year Rate</p>
+                <p className={`font-semibold text-sm sm:text-lg ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                   {congregationData.attendanceRate}%
                 </p>
               </div>
             </div>
-            <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-gray-700">
-              <p className="text-xs text-gray-400 mb-1 sm:mb-2">
+            <div className={`mt-2 sm:mt-3 pt-2 sm:pt-3 border-t ${darkMode ? 'border-gray-700' : 'border-gray-300'}`}>
+              <p className={`text-xs mb-1 sm:mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                 Monthly Breakdown:
               </p>
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-1">
@@ -272,16 +272,16 @@ export default function YearEndChart({ attendanceData, darkMode }) {
                     <div key={index} className="flex items-center gap-1">
                       <div
                         className={`w-2 h-2 rounded-full ${
-                          hasAttendance ? "bg-green-500" : "bg-gray-600"
+                          hasAttendance ? "bg-green-500" : "bg-gray-400"
                         }`}
                       />
                       <span
                         className={`text-xs ${
                           isCurrentMonth
-                            ? "font-bold text-blue-400"
+                            ? "font-bold text-blue-500"
                             : isFutureMonth
-                              ? "text-gray-500"
-                              : "text-gray-300"
+                              ? "text-gray-400"
+                              : darkMode ? "text-gray-300" : "text-gray-700"
                         }`}
                       >
                         {month.slice(0, 3)}

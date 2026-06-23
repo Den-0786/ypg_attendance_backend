@@ -17,27 +17,27 @@ const CustomAreaChart = ({ data, seriesConfig, title, darkMode = true }) => {
     if (!active || !payload || !payload.length) return null;
 
     return (
-      <div className="bg-gray-900 p-4 rounded-lg shadow-xl border border-amber-500/50 text-white min-w-[200px]">
-        <p className="text-sm font-semibold text-gray-300 mb-3 border-b border-gray-700 pb-2">
+      <div className="bg-gray-900 p-3 rounded-lg shadow-xl border border-amber-500/50 text-white min-w-[180px] max-h-[400px] overflow-y-auto">
+        <p className="text-xs font-semibold text-gray-300 mb-2 border-b border-gray-700 pb-2">
           {label}
         </p>
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {payload.map((entry, index) => {
             const config = seriesConfig.find(s => s.dataKey === entry.dataKey);
             return (
               <div key={index} className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <div
-                    className="w-3 h-3 rounded-full"
+                    className="w-2 h-2 rounded-full"
                     style={{ backgroundColor: entry.color }}
                   />
-                  <span className="text-sm text-gray-300">{config?.label || entry.dataKey}</span>
+                  <span className="text-[10px] text-gray-300">{config?.label || entry.dataKey}</span>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm font-semibold text-white">{entry.value}</div>
+                  <div className="text-[11px] font-semibold text-white">{entry.value}</div>
                   {config?.showChange && entry.payload[`${entry.dataKey}Change`] && (
                     <div
-                      className={`text-xs ${
+                      className={`text-[9px] ${
                         entry.payload[`${entry.dataKey}Change`] >= 0
                           ? 'text-green-400'
                           : 'text-red-400'

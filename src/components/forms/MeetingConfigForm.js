@@ -5,7 +5,7 @@ import PINModal from '../auth/PINModal';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
-export default function MeetingConfigForm({ onMeetingConfigured }) {
+export default function MeetingConfigForm({ onMeetingConfigured, darkMode = false }) {
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
   const [meetingType, setMeetingType] = useState('general');
@@ -92,43 +92,43 @@ export default function MeetingConfigForm({ onMeetingConfigured }) {
   };
 
   return (
-    <div className="modern-card p-6">
+    <div className={`p-6 rounded-xl shadow-lg ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
       <div className="mb-6">
-        <h3 className="text-xl font-bold text-gray-900 mb-2">Configure Meeting</h3>
-        <p className="text-gray-600 text-sm">Set meeting type and participant limits per local</p>
+        <h3 className={`text-xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Configure Meeting</h3>
+        <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Set meeting type and participant limits per local</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">Meeting Title</label>
+          <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Meeting Title</label>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g. Monthly General Meeting"
-            className="modern-input w-full"
+            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${darkMode ? 'border-gray-600 text-white bg-gray-700' : 'border-gray-300 text-gray-900 bg-gray-50'}`}
             required
           />
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">Meeting Date</label>
+          <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Meeting Date</label>
           <input
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="modern-input w-full"
+            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${darkMode ? 'border-gray-600 text-white bg-gray-700' : 'border-gray-300 text-gray-900 bg-gray-50'}`}
             required
             min={new Date().toISOString().split('T')[0]}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">Meeting Type</label>
+          <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Meeting Type</label>
           <select
             value={meetingType}
             onChange={(e) => setMeetingType(e.target.value)}
-            className="modern-input w-full cursor-pointer"
+            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer ${darkMode ? 'border-gray-600 text-white bg-gray-700' : 'border-gray-300 text-gray-900 bg-gray-50'}`}
             required
           >
             <option value="general">General Meeting (default: 5 per local)</option>
@@ -138,9 +138,9 @@ export default function MeetingConfigForm({ onMeetingConfigured }) {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
             Custom Participant Limit per Local
-            <span className="text-gray-500 font-normal ml-2">(optional, overrides default)</span>
+            <span className={`font-normal ml-2 ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>(optional, overrides default)</span>
           </label>
           <input
             type="number"
@@ -148,33 +148,33 @@ export default function MeetingConfigForm({ onMeetingConfigured }) {
             value={customLimit}
             onChange={(e) => setCustomLimit(e.target.value)}
             placeholder="Leave empty for default limits"
-            className="modern-input w-full"
+            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${darkMode ? 'border-gray-600 text-white bg-gray-700' : 'border-gray-300 text-gray-900 bg-gray-50'}`}
           />
-          <p className="text-xs text-gray-500 mt-2">
-            Effective limit: <span className="font-semibold text-indigo-600">{getEffectiveLimit()}</span> members per local
+          <p className={`text-xs mt-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+            Effective limit: <span className={`font-semibold ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>{getEffectiveLimit()}</span> members per local
           </p>
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">Admin Username</label>
+          <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Admin Username</label>
           <input
             type="text"
             value={adminUsername}
             onChange={(e) => setAdminUsername(e.target.value)}
             placeholder="Admin username"
-            className="modern-input w-full"
+            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${darkMode ? 'border-gray-600 text-white bg-gray-700' : 'border-gray-300 text-gray-900 bg-gray-50'}`}
             required
           />
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">Admin Password</label>
+          <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Admin Password</label>
           <input
             type="password"
             value={adminPassword}
             onChange={(e) => setAdminPassword(e.target.value)}
             placeholder="Admin password"
-            className="modern-input w-full"
+            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${darkMode ? 'border-gray-600 text-white bg-gray-700' : 'border-gray-300 text-gray-900 bg-gray-50'}`}
             required
           />
         </div>

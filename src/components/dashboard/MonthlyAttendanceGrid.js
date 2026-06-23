@@ -76,9 +76,9 @@ export default function MonthlyAttendanceGrid({ attendanceData, darkMode }) {
 
   if (!processedData.length) {
     return (
-      <div className="bg-gray-800 rounded-xl shadow-lg p-4 md:p-6 border border-amber-500/30">
+      <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg p-4 md:p-6 border ${darkMode ? 'border-amber-500/30' : 'border-gray-200'}`}>
         <div className="flex justify-center items-center h-64">
-          <div className="text-gray-500">
+          <div className={`${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
             Loading monthly attendance analytics...
           </div>
         </div>
@@ -88,21 +88,20 @@ export default function MonthlyAttendanceGrid({ attendanceData, darkMode }) {
 
   const totalAttendance = processedData.reduce((sum, month) => sum + Object.values(month).reduce((a, b) => a + (typeof b === 'number' ? b : 0), 0), 0);
 
-  // Prepare data for Area Chart - show top 5 congregations
-  const topCongregations = congregations.slice(0, 5);
+  // Prepare data for Area Chart - show all congregations
   const chartData = processedData.map(month => {
     const dataPoint = { name: month.month };
-    topCongregations.forEach(cong => {
+    congregations.forEach(cong => {
       const shortName = cong.split(' ').slice(0, 2).join(' ');
       dataPoint[shortName] = month[cong] || 0;
     });
     return dataPoint;
   });
 
-  // Configure series with orange/amber colors
-  const seriesConfig = topCongregations.map((cong, index) => {
+  // Configure series with orange/amber colors for all congregations
+  const seriesConfig = congregations.map((cong, index) => {
     const shortName = cong.split(' ').slice(0, 2).join(' ');
-    const colors = ['#f59e0b', '#fbbf24', '#fcd34d', '#fde68a', '#fed7aa'];
+    const colors = ['#f59e0b', '#fbbf24', '#fcd34d', '#fde68a', '#fed7aa', '#f59e0b', '#fbbf24', '#fcd34d', '#fde68a', '#fed7aa'];
     return {
       dataKey: shortName,
       label: shortName,
@@ -112,15 +111,15 @@ export default function MonthlyAttendanceGrid({ attendanceData, darkMode }) {
   });
 
   return (
-    <div className="bg-gray-800 rounded-xl shadow-2xl p-4 md:p-6 border border-amber-500/30">
-      <h2 className="text-lg md:text-xl font-bold text-amber-400 mb-4 md:mb-6">
+    <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-2xl p-4 md:p-6 border ${darkMode ? 'border-amber-500/30' : 'border-gray-200'}`}>
+      <h2 className={`text-lg md:text-xl font-bold mb-4 md:mb-6 ${darkMode ? 'text-amber-400' : 'text-gray-900'}`}>
         Monthly Attendance Analytics
       </h2>
       
       {/* Summary Card */}
-      <div className="bg-gray-700 p-4 rounded-lg border border-amber-500/30 mb-6">
-        <div className="text-4xl font-bold text-white mb-1">{totalAttendance}</div>
-        <div className="text-sm text-gray-400">Total Attendance (All Congregations)</div>
+      <div className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} p-4 rounded-lg border ${darkMode ? 'border-amber-500/30' : 'border-gray-200'} mb-6`}>
+        <div className={`text-4xl font-bold mb-1 ${darkMode ? 'text-white' : 'text-gray-900'}`}>{totalAttendance}</div>
+        <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Attendance (All Congregations)</div>
       </div>
 
       {/* Area Chart */}
@@ -141,13 +140,13 @@ export default function MonthlyAttendanceGrid({ attendanceData, darkMode }) {
           const percentage = maxPossible > 0 ? ((congregationTotal / maxPossible) * 100).toFixed(0) : 0;
           
           return (
-            <div key={congregation} className="bg-gray-700 p-4 rounded-lg border border-amber-500/30 hover:border-amber-500 transition-colors">
-              <h3 className="text-sm font-semibold text-amber-400 mb-2 truncate">
+            <div key={congregation} className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} p-4 rounded-lg border ${darkMode ? 'border-amber-500/30 hover:border-amber-500' : 'border-gray-200 hover:border-amber-500'} transition-colors`}>
+              <h3 className={`text-sm font-semibold mb-2 truncate ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
                 {congregation}
               </h3>
               <div className="flex items-center justify-between mb-2">
-                <div className="text-2xl font-bold text-white">{congregationTotal}</div>
-                <div className="text-xs text-gray-400">{percentage}%</div>
+                <div className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{congregationTotal}</div>
+                <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{percentage}%</div>
               </div>
               {/* Progress Bar */}
               <div className="w-full bg-gray-600 rounded-full h-2">
@@ -165,13 +164,13 @@ export default function MonthlyAttendanceGrid({ attendanceData, darkMode }) {
       <div className="mt-4 md:mt-6 flex flex-wrap items-center justify-center gap-3 md:gap-6 text-xs md:text-sm">
         <div className="flex items-center gap-1 md:gap-2">
           <div className="w-3 h-3 bg-green-500 border border-green-600 rounded-sm"></div>
-          <span className="text-gray-300">Present</span>
+          <span className={darkMode ? 'text-gray-300' : 'text-gray-700'}>Present</span>
         </div>
         <div className="flex items-center gap-1 md:gap-2">
           <div className="w-3 h-3 bg-gray-400 border border-gray-500 rounded-sm"></div>
-          <span className="text-gray-300">Absent</span>
+          <span className={darkMode ? 'text-gray-300' : 'text-gray-700'}>Absent</span>
         </div>
-        <div className="text-gray-400 text-center">
+        <div className={darkMode ? 'text-gray-400' : 'text-gray-600'}>
           • Shows months up to current month ({months[new Date().getMonth()]})
         </div>
       </div>

@@ -682,24 +682,24 @@ export default function RecordsLibrary({
         {Object.keys(groupedRecords).map((cong, idx) => (
           <div
             key={cong}
-            className={`w-full max-w-full mb-6 rounded-2xl shadow-lg border p-4 md:p-5 ${congregationColors[cong] || "bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700"}`}
+            className={`w-full max-w-full mb-6 rounded-2xl shadow-lg border p-4 md:p-5 ${congregationColors[cong] || (darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200")}`}
           >
-            <h3 className="text-xl font-bold mb-3 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">{cong}</h3>
+            <h3 className={`text-xl font-bold mb-3 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent`}>{cong}</h3>
             {Object.keys(groupedRecords[cong]).map((month) => (
               <div key={month} className="mb-4">
-                <h4 className="text-base font-semibold text-amber-400 mb-1">
+                <h4 className={`text-base font-semibold mb-1 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
                   {month}
                 </h4>
                 {Object.keys(groupedRecords[cong][month]).map((day) => (
                   <div
                     key={day}
-                    className="mb-2 pl-2 border-l-2 border-blue-600"
+                    className={`mb-2 pl-2 border-l-2 ${darkMode ? 'border-blue-500' : 'border-blue-400'}`}
                   >
-                    <div className="font-medium text-sm text-gray-200 mb-1">
+                    <div className={`font-medium text-sm mb-1 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>
                       {day}
                     </div>
                     <div className="overflow-x-auto w-full">
-                      <table className="min-w-max w-full text-gray-100 mb-2 border-collapse">
+                      <table className={`min-w-max w-full mb-2 border-collapse ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
                         <thead
                           className={
                             darkMode
@@ -708,7 +708,7 @@ export default function RecordsLibrary({
                           }
                         >
                           <tr>
-                            <th className="px-3 md:px-4 py-3 border-r border-gray-600 text-xs md:text-sm">
+                            <th className={`px-3 md:px-4 py-3 border-r ${darkMode ? 'border-gray-600' : 'border-gray-300'} text-xs md:text-sm`}>
                               <input
                                 type="checkbox"
                                 checked={isAllSelected}
@@ -748,37 +748,37 @@ export default function RecordsLibrary({
                           {groupedRecords[cong][month][day].map((record, i) => (
                             <tr
                               key={record.id || i}
-                              className="text-sm md:text-base hover:bg-gray-700/50 transition-colors"
+                              className={`text-sm md:text-base hover:bg-gray-700/50 transition-colors ${darkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-100'}`}
                             >
-                              <td className="border px-3 md:px-4 py-3 border-r border-gray-600 text-center">
+                              <td className={`border px-3 md:px-4 py-3 border-r ${darkMode ? 'border-gray-600' : 'border-gray-300'} text-center`}>
                                 <input
                                   type="checkbox"
                                   checked={selectedRecords.includes(record.id)}
                                   onChange={() => toggleSelect(record.id)}
                                 />
                               </td>
-                              <td className="border px-3 md:px-4 py-3 text-xs md:text-sm border-r border-gray-600 text-center font-semibold">
+                              <td className={`border px-3 md:px-4 py-3 text-xs md:text-sm border-r ${darkMode ? 'border-gray-600' : 'border-gray-300'} text-center font-semibold`}>
                                 {record.name}
                               </td>
-                              <td className="border px-3 md:px-4 py-3 text-xs md:text-sm border-r border-gray-600 text-center">
+                              <td className={`border px-3 md:px-4 py-3 text-xs md:text-sm border-r ${darkMode ? 'border-gray-600' : 'border-gray-300'} text-center`}>
                                 {record.congregation}
                               </td>
-                              <td className="border px-3 md:px-4 py-3 text-xs md:text-sm border-r border-gray-600 text-center">
+                              <td className={`border px-3 md:px-4 py-3 text-xs md:text-sm border-r ${darkMode ? 'border-gray-600' : 'border-gray-300'} text-center`}>
                                 {record.position}
                               </td>
-                              <td className="border px-3 md:px-4 py-3 border-r border-gray-600 text-center">
+                              <td className={`border px-3 md:px-4 py-3 border-r ${darkMode ? 'border-gray-600' : 'border-gray-300'} text-center`}>
                                 {record.type}
                               </td>
-                              <td className="border px-3 md:px-4 py-3 border-r border-gray-600 text-center">
+                              <td className={`border px-3 md:px-4 py-3 border-r ${darkMode ? 'border-gray-600' : 'border-gray-300'} text-center`}>
                                 {record.meeting_date}
                               </td>
-                              <td className="border px-3 md:px-4 py-3 border-r border-gray-600 text-center">
+                              <td className={`border px-3 md:px-4 py-3 border-r ${darkMode ? 'border-gray-600' : 'border-gray-300'} text-center`}>
                                 {record.timestamp}
                               </td>
-                              <td className="border px-3 md:px-4 py-3 border-r border-gray-600 text-center">
+                              <td className={`border px-3 md:px-4 py-3 border-r ${darkMode ? 'border-gray-600' : 'border-gray-300'} text-center`}>
                                 {record.record_kind}
                               </td>
-                              <td className="border px-3 md:px-4 py-3 border-r border-gray-600 text-center">
+                              <td className={`border px-3 md:px-4 py-3 border-r ${darkMode ? 'border-gray-600' : 'border-gray-300'} text-center`}>
                                 {record.notes}
                               </td>
                               <td className="border px-3 md:px-4 py-3 text-center">
@@ -889,16 +889,16 @@ export default function RecordsLibrary({
           onClick={() => setShowDetails(false)}
         >
           <div
-            className="bg-gray-800 p-4 rounded-xl shadow-2xl w-full max-w-sm border border-amber-500/30"
+            className={`${darkMode ? 'bg-gray-800' : 'bg-white'} p-4 rounded-xl shadow-2xl w-full max-w-sm border ${darkMode ? 'border-amber-500/30' : 'border-gray-200'}`}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-between items-center mb-3 pb-2 border-b border-amber-500/30">
-              <h2 className="text-base font-semibold text-white">
+            <div className={`flex justify-between items-center mb-3 pb-2 border-b ${darkMode ? 'border-amber-500/30' : 'border-gray-200'}`}>
+              <h2 className={`text-base font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                 Record Details
               </h2>
               <button
                 onClick={() => setShowDetails(false)}
-                className="text-gray-400 hover:text-gray-300 text-lg font-bold w-5 h-5 flex items-center justify-center rounded-full hover:bg-gray-700 transition-colors"
+                className={`${darkMode ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-700' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'} text-lg font-bold w-5 h-5 flex items-center justify-center rounded-full transition-colors`}
               >
                 ×
               </button>
@@ -907,28 +907,28 @@ export default function RecordsLibrary({
               {Object.entries(detailsRecord).map(([field, value]) => (
                 <div
                   key={field}
-                  className="flex items-center py-1.5 px-2 rounded-lg hover:bg-gray-700 transition-colors"
+                  className={`flex items-center py-1.5 px-2 rounded-lg hover:transition-colors ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
                 >
-                  <span className="font-medium capitalize text-gray-400 text-xs min-w-20">
+                  <span className={`font-medium capitalize text-xs min-w-20 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                     {field.replace(/_/g, " ")}
                   </span>
-                  <span className="text-gray-100 text-xs ml-2 flex-1 break-words">
+                  <span className={`text-xs ml-2 flex-1 break-words ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
                     {String(value || "N/A")}
                   </span>
                 </div>
               ))}
             </div>
             {/* Audit log placeholder: Backend required */}
-            <div className="mt-3 p-2 bg-gray-700 rounded-lg border border-amber-500/30">
-              <span className="font-medium text-amber-400 text-xs">
+            <div className={`mt-3 p-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-amber-500/30' : 'bg-gray-50 border-gray-200'}`}>
+              <span className={`font-medium text-xs ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
                 Audit Log:
               </span>
-              <span className="text-blue-400 text-xs block mt-1">
+              <span className={`text-xs block mt-1 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
                 (Show who edited/deleted this record and when. Backend support
                 required.)
               </span>
             </div>
-            <div className="flex justify-end mt-3 pt-2 border-t border-amber-500/30">
+            <div className={`flex justify-end mt-3 pt-2 border-t ${darkMode ? 'border-amber-500/30' : 'border-gray-200'}`}>
               <button
                 onClick={() => setShowDetails(false)}
                 className="px-3 py-1.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg transition-all duration-200 text-xs font-medium shadow-sm hover:shadow-md"
@@ -942,10 +942,10 @@ export default function RecordsLibrary({
       {/* Edit Modal */}
       {showEdit && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-[9998]">
-          <div className="bg-gray-800 p-3 rounded shadow-lg w-full max-w-xs">
-            <h2 className="text-lg font-bold mb-4">Edit Record</h2>
+          <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} p-3 rounded shadow-lg w-full max-w-xs`}>
+            <h2 className={`text-lg font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Edit Record</h2>
             {Object.keys(editForm).length === 0 ? (
-              <p className="text-gray-500 mb-4">
+              <p className={`${darkMode ? 'text-gray-500' : 'text-gray-500'} mb-4`}>
                 No editable fields available for this record.
               </p>
             ) : (
@@ -954,7 +954,7 @@ export default function RecordsLibrary({
                   (field) =>
                     editForm[field] !== undefined && (
                       <div key={field} className="mb-3">
-                        <label className="block text-sm font-medium mb-1 capitalize">
+                        <label className={`block text-sm font-medium mb-1 capitalize ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                           {field.replace(/_/g, " ")}
                         </label>
                         <input
@@ -973,7 +973,7 @@ export default function RecordsLibrary({
                                 : e.target.value
                             )
                           }
-                          className="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:text-white"
+                          className={`w-full border rounded px-3 py-2 ${darkMode ? 'dark:bg-gray-700 dark:text-white bg-gray-700 text-white' : 'bg-white text-gray-900'}`}
                         />
                       </div>
                     )
@@ -983,13 +983,13 @@ export default function RecordsLibrary({
             <div className="flex justify-end gap-3 mt-4">
               <button
                 onClick={() => setShowEdit(false)}
-                className="px-4 py-2 bg-gray-400 rounded text-white"
+                className="px-4 py-2 bg-gray-400 rounded text-white hover:bg-gray-500"
               >
                 Cancel
               </button>
               <button
                 onClick={saveEdit}
-                className="px-4 py-2 bg-blue-600 rounded text-white"
+                className="px-4 py-2 bg-blue-600 rounded text-white hover:bg-blue-700"
               >
                 <FaSave className="inline mr-1" /> Save Changes
               </button>
@@ -1000,10 +1000,10 @@ export default function RecordsLibrary({
       {/* Delete Confirmation Modal */}
       {showConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-[9998]">
-          <div className="bg-gray-800 p-6 rounded shadow-lg text-center">
-            <p className="text-white">
+          <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} p-6 rounded shadow-lg text-center`}>
+            <p className={darkMode ? 'text-white' : 'text-gray-900'}>
               Are you sure you want to delete all records for{" "}
-              <strong className="text-white">
+              <strong className={darkMode ? 'text-white' : 'text-gray-900'}>
                 {deleteName}
               </strong>
               ?
@@ -1011,7 +1011,7 @@ export default function RecordsLibrary({
             <div className="mt-4 flex justify-center gap-4">
               <button
                 onClick={() => setShowConfirm(false)}
-                className="px-4 py-2 bg-gray-400 dark:bg-gray-600 rounded text-white hover:bg-gray-500 dark:hover:bg-gray-700"
+                className="px-4 py-2 bg-gray-400 rounded text-white hover:bg-gray-500"
               >
                 Cancel
               </button>
@@ -1028,14 +1028,14 @@ export default function RecordsLibrary({
       {/* Bulk Delete Confirmation Modal */}
       {showBulkConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-[9998]">
-          <div className="bg-gray-800 p-6 rounded shadow-lg text-center">
-            <p className="text-white">
+          <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} p-6 rounded shadow-lg text-center`}>
+            <p className={darkMode ? 'text-white' : 'text-gray-900'}>
               Are you sure you want to delete all selected records?
             </p>
             <div className="mt-4 flex justify-center gap-4">
               <button
                 onClick={() => setShowBulkConfirm(false)}
-                className="px-4 py-2 bg-gray-400 dark:bg-gray-600 rounded text-white hover:bg-gray-500 dark:hover:bg-gray-700"
+                className="px-4 py-2 bg-gray-400 rounded text-white hover:bg-gray-500"
               >
                 Cancel
               </button>
@@ -1052,26 +1052,26 @@ export default function RecordsLibrary({
       {/* Notes Modal */}
       {showNotesModal && notesRecord && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-gray-800 p-4 rounded shadow-lg w-full max-w-md">
+          <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} p-4 rounded shadow-lg w-full max-w-md`}>
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-bold">
+              <h2 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                 Notes for {notesRecord.name}
               </h2>
               <button
                 onClick={() => setShowNotesModal(false)}
-                className="text-gray-500 hover:text-gray-700 text-xl font-bold"
+                className={`${darkMode ? 'text-gray-500 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'} text-xl font-bold`}
               >
                 &times;
               </button>
             </div>
             <div className="mb-4">
-              <label className="block text-sm font-medium mb-2">Notes:</label>
+              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Notes:</label>
               {tagEditId === notesRecord.id ? (
                 <div className="space-y-2">
                   <textarea
                     value={tagInput}
                     onChange={(e) => setTagInput(e.target.value)}
-                    className="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:text-white h-24"
+                    className={`w-full border rounded px-3 py-2 h-24 ${darkMode ? 'dark:bg-gray-700 dark:text-white bg-gray-700 text-white' : 'bg-white text-gray-900'}`}
                     placeholder="Enter notes..."
                     autoFocus
                   />
@@ -1098,7 +1098,7 @@ export default function RecordsLibrary({
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <div className="border rounded px-3 py-2 dark:bg-gray-700 dark:text-white min-h-24">
+                  <div className={`border rounded px-3 py-2 min-h-24 ${darkMode ? 'dark:bg-gray-700 dark:text-white bg-gray-700 text-white' : 'bg-white text-gray-900'}`}>
                     {notesRecord.notes || "No notes added yet."}
                   </div>
                   <button

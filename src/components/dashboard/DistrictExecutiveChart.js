@@ -84,11 +84,16 @@ export default function DistrictExecutiveChart({ attendanceData, darkMode }) {
       }
     });
 
+    // Only show months up to current month
+    const monthsToShow = months.slice(0, currentMonth + 1);
+    
     const data = positionsList.map((position) => {
       const monthlyData = positionMap.get(position);
-      const totalMeetings = monthlyData.reduce((sum, count) => sum + count, 0);
+      // Only include months up to current month
+      const monthlyDataToShow = monthlyData.slice(0, currentMonth + 1);
+      const totalMeetings = monthlyDataToShow.reduce((sum, count) => sum + count, 0);
       const attendanceRate = (
-        (monthlyData.filter((count) => count > 0).length / 12) *
+        (monthlyDataToShow.filter((count) => count > 0).length / monthsToShow.length) *
         100
       ).toFixed(1);
 
@@ -96,7 +101,7 @@ export default function DistrictExecutiveChart({ attendanceData, darkMode }) {
         position: position,
         totalMeetings: totalMeetings,
         attendanceRate: attendanceRate,
-        monthlyAttendance: [...monthlyData],
+        monthlyAttendance: monthlyData,
       };
     });
 
@@ -145,8 +150,8 @@ export default function DistrictExecutiveChart({ attendanceData, darkMode }) {
 
   if (!chartData.length) {
     return (
-      <div className="bg-gray-800 rounded-xl shadow-2xl p-4 md:p-6 border border-amber-500/30">
-        <div className="text-gray-500 text-center">
+      <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-2xl p-4 md:p-6 border ${darkMode ? 'border-amber-500/30' : 'border-gray-200'}`}>
+        <div className={`${darkMode ? 'text-gray-500' : 'text-gray-400'} text-center`}>
           <p>Loading district executives...</p>
         </div>
       </div>
@@ -159,8 +164,12 @@ export default function DistrictExecutiveChart({ attendanceData, darkMode }) {
     chartData.length
   ).toFixed(1);
 
-  // Prepare data for Area Chart
-  const chartDataForGraph = months.map((month, index) => {
+  // Only show months up to current month
+  const currentMonth = new Date().getMonth();
+  const monthsToShow = months.slice(0, currentMonth + 1);
+  
+  // Prepare data for Area Chart - only show months up to current month
+  const chartDataForGraph = monthsToShow.map((month, index) => {
     const dataPoint = { name: month };
     chartData.forEach(positionData => {
       const shortName = positionData.position.split(' ').slice(0, 2).join(' ');
@@ -182,20 +191,20 @@ export default function DistrictExecutiveChart({ attendanceData, darkMode }) {
   });
 
   return (
-    <div className="bg-gray-800 rounded-xl shadow-2xl p-4 md:p-6 border border-amber-500/30">
+    <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-2xl p-4 md:p-6 border ${darkMode ? 'border-amber-500/30' : 'border-gray-200'}`}>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 md:mb-6">
-        <h2 className="text-lg md:text-xl font-bold text-amber-400 flex items-center gap-2">
-          <FaUsers className="text-amber-400" />
+        <h2 className={`text-lg md:text-xl font-bold flex items-center gap-2 ${darkMode ? 'text-amber-400' : 'text-gray-900'}`}>
+          <FaUsers className={darkMode ? 'text-amber-400' : 'text-amber-600'} />
           District Executive Attendance Analytics
         </h2>
 
         <div className="flex items-center gap-2 mt-2 md:mt-0">
           <label className="text-sm flex items-center gap-2">
-            <span className="font-semibold text-gray-300">Year:</span>
+            <span className={`font-semibold ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Year:</span>
             <select
               value={selectedYear || ""}
               onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className="px-3 py-2 border-2 border-amber-500/30 rounded-xl bg-gray-700 text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+              className={`px-3 py-2 border-2 rounded-xl ${darkMode ? 'bg-gray-700 border-amber-500/30 text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500' : 'bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-amber-500 focus:border-amber-500'} transition-all`}
             >
               {Array.isArray(availableYears) &&
                 availableYears.map((year) => (
@@ -219,23 +228,23 @@ export default function DistrictExecutiveChart({ attendanceData, darkMode }) {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-gray-700 p-4 rounded-lg border border-amber-500/30">
-          <div className="text-3xl font-bold text-white mb-1">{chartData.length}</div>
-          <div className="text-xs text-gray-400">Total Positions</div>
+        <div className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} p-4 rounded-lg border ${darkMode ? 'border-amber-500/30' : 'border-gray-200'}`}>
+          <div className={`text-3xl font-bold mb-1 ${darkMode ? 'text-white' : 'text-gray-900'}`}>{chartData.length}</div>
+          <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Positions</div>
         </div>
-        <div className="bg-gray-700 p-4 rounded-lg border border-amber-500/30">
-          <div className="text-3xl font-bold text-white mb-1">{totalMeetings}</div>
-          <div className="text-xs text-gray-400">Total Meetings</div>
+        <div className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} p-4 rounded-lg border ${darkMode ? 'border-amber-500/30' : 'border-gray-200'}`}>
+          <div className={`text-3xl font-bold mb-1 ${darkMode ? 'text-white' : 'text-gray-900'}`}>{totalMeetings}</div>
+          <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Meetings</div>
         </div>
-        <div className="bg-gray-700 p-4 rounded-lg border border-amber-500/30">
-          <div className="text-3xl font-bold text-white mb-1">{avgAttendanceRate}%</div>
-          <div className="text-xs text-gray-400">Avg Attendance Rate</div>
+        <div className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} p-4 rounded-lg border ${darkMode ? 'border-amber-500/30' : 'border-gray-200'}`}>
+          <div className={`text-3xl font-bold mb-1 ${darkMode ? 'text-white' : 'text-gray-900'}`}>{avgAttendanceRate}%</div>
+          <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Avg Attendance Rate</div>
         </div>
-        <div className="bg-gray-700 p-4 rounded-lg border border-amber-500/30">
-          <div className="text-3xl font-bold text-white mb-1">
+        <div className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} p-4 rounded-lg border ${darkMode ? 'border-amber-500/30' : 'border-gray-200'}`}>
+          <div className={`text-3xl font-bold mb-1 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
             {chartData.filter((data) => parseFloat(data.attendanceRate) === 100).length}
           </div>
-          <div className="text-xs text-gray-400">Perfect Attendance</div>
+          <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Perfect Attendance</div>
         </div>
       </div>
 
@@ -254,19 +263,19 @@ export default function DistrictExecutiveChart({ attendanceData, darkMode }) {
         {chartData.map((data, index) => (
           <div
             key={data.position}
-            className="bg-gray-700 p-4 rounded-lg border border-amber-500/30 hover:border-amber-500 transition-colors"
+            className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} p-4 rounded-lg border ${darkMode ? 'border-amber-500/30 hover:border-amber-500' : 'border-gray-200 hover:border-amber-500'} transition-colors`}
           >
-            <h3 className="text-sm font-semibold text-amber-400 mb-2 truncate">
+            <h3 className={`text-sm font-semibold mb-2 truncate ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
               {data.position}
             </h3>
             <div className="flex items-center justify-between mb-2">
               <div>
-                <div className="text-2xl font-bold text-white">{data.totalMeetings}</div>
-                <div className="text-xs text-gray-400">Total Meetings</div>
+                <div className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{data.totalMeetings}</div>
+                <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Meetings</div>
               </div>
               <div className="text-right">
-                <div className="text-xl font-bold text-white">{data.attendanceRate}%</div>
-                <div className="text-xs text-gray-400">Rate</div>
+                <div className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{data.attendanceRate}%</div>
+                <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Rate</div>
               </div>
             </div>
             
@@ -288,16 +297,16 @@ export default function DistrictExecutiveChart({ attendanceData, darkMode }) {
       </div>
 
       {/* Performance Categories */}
-      <div className="mt-6 p-4 bg-gray-700 rounded-lg border border-amber-500/30">
-        <h4 className="text-sm font-semibold text-white mb-3 text-center">
+      <div className={`mt-6 p-4 rounded-lg border ${darkMode ? 'bg-gray-700 border-amber-500/30' : 'bg-gray-50 border-gray-200'}`}>
+        <h4 className={`text-sm font-semibold mb-3 text-center ${darkMode ? 'text-white' : 'text-gray-900'}`}>
           Attendance Performance Categories
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-          <div className="flex items-center justify-between p-2 bg-green-900/20 rounded">
-            <span className="text-green-300">
+          <div className={`flex items-center justify-between p-2 rounded ${darkMode ? 'bg-green-900/20' : 'bg-green-50'}`}>
+            <span className={darkMode ? 'text-green-300' : 'text-green-700'}>
               Excellent (90-100%)
             </span>
-            <span className="font-semibold text-green-300">
+            <span className={`font-semibold ${darkMode ? 'text-green-300' : 'text-green-700'}`}>
               {
                 chartData.filter(
                   (data) => parseFloat(data.attendanceRate) >= 90
@@ -305,11 +314,11 @@ export default function DistrictExecutiveChart({ attendanceData, darkMode }) {
               }
             </span>
           </div>
-          <div className="flex items-center justify-between p-2 bg-amber-900/20 rounded">
-            <span className="text-amber-300">
+          <div className={`flex items-center justify-between p-2 rounded ${darkMode ? 'bg-amber-900/20' : 'bg-amber-50'}`}>
+            <span className={darkMode ? 'text-amber-300' : 'text-amber-700'}>
               Good (70-89%)
             </span>
-            <span className="font-semibold text-amber-300">
+            <span className={`font-semibold ${darkMode ? 'text-amber-300' : 'text-amber-700'}`}>
               {
                 chartData.filter(
                   (data) => {
@@ -320,11 +329,11 @@ export default function DistrictExecutiveChart({ attendanceData, darkMode }) {
               }
             </span>
           </div>
-          <div className="flex items-center justify-between p-2 bg-red-900/20 rounded">
-            <span className="text-red-300">
+          <div className={`flex items-center justify-between p-2 rounded ${darkMode ? 'bg-red-900/20' : 'bg-red-50'}`}>
+            <span className={darkMode ? 'text-red-300' : 'text-red-700'}>
               Needs Improvement (&lt;70%)
             </span>
-            <span className="font-semibold text-red-300">
+            <span className={`font-semibold ${darkMode ? 'text-red-300' : 'text-red-700'}`}>
               {
                 chartData.filter(
                   (data) => parseFloat(data.attendanceRate) < 70

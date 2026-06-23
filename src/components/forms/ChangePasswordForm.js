@@ -18,6 +18,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 export default function ChangePasswordForm({
   onClose,
   currentUser: propCurrentUser,
+  darkMode = false,
 }) {
   const [formData, setFormData] = useState({
     currentUsername: "",
@@ -327,13 +328,13 @@ export default function ChangePasswordForm({
   if (currentUser && currentUser.role !== "admin") {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
-        <div className="bg-gray-900 rounded-lg p-6 w-full max-w-sm shadow-xl">
+        <div className={`${darkMode ? 'bg-gray-900' : 'bg-white'} rounded-lg p-6 w-full max-w-sm shadow-xl`}>
           <div className="text-center">
             <FaTimes className="text-red-500 text-3xl mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-white mb-2">
+            <h3 className={`text-lg font-bold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
               Access Denied
             </h3>
-            <p className="text-gray-400 mb-4">
+            <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'} mb-4`}>
               Only administrators can change credentials.
             </p>
             <button
@@ -353,20 +354,20 @@ export default function ChangePasswordForm({
       {/* PIN Modal */}
       {showPINModal && (
         <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-gray-900 rounded-lg p-3 w-full max-w-xs shadow-xl">
+          <div className={`${darkMode ? 'bg-gray-900' : 'bg-white'} rounded-lg p-3 w-full max-w-xs shadow-xl`}>
             {pinStatus === null ? (
               <div className="text-center py-4">
                 <div className="inline-block w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mb-2"></div>
-                <p className="text-sm text-gray-400">
+                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                   Checking PIN status...
                 </p>
               </div>
             ) : (
               <>
-                <h2 className="text-lg font-bold mb-2 text-center text-amber-400">
+                <h2 className={`text-lg font-bold mb-2 text-center ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
                   {pinStatus === "not_setup" ? "Setup PIN" : "Enter PIN"}
                 </h2>
-                <p className="text-gray-300 mb-4 text-center text-sm">
+                <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} mb-4 text-center text-sm`}>
                   {pinStatus === "not_setup"
                     ? "Setup a 4-digit PIN for credential changes"
                     : "Enter 4-digit PIN to access credential change"}
@@ -377,6 +378,7 @@ export default function ChangePasswordForm({
                   onCancel={handleClose}
                   pinStatus={pinStatus}
                   onSetupPIN={setupInitialPIN}
+                  darkMode={darkMode}
                 />
               </>
             )}
@@ -387,14 +389,14 @@ export default function ChangePasswordForm({
       {/* Credentials Form */}
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-gray-900 rounded-lg p-3 w-full max-w-xs shadow-xl">
+          <div className={`${darkMode ? 'bg-gray-900' : 'bg-white'} rounded-lg p-3 w-full max-w-xs shadow-xl`}>
             <div className="flex justify-between items-center mb-2">
-              <h3 className="text-base font-bold text-amber-400">
+              <h3 className={`text-base font-bold ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
                 Change Credentials
               </h3>
               <button
                 onClick={handleClose}
-                className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-lg font-bold focus:outline-none"
+                className={`${darkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'} text-lg font-bold focus:outline-none`}
               >
                 <FaTimes />
               </button>
@@ -402,8 +404,8 @@ export default function ChangePasswordForm({
 
             {/* User Selection */}
             {!isAdminMode && (
-              <div className="mb-2 p-2 bg-gray-800 rounded-lg">
-                <h4 className="text-xs font-semibold text-gray-300 mb-1 flex items-center gap-1">
+              <div className={`mb-2 p-2 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+                <h4 className={`text-xs font-semibold mb-1 flex items-center gap-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                   <FaUsers /> Select User to Manage
                 </h4>
                 <div className="space-y-1 max-h-24 overflow-y-auto">
@@ -411,7 +413,7 @@ export default function ChangePasswordForm({
                     <button
                       key={user.id}
                       onClick={() => handleUserSelect(user)}
-                      className="w-full text-left p-1.5 bg-gray-700 rounded border border-amber-500/30 hover:bg-blue-50 dark:hover:bg-gray-600 transition"
+                      className={`w-full text-left p-1.5 rounded border hover:transition ${darkMode ? 'bg-gray-700 border-amber-500/30 hover:bg-gray-600' : 'bg-white border-gray-300 hover:bg-gray-50'}`}
                     >
                       <div className="flex items-center gap-2">
                         <div
@@ -428,10 +430,10 @@ export default function ChangePasswordForm({
                           )}
                         </div>
                         <div>
-                          <p className="text-xs font-medium text-white">
+                          <p className={`text-xs font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                             {user.username}
                           </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                          <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
                             {user.role === "admin" ? "Administrator" : "User"}
                           </p>
                         </div>
@@ -444,8 +446,8 @@ export default function ChangePasswordForm({
 
             {/* Selected User Display */}
             {isAdminMode && selectedTargetUser && (
-              <div className="mb-2 p-1.5 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-700">
-                <p className="text-xs text-amber-400">
+              <div className={`mb-2 p-1.5 rounded border ${darkMode ? 'bg-blue-900/20 border-blue-700' : 'bg-blue-50 border-blue-200'}`}>
+                <p className={`text-xs ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
                   <strong>Managing:</strong> {selectedTargetUser.username} (
                   {selectedTargetUser.role === "admin"
                     ? "Administrator"
@@ -456,14 +458,14 @@ export default function ChangePasswordForm({
             )}
 
             {/* Tab Navigation */}
-            <div className="flex gap-1 mb-2 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+            <div className={`flex gap-1 mb-2 rounded-lg p-1 ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
               <button
                 type="button"
                 onClick={() => setActiveTab("credentials")}
                 className={`flex-1 px-2 py-1 text-xs rounded-md transition ${
                   activeTab === "credentials"
                     ? "bg-blue-600 text-white"
-                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                    : `${darkMode ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-gray-200'}`
                 }`}
               >
                 Username/Password
@@ -474,7 +476,7 @@ export default function ChangePasswordForm({
                 className={`flex-1 px-2 py-1 text-xs rounded-md transition ${
                   activeTab === "pin"
                     ? "bg-blue-600 text-white"
-                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                    : `${darkMode ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-gray-200'}`
                 }`}
               >
                 PIN
@@ -485,7 +487,7 @@ export default function ChangePasswordForm({
               {activeTab === "credentials" ? (
                 <>
                   <div>
-                    <label className="block text-xs font-medium text-gray-300 mb-1">
+                    <label className={`block text-xs font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       Current Username
                     </label>
                     <input
@@ -497,14 +499,14 @@ export default function ChangePasswordForm({
                           currentUsername: e.target.value,
                         }))
                       }
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 dark:text-white text-sm bg-gray-50 dark:bg-gray-700"
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm ${darkMode ? 'border-gray-700 text-white bg-gray-700' : 'border-gray-300 text-gray-900 bg-gray-50'}`}
                       placeholder="Current username"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-gray-300 mb-1">
+                    <label className={`block text-xs font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       Current Password
                     </label>
                     <div className="relative">
@@ -517,14 +519,14 @@ export default function ChangePasswordForm({
                             currentPassword: e.target.value,
                           }))
                         }
-                        className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 dark:text-white text-sm bg-gray-50 dark:bg-gray-700"
+                        className={`w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm ${darkMode ? 'border-gray-700 text-white bg-gray-700' : 'border-gray-300 text-gray-900 bg-gray-50'}`}
                         placeholder="Current password"
                         required
                       />
                       <button
                         type="button"
                         onClick={() => togglePasswordVisibility("current")}
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        className={`absolute right-2 top-1/2 transform -translate-y-1/2 ${darkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}`}
                       >
                         {showPasswords.current ? <FaEye /> : <FaEyeSlash />}
                       </button>
@@ -532,7 +534,7 @@ export default function ChangePasswordForm({
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-gray-300 mb-1">
+                    <label className={`block text-xs font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       New Username
                     </label>
                     <input
@@ -544,14 +546,14 @@ export default function ChangePasswordForm({
                           newUsername: e.target.value,
                         }))
                       }
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 dark:text-white text-sm bg-gray-50 dark:bg-gray-700"
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm ${darkMode ? 'border-gray-700 text-white bg-gray-700' : 'border-gray-300 text-gray-900 bg-gray-50'}`}
                       placeholder="New username"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-gray-300 mb-1">
+                    <label className={`block text-xs font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       New Password
                     </label>
                     <div className="relative">
@@ -564,14 +566,14 @@ export default function ChangePasswordForm({
                             newPassword: e.target.value,
                           }))
                         }
-                        className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 dark:text-white text-sm bg-gray-50 dark:bg-gray-700"
+                        className={`w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm ${darkMode ? 'border-gray-700 text-white bg-gray-700' : 'border-gray-300 text-gray-900 bg-gray-50'}`}
                         placeholder="New password"
                         required
                       />
                       <button
                         type="button"
                         onClick={() => togglePasswordVisibility("new")}
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        className={`absolute right-2 top-1/2 transform -translate-y-1/2 ${darkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}`}
                       >
                         {showPasswords.new ? <FaEye /> : <FaEyeSlash />}
                       </button>
@@ -627,7 +629,7 @@ export default function ChangePasswordForm({
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-gray-300 mb-1">
+                    <label className={`block text-xs font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       Confirm New Password
                     </label>
                     <div className="relative">
@@ -640,14 +642,14 @@ export default function ChangePasswordForm({
                             confirmPassword: e.target.value,
                           }))
                         }
-                        className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 dark:text-white text-sm bg-gray-50 dark:bg-gray-700"
+                        className={`w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm ${darkMode ? 'border-gray-700 text-white bg-gray-700' : 'border-gray-300 text-gray-900 bg-gray-50'}`}
                         placeholder="Confirm new password"
                         required
                       />
                       <button
                         type="button"
                         onClick={() => togglePasswordVisibility("confirm")}
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        className={`absolute right-2 top-1/2 transform -translate-y-1/2 ${darkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}`}
                       >
                         {showPasswords.confirm ? <FaEye /> : <FaEyeSlash />}
                       </button>
@@ -685,7 +687,7 @@ export default function ChangePasswordForm({
               ) : (
                 <>
                   <div>
-                    <label className="block text-xs font-medium text-gray-300 mb-1">
+                    <label className={`block text-xs font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       Current PIN
                     </label>
                     <div className="relative">
@@ -698,7 +700,7 @@ export default function ChangePasswordForm({
                             currentPIN: e.target.value,
                           }))
                         }
-                        className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 dark:text-white text-sm bg-gray-50 dark:bg-gray-700"
+                        className={`w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm ${darkMode ? 'border-gray-700 text-white bg-gray-700' : 'border-gray-300 text-gray-900 bg-gray-50'}`}
                         placeholder="Enter current 4-digit PIN"
                         maxLength={4}
                         required
@@ -706,14 +708,14 @@ export default function ChangePasswordForm({
                       <button
                         type="button"
                         onClick={() => togglePasswordVisibility("currentPin")}
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        className={`absolute right-2 top-1/2 transform -translate-y-1/2 ${darkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}`}
                       >
                         {showPasswords.currentPin ? <FaEyeSlash /> : <FaEye />}
                       </button>
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-300 mb-1">
+                    <label className={`block text-xs font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       New PIN
                     </label>
                     <div className="relative">
@@ -726,7 +728,7 @@ export default function ChangePasswordForm({
                             newPIN: e.target.value,
                           }))
                         }
-                        className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 dark:text-white text-sm bg-gray-50 dark:bg-gray-700"
+                        className={`w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm ${darkMode ? 'border-gray-700 text-white bg-gray-700' : 'border-gray-300 text-gray-900 bg-gray-50'}`}
                         placeholder="4-digit PIN"
                         maxLength={4}
                         required
@@ -734,14 +736,14 @@ export default function ChangePasswordForm({
                       <button
                         type="button"
                         onClick={() => togglePasswordVisibility("pin")}
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        className={`absolute right-2 top-1/2 transform -translate-y-1/2 ${darkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}`}
                       >
                         {showPasswords.pin ? <FaEyeSlash /> : <FaEye />}
                       </button>
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-300 mb-1">
+                    <label className={`block text-xs font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       Confirm New PIN
                     </label>
                     <div className="relative">
@@ -754,7 +756,7 @@ export default function ChangePasswordForm({
                             confirmPIN: e.target.value,
                           }))
                         }
-                        className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 dark:text-white text-sm bg-gray-50 dark:bg-gray-700"
+                        className={`w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm ${darkMode ? 'border-gray-700 text-white bg-gray-700' : 'border-gray-300 text-gray-900 bg-gray-50'}`}
                         placeholder="Confirm 4-digit PIN"
                         maxLength={4}
                         required
@@ -762,7 +764,7 @@ export default function ChangePasswordForm({
                       <button
                         type="button"
                         onClick={() => togglePasswordVisibility("confirmPin")}
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        className={`absolute right-2 top-1/2 transform -translate-y-1/2 ${darkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}`}
                       >
                         {showPasswords.confirmPin ? <FaEyeSlash /> : <FaEye />}
                       </button>
@@ -806,7 +808,7 @@ export default function ChangePasswordForm({
 }
 
 // PIN Input Component
-function PINInput({ onSuccess, onCancel, pinStatus, onSetupPIN }) {
+function PINInput({ onSuccess, onCancel, pinStatus, onSetupPIN, darkMode = false }) {
   const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
 
