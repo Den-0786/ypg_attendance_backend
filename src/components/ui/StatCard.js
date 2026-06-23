@@ -1,24 +1,24 @@
 import React from "react";
 
 const cardStyles = {
-  blue: "bg-gray-800 border-amber-500/30 shadow-lg",
-  green: "bg-gray-800 border-amber-500/30 shadow-lg",
-  purple: "bg-gray-800 border-amber-500/30 shadow-lg",
-  amber: "bg-gray-800 border-amber-500/30 shadow-lg",
-  emerald: "bg-gray-800 border-amber-500/30 shadow-lg",
-  cyan: "bg-gray-800 border-amber-500/30 shadow-lg",
-};
-
-const iconColors = {
-  blue: "bg-blue-700",
-  green: "bg-amber-500",
-  purple: "bg-blue-700",
-  amber: "bg-amber-500",
-  emerald: "bg-amber-500",
-  cyan: "bg-blue-700",
+  blue: "shadow-lg",
+  green: "shadow-lg",
+  purple: "shadow-lg",
+  amber: "shadow-lg",
+  emerald: "shadow-lg",
+  cyan: "shadow-lg",
 };
 
 const textColors = {
+  blue: "text-amber-600",
+  green: "text-amber-600",
+  purple: "text-amber-600",
+  amber: "text-amber-600",
+  emerald: "text-amber-600",
+  cyan: "text-amber-600",
+};
+
+const textColorsDark = {
   blue: "text-amber-400",
   green: "text-amber-400",
   purple: "text-amber-400",
@@ -28,12 +28,30 @@ const textColors = {
 };
 
 const valueColors = {
+  blue: "text-gray-900",
+  green: "text-gray-900",
+  purple: "text-gray-900",
+  amber: "text-gray-900",
+  emerald: "text-gray-900",
+  cyan: "text-gray-900",
+};
+
+const valueColorsDark = {
   blue: "text-white",
   green: "text-white",
   purple: "text-white",
   amber: "text-white",
   emerald: "text-white",
   cyan: "text-white",
+};
+
+const iconColors = {
+  blue: "bg-blue-700",
+  green: "bg-amber-500",
+  purple: "bg-blue-700",
+  amber: "bg-amber-500",
+  emerald: "bg-amber-500",
+  cyan: "bg-blue-700",
 };
 
 const icons = {
@@ -74,16 +92,16 @@ const icons = {
   ),
 };
 
-export default function StatCard({ title, value, color = "blue", icon = "document" }) {
+export default function StatCard({ title, value, color = "blue", icon = "document", darkMode = false }) {
   return (
-    <div className={`p-4 md:p-5 border rounded-2xl shadow-lg hover:shadow-xl transition-shadow ${cardStyles[color]}`}>
+    <div className={`p-4 md:p-5 border rounded-2xl shadow-lg hover:shadow-xl transition-shadow ${cardStyles[color]} ${darkMode ? 'bg-gray-800 border-amber-500/30' : 'bg-white border-gray-200'}`}>
       <div className="flex items-center gap-2 mb-2">
         <div className={`w-8 h-8 ${iconColors[color]} rounded-lg flex items-center justify-center`}>
           {icons[icon]}
         </div>
-        <h3 className="text-xs md:text-sm font-semibold">{title}</h3>
+        <h3 className={`text-xs md:text-sm font-semibold ${darkMode ? textColorsDark[color] : textColors[color]}`}>{title}</h3>
       </div>
-      <p className={`text-2xl md:text-3xl font-bold ${valueColors[color]}`}>
+      <p className={`text-2xl md:text-3xl font-bold ${darkMode ? valueColorsDark[color] : valueColors[color]}`}>
         {value}
       </p>
     </div>

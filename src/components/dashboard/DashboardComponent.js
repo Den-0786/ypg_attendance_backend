@@ -267,16 +267,16 @@ export default function Dashboard({ onLogout }) {
       {/* Fixed Sidebar */}
       <div
         className={cn(
-          "fixed top-0 left-0 z-50 h-screen w-64 p-4 border-r flex flex-col justify-between transition-transform duration-300 text-white overflow-y-auto border-amber-500/30",
-          darkMode ? "bg-gray-900" : "bg-gray-800",
+          "fixed top-0 left-0 z-50 h-screen w-64 p-4 border-r flex flex-col justify-between transition-transform duration-300 overflow-y-auto border-amber-500/30",
+          darkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900",
           showSidebar ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         )}
         ref={sidebarRef}
       >
         <div>
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-amber-400">Dashboard</h2>
-            <button className="md:hidden text-gray-400 hover:text-amber-400" onClick={() => setShowSidebar(false)}>
+            <h2 className={`text-2xl font-bold ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>Dashboard</h2>
+            <button className={`md:hidden ${darkMode ? 'text-gray-400 hover:text-amber-400' : 'text-gray-500 hover:text-amber-600'}`} onClick={() => setShowSidebar(false)}>
               ✖
             </button>
           </div>
@@ -290,7 +290,7 @@ export default function Dashboard({ onLogout }) {
                 "w-full text-left px-4 py-3 rounded-lg transition-all duration-300 flex items-center gap-3 font-medium border",
                 view === "home"
                   ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white border-amber-500 shadow-lg shadow-amber-500/30"
-                  : "bg-transparent text-gray-300 border-gray-700 hover:border-amber-500 hover:text-amber-400"
+                  : darkMode ? "bg-transparent text-gray-300 border-gray-700 hover:border-amber-500 hover:text-amber-400" : "bg-transparent text-gray-700 border-gray-300 hover:border-amber-500 hover:text-amber-600"
               )}
             >
               <span>🏠</span>
@@ -305,7 +305,7 @@ export default function Dashboard({ onLogout }) {
                 "w-full text-left px-4 py-3 rounded-lg transition-all duration-300 flex items-center gap-3 font-medium border",
                 view === "local"
                   ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white border-amber-500 shadow-lg shadow-amber-500/30"
-                  : "bg-transparent text-gray-300 border-gray-700 hover:border-amber-500 hover:text-amber-400"
+                  : darkMode ? "bg-transparent text-gray-300 border-gray-700 hover:border-amber-500 hover:text-amber-400" : "bg-transparent text-gray-700 border-gray-300 hover:border-amber-500 hover:text-amber-600"
               )}
             >
               <span>📊</span>
@@ -320,7 +320,7 @@ export default function Dashboard({ onLogout }) {
                 "w-full text-left px-4 py-3 rounded-lg transition-all duration-300 flex items-center gap-3 font-medium border",
                 view === "district"
                   ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white border-amber-500 shadow-lg shadow-amber-500/30"
-                  : "bg-transparent text-gray-300 border-gray-700 hover:border-amber-500 hover:text-amber-400"
+                  : darkMode ? "bg-transparent text-gray-300 border-gray-700 hover:border-amber-500 hover:text-amber-400" : "bg-transparent text-gray-700 border-gray-300 hover:border-amber-500 hover:text-amber-600"
               )}
             >
               <span>🗺️</span>
@@ -335,7 +335,7 @@ export default function Dashboard({ onLogout }) {
                 "w-full text-left px-4 py-3 rounded-lg transition-all duration-300 flex items-center gap-3 font-medium border",
                 view === "records"
                   ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white border-amber-500 shadow-lg shadow-amber-500/30"
-                  : "bg-transparent text-gray-300 border-gray-700 hover:border-amber-500 hover:text-amber-400"
+                  : darkMode ? "bg-transparent text-gray-300 border-gray-700 hover:border-amber-500 hover:text-amber-400" : "bg-transparent text-gray-700 border-gray-300 hover:border-amber-500 hover:text-amber-600"
               )}
             >
               <span>📚</span>
@@ -345,14 +345,14 @@ export default function Dashboard({ onLogout }) {
         </div>
         <div className="space-y-3">
           {/* Year Selector */}
-          <div className="space-y-2 p-3 bg-gray-800 rounded-lg border border-amber-500/30">
-            <h3 className="text-sm font-semibold text-amber-400 mb-2">
+          <div className={`space-y-2 p-3 rounded-lg border ${darkMode ? 'bg-gray-800 border-amber-500/30' : 'bg-gray-100 border-gray-300'}`}>
+            <h3 className={`text-sm font-semibold mb-2 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
               Year Selection
             </h3>
             <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+              className={`w-full px-3 py-2 border rounded-md text-sm ${darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'}`}
             >
               {Array.isArray(availableYearsArray) &&
                 availableYearsArray.map((year) => (
@@ -361,19 +361,19 @@ export default function Dashboard({ onLogout }) {
                   </option>
                 ))}
             </select>
-            <p className="text-xs text-gray-600 dark:text-gray-400">
+            <p className={`text-xs ${darkMode ? 'text-gray-600' : 'text-gray-500'}`}>
               Data closes on Dec 31st of each year
             </p>
           </div>
 
           {/* Action Buttons Group */}
-          <div className="space-y-2 p-4 bg-gray-800 rounded-xl border border-amber-500/30">
-            <h3 className="text-sm font-semibold text-amber-400 mb-3">
+          <div className={`space-y-2 p-4 rounded-xl border ${darkMode ? 'bg-gray-800 border-amber-500/30' : 'bg-gray-100 border-gray-300'}`}>
+            <h3 className={`text-sm font-semibold mb-3 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
               Actions
             </h3>
             <button
               onClick={() => setShowChangePasswordModal(true)}
-              className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-700 transition-all duration-200 font-medium text-gray-300 border border-gray-700 hover:border-amber-500"
+              className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-200 font-medium border ${darkMode ? 'text-gray-300 bg-transparent border-gray-700 hover:bg-gray-700 hover:border-amber-500' : 'text-gray-700 bg-transparent border-gray-300 hover:bg-gray-200 hover:border-amber-500'}`}
             >
               🔑 Change Credentials
             </button>

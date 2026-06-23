@@ -12,17 +12,18 @@ export default function DashboardStats({
   filteredData,
   totalCongregationsCount,
   totalMeetingsCount,
-  selectedYear
+  selectedYear,
+  darkMode = false
 }) {
   return (
     <>
       {/* Original Four Summary Cards */}
       <div className="overflow-x-auto md:overflow-x-visible custom-scrollbar">
         <div className="flex md:grid md:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6 min-w-max md:min-w-0">
-          <StatCard title="Total Records" value={filteredData.length} color="blue" icon="document" />
-          <StatCard title="Congregations Present" value={totalCongregationsCount} color="green" icon="building" />
-          <StatCard title="Total Meetings" value={totalMeetingsCount} color="purple" icon="calendar" />
-          <StatCard title="Grand Total Progress" value={`${getGrandTotalProgress(filteredData, selectedYear)}%`} color="amber" icon="chart" />
+          <StatCard title="Total Records" value={filteredData.length} color="blue" icon="document" darkMode={darkMode} />
+          <StatCard title="Congregations Present" value={totalCongregationsCount} color="green" icon="building" darkMode={darkMode} />
+          <StatCard title="Total Meetings" value={totalMeetingsCount} color="purple" icon="calendar" darkMode={darkMode} />
+          <StatCard title="Grand Total Progress" value={`${getGrandTotalProgress(filteredData, selectedYear)}%`} color="amber" icon="chart" darkMode={darkMode} />
         </div>
       </div>
       {/* Three Stat Cards (Total Congregations, Top Attendees, Unique People) */}
@@ -32,18 +33,21 @@ export default function DashboardStats({
           value={getTop3Congregations(filteredData.filter((entry) => !isApologyEntry(entry)), selectedYear).length} 
           color="purple" 
           icon="users" 
+          darkMode={darkMode}
         />
         <StatCard 
           title="Top Attendees (5+)" 
           value={getTop3Attendees(filteredData.filter((entry) => !isApologyEntry(entry)), selectedYear).length} 
           color="emerald" 
           icon="check" 
+          darkMode={darkMode}
         />
         <StatCard 
           title="Unique People (<5)" 
           value={getUniquePeopleLessThan5(filteredData.filter((entry) => !isApologyEntry(entry)), selectedYear).length} 
           color="cyan" 
           icon="person" 
+          darkMode={darkMode}
         />
       </div>
     </>

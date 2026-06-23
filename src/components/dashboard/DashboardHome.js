@@ -485,12 +485,13 @@ export default function DashboardHome({
   );
   return (
     <div>
-      <ProgressCards localProgress={localProgress} districtProgress={districtProgress} selectedYear={selectedYear} />
+      <ProgressCards localProgress={localProgress} districtProgress={districtProgress} selectedYear={selectedYear} darkMode={darkMode} />
       <DashboardStats
         filteredData={filteredData}
         totalCongregationsCount={totalCongregationsCount}
         totalMeetingsCount={totalMeetingsCount}
         selectedYear={selectedYear}
+        darkMode={darkMode}
       />
       {/* Search Bar and Attendance/Apology Buttons */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 md:mb-6 space-y-3 md:space-y-0">
