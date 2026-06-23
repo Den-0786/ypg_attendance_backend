@@ -6,7 +6,7 @@ import { capitalizeFirst } from "../../lib/utils";
 import PINModal from "../auth/PINModal";
 import SearchBar from "../ui/inputs/SearchBar";
 import FilterButtons from "../ui/inputs/FilterButtons";
-import AttendanceTable from "../ui/tables/AttendanceTable";
+import AttendanceTable from "../ui/AttendanceTable";
 
 // Add capitalizeWords function
 function capitalizeWords(str) {
