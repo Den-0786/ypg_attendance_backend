@@ -15,6 +15,7 @@ import toast from "react-hot-toast";
 import ChangePasswordForm from "../forms/ChangePasswordForm";
 import RecordsLibrary from "../records/RecordsLibrary";
 import PINModal from "../auth/PINModal";
+import MeetingConfigForm from "../forms/MeetingConfigForm";
 import DashboardHome from "./DashboardHome";
 import DashboardLocal from "./DashboardLocal";
 import DashboardDistrict from "./DashboardDistrict";
@@ -31,6 +32,7 @@ export default function Dashboard({ onLogout }) {
   const [isMobile, setIsMobile] = useState(false);
   const [showManageMeetingModal, setShowManageMeetingModal] = useState(false);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
+  const [showMeetingConfigModal, setShowMeetingConfigModal] = useState(false);
   const [deactivating, setDeactivating] = useState(false);
   const [showPINModal, setShowPINModal] = useState(false);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -377,7 +379,7 @@ export default function Dashboard({ onLogout }) {
               Go to Form
             </button>
             <button
-              onClick={() => router.push("/forms")}
+              onClick={() => setShowMeetingConfigModal(true)}
               className="w-full text-left px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700"
             >
               Set Meeting
@@ -492,6 +494,34 @@ export default function Dashboard({ onLogout }) {
           onClose={() => setShowChangePasswordModal(false)}
           currentUser={currentUser}
         />
+      )}
+
+      {/* Meeting Config Modal */}
+      {showMeetingConfigModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Set Meeting</h2>
+                <button
+                  onClick={() => setShowMeetingConfigModal(false)}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <MeetingConfigForm
+                onMeetingConfigured={() => {
+                  setShowMeetingConfigModal(false);
+                  // Refresh data
+                  fetchAttendanceData();
+                }}
+              />
+            </div>
+          </div>
+        </div>
       )}
 
       {/* PIN Modal */}
