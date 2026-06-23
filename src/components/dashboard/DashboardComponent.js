@@ -267,7 +267,8 @@ export default function Dashboard({ onLogout }) {
       {/* Fixed Sidebar */}
       <div
         className={cn(
-          "fixed top-0 left-0 z-50 h-screen w-64 p-4 border-r flex flex-col justify-between transition-transform duration-300 bg-gray-900 text-white overflow-y-auto border-amber-500/30",
+          "fixed top-0 left-0 z-50 h-screen w-64 p-4 border-r flex flex-col justify-between transition-transform duration-300 text-white overflow-y-auto border-amber-500/30",
+          darkMode ? "bg-gray-900" : "bg-gray-800",
           showSidebar ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         )}
         ref={sidebarRef}
@@ -411,7 +412,7 @@ export default function Dashboard({ onLogout }) {
       </div>
 
       {/* Main scrollable content area */}
-      <div className="flex-1 p-3 md:p-6 overflow-y-auto md:ml-64 bg-gray-900">
+      <div className={`flex-1 p-3 md:p-6 overflow-y-auto md:ml-64 ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
         {view === "home" ? (
           <DashboardHome
             darkMode={darkMode}
@@ -497,6 +498,7 @@ export default function Dashboard({ onLogout }) {
         <ChangePasswordForm
           onClose={() => setShowChangePasswordModal(false)}
           currentUser={currentUser}
+          darkMode={darkMode}
         />
       )}
 
@@ -522,6 +524,7 @@ export default function Dashboard({ onLogout }) {
                   // Refresh data
                   fetchAttendanceData();
                 }}
+                darkMode={darkMode}
               />
             </div>
           </div>
