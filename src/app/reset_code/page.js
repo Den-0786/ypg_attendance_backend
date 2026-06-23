@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import { FaCheckCircle, FaTimesCircle, FaEye, FaEyeSlash } from 'react-icons/fa';
-import PasswordInput from '@components/PasswordInput';
+import PasswordInput from '@components/forms/PasswordInput';
 
 // Force dynamic rendering to prevent prerendering issues
 export const dynamic = 'force-dynamic';

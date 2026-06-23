@@ -1,11 +1,11 @@
 'use client';
 import { useState } from 'react';
-import { useMeetingDate } from './MeetingDateContext';
+import { useMeetingDate } from '../context/MeetingDateContext';
 import { toast } from 'react-hot-toast';
 import { HiEye, HiEyeOff } from 'react-icons/hi';
 import { useRouter } from 'next/navigation';
 import { capitalizeFirst, toTitleCase } from '../lib/utils';
-import PINModal from './PINModal';
+import PINModal from '../auth/PINModal';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -197,27 +197,15 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
         <h2 className="text-2xl font-bold text-center text-yellow-700 mb-2">Set Meeting Details</h2>
         <p className="text-center text-gray-500 mb-4">Please enter the details for the new meeting</p>
 
-        {/* Deactivate Current Meeting Button */}
-        <div className="text-center space-y-2">
+        {/* Navigation button */}
+        <div className="flex justify-center mb-4">
           <button
             type="button"
-            onClick={handleDeactivateMeeting}
-            disabled={deactivating}
-            className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition disabled:bg-red-400"
+            onClick={handleBackToForms}
+            className="bg-gray-500 text-white px-3 py-1 rounded text-sm hover:bg-gray-600 transition cursor-pointer"
           >
-            {deactivating ? 'Deactivating...' : 'Deactivate Current Meeting'}
+            Back to Forms
           </button>
-          
-          {/* Navigation button aligned with deactivate */}
-          <div className="flex justify-center">
-            <button
-              type="button"
-              onClick={handleBackToForms}
-              className="bg-gray-500 text-white px-3 py-1 rounded text-sm hover:bg-gray-600 transition cursor-pointer"
-            >
-              Back to Forms
-            </button>
-          </div>
         </div>
 
         <div className="space-y-1">

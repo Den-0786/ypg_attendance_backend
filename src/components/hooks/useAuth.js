@@ -3,7 +3,7 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "@components/store/authStore";
 import { toast } from "react-hot-toast";
 import { useState, useEffect, useRef } from "react";
-import { useMeetingDate } from "../MeetingDateContext";
+import { useMeetingDate } from "../context/MeetingDateContext";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 

@@ -529,26 +529,26 @@ export default function RecordsLibrary({
       {/* Tabs */}
       <div className="flex gap-2 md:gap-4 mb-4 justify-center">
         <button
-          className={`px-3 md:px-4 py-2 rounded text-sm md:text-base ${tab === "local" ? "bg-blue-600 text-white" : "bg-gray-200 dark:bg-gray-700"}`}
+          className={`px-5 py-2.5 rounded-xl font-medium text-sm md:text-base transition-all ${tab === "local" ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg" : "bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50"}`}
           onClick={() => setTab("local")}
         >
           Local Congregations
         </button>
         <button
-          className={`px-3 md:px-4 py-2 rounded text-sm md:text-base ${tab === "district" ? "bg-blue-600 text-white" : "bg-gray-200 dark:bg-gray-700"}`}
+          className={`px-5 py-2.5 rounded-xl font-medium text-sm md:text-base transition-all ${tab === "district" ? "bg-gradient-to-r from-purple-600 to-violet-600 text-white shadow-lg" : "bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:hover:bg-purple-900/50"}`}
           onClick={() => setTab("district")}
         >
           District Executives
         </button>
       </div>
       {/* Analytics Chart */}
-      <div className="mb-4 flex items-center gap-4">
-        <FaChartBar className="text-blue-600" />
-        <span className="font-semibold">Records per year:</span>
+      <div className="mb-4 flex items-center gap-4 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30 p-4 rounded-xl">
+        <FaChartBar className="text-indigo-600 dark:text-indigo-300" />
+        <span className="font-semibold text-gray-700 dark:text-gray-300">Records per year:</span>
         {chartData.map((d) => (
           <span
             key={d.year}
-            className="px-2 py-1 bg-blue-100 dark:bg-blue-900 rounded text-blue-800 dark:text-blue-200 text-xs font-bold"
+            className="px-3 py-1.5 bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900/50 dark:to-indigo-900/50 rounded-lg text-blue-800 dark:text-blue-200 text-xs font-bold border border-blue-200 dark:border-blue-700"
           >
             {d.year}: {d.count}
           </span>
@@ -641,18 +641,23 @@ export default function RecordsLibrary({
       </div>
       {/* Search Bar */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 md:mb-6 space-y-3 md:space-y-0">
-        <h1 className="text-lg md:text-xl font-bold">
+        <h1 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
           {tab === "local"
             ? "Local Congregations Records"
             : "District Executives Records"}
         </h1>
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={`Search ${tab === "local" ? "congregation" : "executive"}...`}
-          className="w-full md:max-w-xs border px-3 py-2 rounded-md dark:bg-gray-700 dark:text-white text-sm md:text-base"
-        />
+        <div className="relative">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={`Search ${tab === "local" ? "congregation" : "executive"}...`}
+            className="w-full md:max-w-xs border-2 border-gray-200 dark:border-gray-600 px-4 py-2.5 rounded-xl dark:bg-gray-700 dark:text-white text-sm md:text-base focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+          />
+          <svg className="w-5 h-5 absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
       </div>
       {/* Column Customization */}
       <div className="mb-2 flex flex-wrap gap-2">
@@ -677,9 +682,9 @@ export default function RecordsLibrary({
         {Object.keys(groupedRecords).map((cong, idx) => (
           <div
             key={cong}
-            className={`w-full max-w-full mb-6 rounded-xl shadow border p-2 md:p-4 ${congregationColors[cong] || "bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700"}`}
+            className={`w-full max-w-full mb-6 rounded-2xl shadow-lg border p-4 md:p-5 ${congregationColors[cong] || "bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700"}`}
           >
-            <h3 className="text-lg font-bold mb-2">{cong}</h3>
+            <h3 className="text-xl font-bold mb-3 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">{cong}</h3>
             {Object.keys(groupedRecords[cong]).map((month) => (
               <div key={month} className="mb-4">
                 <h4 className="text-base font-semibold text-blue-700 dark:text-blue-300 mb-1">
@@ -698,43 +703,43 @@ export default function RecordsLibrary({
                         <thead
                           className={
                             darkMode
-                              ? "bg-gray-700 text-gray-100"
-                              : "bg-gray-200 text-gray-900"
+                              ? "bg-gradient-to-r from-gray-700 to-gray-600 text-gray-100"
+                              : "bg-gradient-to-r from-gray-100 to-gray-200 text-gray-900"
                           }
                         >
                           <tr>
-                            <th className="px-2 md:px-4 py-2 border-r border-gray-300 text-xs md:text-sm">
+                            <th className="px-3 md:px-4 py-3 border-r border-gray-300 dark:border-gray-600 text-xs md:text-sm">
                               <input
                                 type="checkbox"
                                 checked={isAllSelected}
                                 onChange={toggleSelectAll}
                               />
                             </th>
-                            <th className="text-center px-2 md:px-4 py-2 border-r border-gray-300 text-xs md:text-sm">
+                            <th className="text-center px-3 md:px-4 py-3 border-r border-gray-300 dark:border-gray-600 text-xs md:text-sm font-semibold">
                               Name
                             </th>
-                            <th className="text-center px-2 md:px-4 py-2 border-r border-gray-300 text-xs md:text-sm">
+                            <th className="text-center px-3 md:px-4 py-3 border-r border-gray-300 dark:border-gray-600 text-xs md:text-sm font-semibold">
                               Congregation
                             </th>
-                            <th className="text-center px-2 md:px-4 py-2 border-r border-gray-300 text-xs md:text-sm">
+                            <th className="text-center px-3 md:px-4 py-3 border-r border-gray-300 dark:border-gray-600 text-xs md:text-sm font-semibold">
                               Position
                             </th>
-                            <th className="px-2 md:px-4 py-2 border-r border-gray-300 text-xs md:text-sm">
+                            <th className="px-3 md:px-4 py-3 border-r border-gray-300 dark:border-gray-600 text-xs md:text-sm font-semibold">
                               Type
                             </th>
-                            <th className="px-2 md:px-4 py-2 border-r border-gray-300 text-xs md:text-sm">
+                            <th className="px-3 md:px-4 py-3 border-r border-gray-300 dark:border-gray-600 text-xs md:text-sm font-semibold">
                               Meeting Date
                             </th>
-                            <th className="px-2 md:px-4 py-2 border-r border-gray-300 text-xs md:text-sm">
+                            <th className="px-3 md:px-4 py-3 border-r border-gray-300 dark:border-gray-600 text-xs md:text-sm font-semibold">
                               Timestamp
                             </th>
-                            <th className="px-2 md:px-4 py-2 border-r border-gray-300 text-xs md:text-sm">
+                            <th className="px-3 md:px-4 py-3 border-r border-gray-300 dark:border-gray-600 text-xs md:text-sm font-semibold">
                               Kind
                             </th>
-                            <th className="px-2 md:px-4 py-2 border-r border-gray-300 text-xs md:text-sm">
+                            <th className="px-3 md:px-4 py-3 border-r border-gray-300 dark:border-gray-600 text-xs md:text-sm font-semibold">
                               Notes
                             </th>
-                            <th className="text-center px-2 md:px-4 py-2 text-xs md:text-sm">
+                            <th className="text-center px-3 md:px-4 py-3 text-xs md:text-sm font-semibold">
                               Actions
                             </th>
                           </tr>
@@ -743,54 +748,54 @@ export default function RecordsLibrary({
                           {groupedRecords[cong][month][day].map((record, i) => (
                             <tr
                               key={record.id || i}
-                              className="text-sm md:text-base hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                              className="text-sm md:text-base hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                             >
-                              <td className="border px-2 md:px-4 py-2 border-r border-gray-300 text-center">
+                              <td className="border px-3 md:px-4 py-3 border-r border-gray-300 dark:border-gray-600 text-center">
                                 <input
                                   type="checkbox"
                                   checked={selectedRecords.includes(record.id)}
                                   onChange={() => toggleSelect(record.id)}
                                 />
                               </td>
-                              <td className="border px-2 md:px-4 py-2 text-xs md:text-sm border-r border-gray-300 text-center">
+                              <td className="border px-3 md:px-4 py-3 text-xs md:text-sm border-r border-gray-300 dark:border-gray-600 text-center font-semibold">
                                 {record.name}
                               </td>
-                              <td className="border px-2 md:px-4 py-2 text-xs md:text-sm border-r border-gray-300 text-center">
+                              <td className="border px-3 md:px-4 py-3 text-xs md:text-sm border-r border-gray-300 dark:border-gray-600 text-center">
                                 {record.congregation}
                               </td>
-                              <td className="border px-2 md:px-4 py-2 text-xs md:text-sm border-r border-gray-300 text-center">
+                              <td className="border px-3 md:px-4 py-3 text-xs md:text-sm border-r border-gray-300 dark:border-gray-600 text-center">
                                 {record.position}
                               </td>
-                              <td className="border px-2 md:px-4 py-2 border-r border-gray-300 text-center">
+                              <td className="border px-3 md:px-4 py-3 border-r border-gray-300 dark:border-gray-600 text-center">
                                 {record.type}
                               </td>
-                              <td className="border px-2 md:px-4 py-2 border-r border-gray-300 text-center">
+                              <td className="border px-3 md:px-4 py-3 border-r border-gray-300 dark:border-gray-600 text-center">
                                 {record.meeting_date}
                               </td>
-                              <td className="border px-2 md:px-4 py-2 border-r border-gray-300 text-center">
+                              <td className="border px-3 md:px-4 py-3 border-r border-gray-300 dark:border-gray-600 text-center">
                                 {record.timestamp}
                               </td>
-                              <td className="border px-2 md:px-4 py-2 border-r border-gray-300 text-center">
+                              <td className="border px-3 md:px-4 py-3 border-r border-gray-300 dark:border-gray-600 text-center">
                                 {record.record_kind}
                               </td>
-                              <td className="border px-2 md:px-4 py-2 border-r border-gray-300 text-center">
+                              <td className="border px-3 md:px-4 py-3 border-r border-gray-300 dark:border-gray-600 text-center">
                                 {record.notes}
                               </td>
-                              <td className="border px-2 md:px-4 py-2 text-center">
+                              <td className="border px-3 md:px-4 py-3 text-center">
                                 <div className="flex gap-2 justify-center">
                                   <button
                                     onClick={() => {
                                       setNotesRecord(record);
                                       setShowNotesModal(true);
                                     }}
-                                    className="text-yellow-600 hover:text-yellow-800 dark:text-yellow-400 dark:hover:text-yellow-300 px-2 py-1 rounded text-xs font-medium hover:bg-yellow-50 dark:hover:bg-yellow-900/20 transition-colors"
+                                    className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:hover:bg-yellow-900/50 transition-colors"
                                     title="View/Add Notes"
                                   >
                                     <FaStickyNote />
                                   </button>
                                   <button
                                     onClick={() => handleEdit(record)}
-                                    className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 px-2 py-1 rounded text-xs font-medium hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                                    className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50 transition-colors"
                                   >
                                     Edit
                                   </button>
@@ -798,7 +803,7 @@ export default function RecordsLibrary({
                                     onClick={() =>
                                       handleDelete(record.id, record.name)
                                     }
-                                    className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 px-2 py-1 rounded text-xs font-medium hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                    className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50 transition-colors"
                                   >
                                     Delete
                                   </button>
@@ -819,14 +824,14 @@ export default function RecordsLibrary({
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-2 md:gap-4 justify-center mb-4">
         <button
-          className="px-3 md:px-4 py-2 bg-green-600 text-white rounded text-sm md:text-base flex items-center gap-2 hover:bg-green-700 transition-colors"
+          className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded-xl text-sm md:text-base flex items-center gap-2 hover:shadow-lg transition-all"
           onClick={handleExport}
           title="Export all records as CSV"
         >
           <FaFileCsv /> Export CSV
         </button>
         <button
-          className="px-3 md:px-4 py-2 bg-red-600 text-white rounded text-sm md:text-base flex items-center gap-2 disabled:opacity-50 hover:bg-red-700 transition-colors"
+          className="px-4 py-2.5 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-xl text-sm md:text-base flex items-center gap-2 disabled:opacity-50 hover:shadow-lg transition-all"
           onClick={handleBulkDelete}
           disabled={selectedRecords.length === 0}
           title="Delete all selected records"
@@ -834,7 +839,7 @@ export default function RecordsLibrary({
           <FaTrash /> Delete Selected
         </button>
         <button
-          className="px-3 md:px-4 py-2 bg-gray-500 text-white rounded text-sm md:text-base flex items-center gap-2 hover:bg-gray-600"
+          className="px-4 py-2.5 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl text-sm md:text-base flex items-center gap-2 hover:shadow-lg transition-all"
           onClick={() =>
             setShowColumns((prev) => ({ ...prev, show: !prev.show }))
           }

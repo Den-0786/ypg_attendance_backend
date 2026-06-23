@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 import { useState, useEffect } from "react";
-import { useMeetingDate } from "../components/MeetingDateContext";
+import { useMeetingDate } from "../context/MeetingDateContext";
 import { MdMoreVert, MdEdit, MdDelete } from "react-icons/md";
 import toast from "react-hot-toast";
 import { FaExclamationCircle } from "react-icons/fa";

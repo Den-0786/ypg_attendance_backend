@@ -1,7 +1,7 @@
 // ApologyForm.js
 "use client";
 import { useState, useEffect } from "react";
-import { useMeetingDate } from "./MeetingDateContext";
+import { useMeetingDate } from "../context/MeetingDateContext";
 import { MdMoreVert, MdEdit, MdDelete } from "react-icons/md";
 import toast from "react-hot-toast";
 import {
@@ -10,7 +10,7 @@ import {
   FaTrash,
   FaTimes,
 } from "react-icons/fa";
-import PINModal from "./PINModal";
+import PINModal from "../auth/PINModal";
 import { capitalizeFirst } from "../lib/utils";
 
 const congregations = [

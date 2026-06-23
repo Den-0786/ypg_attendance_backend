@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
-import DistrictExecutiveChart from "./dashboard/DistrictExecutiveChart";
+import MonthlyAttendanceGrid from "./dashboard/MonthlyAttendanceGrid";
 import { toast } from "react-hot-toast";
-import { capitalizeFirst } from "../lib/utils";
+import { capitalizeFirst, toTitleCase } from "../lib/utils";
 import PINModal from "./PINModal";
+import SearchBar from "./ui/SearchBar";
+import FilterButtons from "./ui/FilterButtons";
+import AttendanceTable from "./ui/AttendanceTable";
 
 // Add capitalizeWords function
 function capitalizeWords(str) {
@@ -24,9 +27,9 @@ function useIsMobile() {
   return isMobile;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8001";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
-export default function DashboardDistrict({
+export default function DashboardLocal({
   attendanceData = [],
   apologyData = [],
   darkMode = false,
@@ -49,6 +52,7 @@ export default function DashboardDistrict({
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [adminUsername, setAdminUsername] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
+  const [pendingUndoApology, setPendingUndoApology] = useState(null);
   const [pendingEditApology, setPendingEditApology] = useState(null);
 
   // Get unique years from attendance data
@@ -116,18 +120,28 @@ export default function DashboardDistrict({
     return entryYear === selectedYear;
   });
 
-  // Remove all undo/restore logic and UI
-  // 1. Remove handleUndo function
-  // 2. Remove lastDeleted state and any references
-  // 3. Remove localStorage.setItem('pendingUndo', ...) and related code
-  // 4. Remove Undo button from toasts
+  // Group by congregation and meeting title
+  const grouped = {};
+  filteredData.forEach((entry) => {
+    if (showType === "attendance" && isApologyEntry(entry)) return;
+    if (showType === "apology" && !isApologyEntry(entry)) return;
+    if (entry.type === "local") {
+      const cong = entry.congregation;
+      const meeting = entry.meeting_title
+        ? toTitleCase(entry.meeting_title)
+        : "Unknown Meeting";
+      if (!grouped[cong]) grouped[cong] = {};
+      if (!grouped[cong][meeting]) grouped[cong][meeting] = [];
+      grouped[cong][meeting].push(entry);
+    }
+  });
 
-  // Filter only district executive entries, and filter by showType
+  // Restore previous summary logic with search filtering
   const summary = {};
   filteredData.forEach((entry) => {
     if (showType === "attendance" && isApologyEntry(entry)) return;
     if (showType === "apology" && !isApologyEntry(entry)) return;
-    if (entry.type === "district") {
+    if (entry.type === "local") {
       if (!summary[entry.congregation]) {
         summary[entry.congregation] = [];
       }
@@ -152,10 +166,25 @@ export default function DashboardDistrict({
     }
   });
 
-  // Determine if there are any apologies in the summary
-  const hasApologies = Object.values(summary).some((entries) =>
-    entries.some((e) => isApologyEntry(e))
-  );
+  // Color palette for cards
+  const cardColors = [
+    "bg-blue-50 dark:bg-blue-900",
+    "bg-green-50 dark:bg-green-900",
+    "bg-yellow-50 dark:bg-yellow-900",
+    "bg-purple-50 dark:bg-purple-900",
+    "bg-pink-50 dark:bg-pink-900",
+    "bg-orange-50 dark:bg-orange-900",
+    "bg-teal-50 dark:bg-teal-900",
+    "bg-indigo-50 dark:bg-indigo-900",
+    "bg-red-50 dark:bg-red-900",
+  ];
+
+  // Add at the top with other hooks
+  // Remove all undo/restore logic and UI
+  // 1. Remove handleUndo function
+  // 2. Remove lastDeleted state and any references
+  // 3. Remove localStorage.setItem('pendingUndo', ...) and related code
+  // 4. Remove Undo button from toasts
 
   // Handler for deleting an entry (custom confirmation)
   const handleDelete = (entryId) => {
@@ -327,6 +356,11 @@ export default function DashboardDistrict({
     };
   }, [refetchAttendanceData, refetchApologyData]);
 
+  // Determine if there are any apologies in the summary
+  const hasApologies = Object.values(summary).some((entries) =>
+    entries.some((e) => isApologyEntry(e))
+  );
+
   const isMobile = useIsMobile();
 
   // Group summary by congregation, then by month, then by day
@@ -335,7 +369,7 @@ export default function DashboardDistrict({
     filteredData.forEach((entry) => {
       if (showType === "attendance" && isApologyEntry(entry)) return;
       if (showType === "apology" && !isApologyEntry(entry)) return;
-      if (entry.type === "district") {
+      if (entry.type !== "district") {
         const cong = entry.congregation;
         const dateObj = new Date(entry.meeting_date);
         const monthKey = dateObj.toLocaleString("default", {
@@ -377,16 +411,16 @@ export default function DashboardDistrict({
     <div>
       {/* Search Bar */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 md:mb-6 space-y-3 md:space-y-0">
-        <h1 className="text-lg md:text-xl font-bold w-full text-center">
-          District Executives
+        <h1 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent w-full text-center">
+          Local Congregations
         </h1>
         <div className="flex flex-col md:flex-row gap-3 md:gap-4 items-center">
-          <label className="text-sm flex items-center gap-1">
-            Year:
+          <label className="text-sm flex items-center gap-2">
+            <span className="font-semibold text-gray-700 dark:text-gray-300">Year:</span>
             <select
               value={selectedYear || ""}
               onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className="ml-1 px-2 py-1 border rounded dark:bg-gray-700 dark:text-white"
+              className="px-3 py-2 border-2 border-gray-200 dark:border-gray-600 rounded-xl dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
               disabled={availableYears.length === 0}
             >
               {Array.isArray(availableYears) &&
@@ -397,206 +431,31 @@ export default function DashboardDistrict({
                 ))}
             </select>
           </label>
-          <input
-            type="text"
+          <SearchBar
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search executive..."
-            className="w-full md:max-w-xs border px-3 py-2 rounded-md dark:bg-gray-700 dark:text-white text-sm md:text-base"
+            placeholder="Search congregation..."
           />
         </div>
       </div>
 
-      {/* Attendance & Apology Buttons */}
-      <div className="flex gap-4 mb-4">
-        <button
-          className={`px-4 py-2 rounded ${showType === "attendance" ? "bg-blue-700 text-white" : "bg-blue-600 text-white hover:bg-blue-700"}`}
-          onClick={() => setShowType("attendance")}
-        >
-          Attendance
-        </button>
-        <button
-          className={`px-4 py-2 rounded ${showType === "apology" ? "bg-purple-700 text-white" : "bg-purple-600 text-white hover:bg-purple-700"}`}
-          onClick={() => setShowType("apology")}
-        >
-          Apology
-        </button>
-        <button
-          className={`px-4 py-2 rounded ${showType === "all" ? "bg-gray-700 text-white" : "bg-gray-400 text-white hover:bg-gray-700"}`}
-          onClick={() => setShowType("all")}
-        >
-          All
-        </button>
-      </div>
+      <FilterButtons showType={showType} setShowType={setShowType} />
 
-      {/* Table of District Executives */}
-      <div className="overflow-x-auto custom-scrollbar mb-6 md:mb-10 max-w-full">
-        {groupedSummary &&
-        typeof groupedSummary === "object" &&
-        Object.keys(groupedSummary).length === 0 ? (
-          <div className="text-center py-8">
-            <div className="text-gray-500 dark:text-gray-400 text-lg font-medium">
-              {search
-                ? "No results found for your search."
-                : `No ${showType === "all" ? "attendance or apology" : showType} data available`}
-            </div>
-            <div className="text-gray-400 dark:text-gray-500 text-sm mt-2">
-              {search
-                ? "Try adjusting your search terms."
-                : showType === "all"
-                  ? "No attendance or apology records found for district executives."
-                  : `No ${showType} records found for district executives.`}
-            </div>
-          </div>
-        ) : (
-          groupedSummary &&
-          typeof groupedSummary === "object" &&
-          Object.keys(groupedSummary).map((cong, idx) => (
-            <div
-              key={cong}
-              className={`w-full max-w-full mb-6 rounded-xl shadow border p-2 md:p-4 ${congregationColors[cong] || "bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700"}`}
-            >
-              <h3 className="text-lg font-bold mb-2">{cong}</h3>
-              {groupedSummary[cong] &&
-                typeof groupedSummary[cong] === "object" &&
-                Object.keys(groupedSummary[cong]).map((month) => (
-                  <div key={month} className="mb-4">
-                    <h4 className="text-base font-semibold text-blue-700 dark:text-blue-300 mb-1">
-                      {month}
-                    </h4>
-                    {groupedSummary[cong][month] &&
-                      typeof groupedSummary[cong][month] === "object" &&
-                      Object.keys(groupedSummary[cong][month]).map((day) => (
-                        <div
-                          key={day}
-                          className="mb-2 pl-2 border-l-2 border-blue-300 dark:border-blue-600"
-                        >
-                          <div className="overflow-x-auto w-full">
-                            <table className="min-w-max w-full text-gray-900 dark:text-gray-100 mb-2 border-collapse">
-                              <thead
-                                className={
-                                  darkMode
-                                    ? "bg-gray-700 text-gray-100"
-                                    : "bg-gray-200 text-gray-900"
-                                }
-                              >
-                                <tr>
-                                  <th className="text-center px-2 md:px-4 py-2 border-r border-gray-300 text-xs md:text-sm">
-                                    Meeting
-                                  </th>
-                                  <th className="text-center px-2 md:px-4 py-2 border-r border-gray-300 text-xs md:text-sm">
-                                    Attendee(s)
-                                  </th>
-                                  <th className="px-2 md:px-4 py-2 border-r border-gray-300 text-xs md:text-sm">
-                                    Submitted Time
-                                  </th>
-                                  <th className="px-2 md:px-4 py-2 border-r border-gray-300 text-xs md:text-sm">
-                                    Status
-                                  </th>
-                                  <th className="px-2 md:px-4 py-2 border-r border-gray-300 text-xs md:text-sm">
-                                    Reason
-                                  </th>
-                                  <th className="text-center px-2 md:px-4 py-2 text-xs md:text-sm">
-                                    Actions
-                                  </th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {Array.isArray(
-                                  groupedSummary[cong][month][day]
-                                ) &&
-                                  groupedSummary[cong][month][day].map(
-                                    (entry, i) => (
-                                      <tr
-                                        key={entry.id || i}
-                                        className="text-sm md:text-base hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                                      >
-                                        <td className="border px-2 md:px-4 py-2 text-xs md:text-sm border-r border-gray-300 text-center">
-                                          <div className="text-xs md:text-sm font-medium text-blue-600 dark:text-blue-200">
-                                            {entry.meeting_title ||
-                                              "Unknown Meeting"}
-                                          </div>
-                                        </td>
-                                        <td className="border px-2 md:px-4 py-2 text-xs md:text-sm border-r border-gray-300 text-center">
-                                          <span className="font-semibold">
-                                            {entry.name}
-                                          </span>
-                                          <span> ({entry.position})</span>
-                                        </td>
-                                        <td className="border px-2 md:px-4 py-2 space-y-1 border-r border-gray-300 text-center">
-                                          <div className="text-xs md:text-sm">
-                                            {entry.timestamp}
-                                          </div>
-                                        </td>
-                                        <td className="border px-2 md:px-4 py-2 border-r border-gray-300 text-center">
-                                          <div className="flex items-center gap-2 mb-1 justify-center">
-                                            <span className="text-lg">
-                                              {isApologyEntry(entry) ? (
-                                                <FaTimesCircle className="text-red-500" />
-                                              ) : (
-                                                <FaCheckCircle className="text-green-500" />
-                                              )}
-                                            </span>
-                                          </div>
-                                        </td>
-                                        {isApologyEntry(entry) ? (
-                                          <td className="border px-2 md:px-4 py-2 text-xs md:text-sm border-r border-gray-300 text-center">
-                                            {entry.reason ||
-                                              "No reason provided"}
-                                          </td>
-                                        ) : (
-                                          <td className="border px-2 md:px-4 py-2 text-xs md:text-sm border-r border-gray-300 text-center">
-                                            <span className="text-gray-400">
-                                              -
-                                            </span>
-                                          </td>
-                                        )}
-                                        <td className="border px-2 md:px-4 py-2 text-center">
-                                          <div className="flex gap-2 justify-center">
-                                            <button
-                                              onClick={() =>
-                                                handleEdit(entry.id)
-                                              }
-                                              className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 px-2 py-1 rounded text-xs font-medium hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                                            >
-                                              Edit
-                                            </button>
-                                            <button
-                                              onClick={() =>
-                                                handleDelete(entry.id)
-                                              }
-                                              className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 px-2 py-1 rounded text-xs font-medium hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                                            >
-                                              Delete
-                                            </button>
-                                          </div>
-                                        </td>
-                                      </tr>
-                                    )
-                                  )}
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                ))}
-            </div>
-          ))
-        )}
-      </div>
-
-      {/* District Executive Attendance Chart */}
+      <AttendanceTable
+        darkMode={darkMode}
+        groupedSummary={groupedSummary}
+        congregationColors={congregationColors}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        isApologyEntry={isApologyEntry}
+      />
+      {/* Monthly Attendance Grid */}
       <div className="my-8 md:my-12">
-        <DistrictExecutiveChart
-          attendanceData={filteredData.filter(
-            (entry) => !isApologyEntry(entry)
-          )}
+        <MonthlyAttendanceGrid
+          attendanceData={filteredAttendanceData}
           darkMode={darkMode}
         />
       </div>
-
-      {/* Edit Modal */}
       {editModal.open && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-lg w-full max-w-md">

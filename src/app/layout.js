@@ -1,8 +1,8 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
-import { MeetingDateProvider } from "@components/MeetingDateContext";
-import AutoLogoutWrapper from "../components/AutoLogoutWrapper";
+import { MeetingDateProvider } from "@components/context/MeetingDateContext";
+import AutoLogoutWrapper from "../components/auth/AutoLogoutWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

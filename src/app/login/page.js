@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@components/hooks/useAuth";
 import { useAuthStore } from "@components/store/authStore";
-import LoginForm from "@components/LoginForm";
+import LoginForm from "@components/forms/LoginForm";
 import { toast } from "react-hot-toast";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";

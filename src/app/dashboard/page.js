@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import Dashboard from '@components/DashboardComponent';
+import Dashboard from '@components/dashboard/DashboardComponent';
 import { useAuth } from '@components/hooks/useAuth';
 import { toast } from 'react-hot-toast';
 

@@ -2,9 +2,9 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@components/hooks/useAuth";
-import { useMeetingDate } from "@components/MeetingDateContext";
-import MeetingDateForm from "@components/MeetingDateForm";
-import MainApp from "@components/MainApp";
+import { useMeetingDate } from "@components/context/MeetingDateContext";
+import MeetingDateForm from "@components/forms/MeetingDateForm";
+import MainApp from "@components/common/MainApp";
 import { toast } from "react-hot-toast";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
