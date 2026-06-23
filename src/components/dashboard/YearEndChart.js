@@ -268,6 +268,11 @@ export default function YearEndChart({ attendanceData, darkMode }) {
                   const isFutureMonth =
                     selectedYear === currentYear && index > currentMonth;
 
+                  // Only show months up to current month when viewing current year
+                  if (selectedYear === currentYear && index > currentMonth) {
+                    return null;
+                  }
+
                   return (
                     <div key={index} className="flex items-center gap-1">
                       <div
@@ -279,9 +284,7 @@ export default function YearEndChart({ attendanceData, darkMode }) {
                         className={`text-xs ${
                           isCurrentMonth
                             ? "font-bold text-blue-500"
-                            : isFutureMonth
-                              ? "text-gray-400"
-                              : darkMode ? "text-gray-300" : "text-gray-700"
+                            : darkMode ? "text-gray-300" : "text-gray-700"
                         }`}
                       >
                         {month.slice(0, 3)}

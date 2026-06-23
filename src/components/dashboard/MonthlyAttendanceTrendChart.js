@@ -65,31 +65,31 @@ export default function MonthlyAttendanceTrendChart({ attendanceData, previousYe
   }
 
   return (
-    <div className="w-full bg-gray-800 rounded-xl shadow-md p-4 md:p-6 border border-amber-500/30">
-      <h3 className="text-lg font-bold mb-4 text-amber-400">Monthly Attendance Analytics ({currentYear}{prevStats ? ` vs ${prevYear}` : ''})</h3>
+    <div className={`w-full rounded-xl shadow-md p-4 md:p-6 border ${darkMode ? 'bg-gray-800 border-amber-500/30' : 'bg-white border-gray-200'}`}>
+      <h3 className={`text-lg font-bold mb-4 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>Monthly Attendance Analytics ({currentYear}{prevStats ? ` vs ${prevYear}` : ''})</h3>
       
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-gray-700 p-4 rounded-lg border border-amber-500/30">
-          <div className="text-3xl font-bold text-white mb-1">{totalAttendance}</div>
-          <div className="text-xs text-gray-400">Total Attendance</div>
+        <div className={`p-4 rounded-lg border ${darkMode ? 'bg-gray-700 border-amber-500/30' : 'bg-gray-100 border-gray-300'}`}>
+          <div className={`text-3xl font-bold mb-1 ${darkMode ? 'text-white' : 'text-gray-900'}`}>{totalAttendance}</div>
+          <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Attendance</div>
           {prevStats && (
-            <div className="text-xs text-green-400 mt-1">
+            <div className={`text-xs mt-1 ${totalAttendance > prevTotalAttendance ? 'text-green-600' : 'text-red-600'}`}>
               {totalAttendance > prevTotalAttendance ? '+' : ''}{totalAttendance - prevTotalAttendance} vs last year
             </div>
           )}
         </div>
-        <div className="bg-gray-700 p-4 rounded-lg border border-amber-500/30">
-          <div className="text-3xl font-bold text-white mb-1">{totalUnique}</div>
-          <div className="text-xs text-gray-400">Unique Attendees</div>
+        <div className={`p-4 rounded-lg border ${darkMode ? 'bg-gray-700 border-amber-500/30' : 'bg-gray-100 border-gray-300'}`}>
+          <div className={`text-3xl font-bold mb-1 ${darkMode ? 'text-white' : 'text-gray-900'}`}>{totalUnique}</div>
+          <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Unique Attendees</div>
         </div>
-        <div className="bg-gray-700 p-4 rounded-lg border border-amber-500/30">
-          <div className="text-3xl font-bold text-white mb-1">{avgMonthly}</div>
-          <div className="text-xs text-gray-400">Avg Per Month</div>
+        <div className={`p-4 rounded-lg border ${darkMode ? 'bg-gray-700 border-amber-500/30' : 'bg-gray-100 border-gray-300'}`}>
+          <div className={`text-3xl font-bold mb-1 ${darkMode ? 'text-white' : 'text-gray-900'}`}>{avgMonthly}</div>
+          <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Avg Per Month</div>
         </div>
-        <div className="bg-gray-700 p-4 rounded-lg border border-amber-500/30">
-          <div className="text-3xl font-bold text-white mb-1">{currentStats.filter(s => s.total > 0).length}</div>
-          <div className="text-xs text-gray-400">Active Months</div>
+        <div className={`p-4 rounded-lg border ${darkMode ? 'bg-gray-700 border-amber-500/30' : 'bg-gray-100 border-gray-300'}`}>
+          <div className={`text-3xl font-bold mb-1 ${darkMode ? 'text-white' : 'text-gray-900'}`}>{currentStats.filter(s => s.total > 0).length}</div>
+          <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Active Months</div>
         </div>
       </div>
 
