@@ -890,7 +890,10 @@ def set_meeting(request):
             }
         }, status=201)
     except Exception as e:
-        return Response({'error': 'Failed to create meeting'}, status=400)
+        print(f"Error creating meeting: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return Response({'error': f'Failed to create meeting: {str(e)}'}, status=400)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
