@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
-import DistrictExecutiveChart from "./dashboard/DistrictExecutiveChart";
+import DistrictExecutiveChart from "./DistrictExecutiveChart";
 import { toast } from "react-hot-toast";
-import { capitalizeFirst } from "../lib/utils";
-import PINModal from "./PINModal";
-import SearchBar from "./ui/SearchBar";
-import FilterButtons from "./ui/FilterButtons";
-import AttendanceTable from "./ui/AttendanceTable";
+import { capitalizeFirst } from "../../lib/utils";
+import PINModal from "../auth/PINModal";
+import SearchBar from "../ui/inputs/SearchBar";
+import FilterButtons from "../ui/inputs/FilterButtons";
+import AttendanceTable from "../ui/tables/AttendanceTable";
 
 // Add capitalizeWords function
 function capitalizeWords(str) {
