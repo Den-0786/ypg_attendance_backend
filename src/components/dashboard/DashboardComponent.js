@@ -72,7 +72,7 @@ export default function DashboardComponent(props) {
                   className="text-blue-600 dark:text-blue-300"
                   stroke="currentColor"
                   strokeWidth="3"
-                  strokeDasharray={`${getLocalProgress()} 100`}
+                  strokeDasharray={`0 100`}
                   strokeLinecap="round"
                   fill="none"
                   d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
@@ -80,7 +80,7 @@ export default function DashboardComponent(props) {
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
                 <span className="text-xs md:text-sm font-bold text-blue-700 dark:text-blue-300">
-                  {getLocalProgress()}%
+                  0%
                 </span>
               </div>
             </div>
@@ -111,7 +111,7 @@ export default function DashboardComponent(props) {
                   className="text-green-600 dark:text-green-300"
                   stroke="currentColor"
                   strokeWidth="3"
-                  strokeDasharray={`${getDistrictProgress()} 100`}
+                  strokeDasharray={`0 100`}
                   strokeLinecap="round"
                   fill="none"
                   d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
@@ -119,7 +119,7 @@ export default function DashboardComponent(props) {
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
                 <span className="text-xs md:text-sm font-bold text-green-700 dark:text-green-300">
-                  {getDistrictProgress()}%
+                  0%
                 </span>
               </div>
             </div>
