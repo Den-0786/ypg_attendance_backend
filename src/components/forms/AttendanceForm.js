@@ -69,6 +69,38 @@ export default function AttendanceForm({ meetingInfo }) {
   const meetingDate = meetingInfo?.date || contextMeetingDate || "";
   const meetingTitle = meetingInfo?.title || contextMeetingTitle || "";
 
+  const [currentMeeting, setCurrentMeeting] = useState(null);
+  const [loadingMeeting, setLoadingMeeting] = useState(false);
+
+  // Fetch current meeting details
+  useEffect(() => {
+    const fetchCurrentMeeting = async () => {
+      setLoadingMeeting(true);
+      try {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8001";
+        const token = localStorage.getItem("access_token");
+        const res = await fetch(`${API_URL}/api/current-meeting`, {
+          headers: {
+            Authorization: token ? `Bearer ${token}` : undefined,
+          },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setCurrentMeeting(data);
+        } else {
+          setCurrentMeeting(null);
+        }
+      } catch (error) {
+        console.error("Error fetching meeting:", error);
+        setCurrentMeeting(null);
+      } finally {
+        setLoadingMeeting(false);
+      }
+    };
+
+    fetchCurrentMeeting();
+  }, []);
+
   // Chrome-specific fix for meeting info updates
   useEffect(() => {
     if (meetingInfo) {
@@ -398,17 +430,67 @@ export default function AttendanceForm({ meetingInfo }) {
                 <span className="text-sm">District</span>
               </label>
             </div>
-            {meetingDate && (
-              <p className="text-sm text-gray-500">
-                Meeting Date: {meetingDate}
-              </p>
-            )}
-            {meetingTitle && (
-              <p className="text-sm text-gray-500">
-                Meeting:{" "}
-                <span className="font-semibold text-green-600">
-                  {meetingTitle}
-                </span>
+            {loadingMeeting ? (
+              <p className="text-sm text-gray-500">Loading meeting info...</p>
+            ) : currentMeeting ? (
+              <>
+                {currentMeeting.date && (
+                  <p className="text-sm text-gray-500">
+                    Meeting Date: {currentMeeting.date}
+                  </p>
+                )}
+                {currentMeeting.title && (
+                  <p className="text-sm text-gray-500">
+                    Meeting:{" "}
+                    <span className="font-semibold text-green-600">
+                      {currentMeeting.title}
+                    </span>
+                  </p>
+                )}
+                {currentMeeting.meeting_type && (
+                  <p className="text-sm text-gray-500">
+                    Type:{" "}
+                    <span className="font-semibold text-blue-600 capitalize">
+                      {currentMeeting.meeting_type}
+                    </span>
+                  </p>
+                )}
+                {currentMeeting.custom_participant_limit && (
+                  <p className="text-sm text-gray-500">
+                    Limit:{" "}
+                    <span className="font-semibold text-purple-600">
+                      {currentMeeting.custom_participant_limit} per local
+                    </span>
+                  </p>
+                )}
+                {!currentMeeting.custom_participant_limit && currentMeeting.meeting_type === 'general' && (
+                  <p className="text-sm text-gray-500">
+                    Limit:{" "}
+                    <span className="font-semibold text-purple-600">
+                      5 per local (default)
+                    </span>
+                  </p>
+                )}
+                {!currentMeeting.custom_participant_limit && currentMeeting.meeting_type === 'council' && (
+                  <p className="text-sm text-gray-500">
+                    Limit:{" "}
+                    <span className="font-semibold text-purple-600">
+                      2 per local (default)
+                    </span>
+                  </p>
+                )}
+                {!currentMeeting.custom_participant_limit && currentMeeting.meeting_type === 'emergency' && (
+                  <p className="text-sm text-gray-500">
+                    Limit:{" "}
+                    <span className="font-semibold text-purple-600">
+                      Unlimited
+                    </span>
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="text-sm text-red-500 font-semibold">
+                No active meeting set
               </p>
             )}
           </div>

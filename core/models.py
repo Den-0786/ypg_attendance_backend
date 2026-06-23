@@ -117,15 +117,7 @@ class Meeting(models.Model):
     meeting_type = models.CharField(max_length=20, choices=MEETING_TYPE_CHOICES, default='general')
     custom_participant_limit = models.IntegerField(null=True, blank=True, help_text="Custom limit per local. If null, uses default: General=5, Council=2, Emergency=unlimited")
     is_active = models.BooleanField(default=True)
-    login_username = models.CharField(max_length=150)
-    login_password = models.CharField(max_length=128)  # stores hashed password
     created_at = models.DateTimeField(auto_now_add=True)  # Track when meeting was created
-
-    def set_password(self, raw_password):
-        self.login_password = make_password(raw_password)
-
-    def check_password(self, raw_password):
-        return check_password(raw_password, self.login_password)
 
     def is_expired(self):
         """Check if meeting has been active for more than 24 hours"""

@@ -10,8 +10,6 @@ export default function MeetingConfigForm({ onMeetingConfigured, darkMode = fals
   const [date, setDate] = useState('');
   const [meetingType, setMeetingType] = useState('general');
   const [customLimit, setCustomLimit] = useState('');
-  const [adminUsername, setAdminUsername] = useState('');
-  const [adminPassword, setAdminPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPINModal, setShowPINModal] = useState(false);
 
@@ -40,8 +38,6 @@ export default function MeetingConfigForm({ onMeetingConfigured, darkMode = fals
         title,
         date,
         meeting_type: meetingType,
-        admin_username: adminUsername,
-        admin_password: adminPassword,
       };
 
       // Only include custom_limit if it's set and greater than 0
@@ -66,8 +62,6 @@ export default function MeetingConfigForm({ onMeetingConfigured, darkMode = fals
         setDate('');
         setMeetingType('general');
         setCustomLimit('');
-        setAdminUsername('');
-        setAdminPassword('');
         
         if (typeof onMeetingConfigured === 'function') {
           setTimeout(() => onMeetingConfigured(), 500);
@@ -153,30 +147,6 @@ export default function MeetingConfigForm({ onMeetingConfigured, darkMode = fals
           <p className={`text-xs mt-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
             Effective limit: <span className={`font-semibold ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>{getEffectiveLimit()}</span> members per local
           </p>
-        </div>
-
-        <div>
-          <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Admin Username</label>
-          <input
-            type="text"
-            value={adminUsername}
-            onChange={(e) => setAdminUsername(e.target.value)}
-            placeholder="Admin username"
-            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${darkMode ? 'border-gray-600 text-white bg-gray-700' : 'border-gray-300 text-gray-900 bg-gray-50'}`}
-            required
-          />
-        </div>
-
-        <div>
-          <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Admin Password</label>
-          <input
-            type="password"
-            value={adminPassword}
-            onChange={(e) => setAdminPassword(e.target.value)}
-            placeholder="Admin password"
-            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${darkMode ? 'border-gray-600 text-white bg-gray-700' : 'border-gray-300 text-gray-900 bg-gray-50'}`}
-            required
-          />
         </div>
 
         <button

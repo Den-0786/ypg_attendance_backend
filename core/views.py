@@ -97,7 +97,7 @@ def submit_attendance(request):
 
             # 🔒 Check member-per-local cap based on meeting type or custom limit
             try:
-                meeting = Meeting.objects.get(date=item['meeting_date'])
+                meeting = Meeting.objects.get(date=item['meeting_date'], is_active=True)
                 
                 # Determine the limit to use
                 if meeting.custom_participant_limit is not None:
@@ -127,8 +127,10 @@ def submit_attendance(request):
                             'error': f"Maximum attendance limit of {limit} members reached for {item['congregation']} for this {limit_type} Meeting."
                         }, status=400)
             except Meeting.DoesNotExist:
-                # If no meeting found, proceed without cap check
-                pass
+                # If no active meeting found, reject attendance submission
+                return Response({
+                    'error': 'No active meeting set for this date. Please set a meeting before taking attendance.'
+                }, status=400)
 
             # Optional: Remove timestamp from item if you're auto-generating it
             item.pop('timestamp', None)
@@ -851,20 +853,6 @@ def set_meeting(request):
     if not user_id:
         return Response({'error': 'Authentication required'}, status=401)
     
-    # Verify admin credentials from request
-    admin_username = request.data.get('admin_username')
-    admin_password = request.data.get('admin_password')
-    
-    if not admin_username or not admin_password:
-        return Response({'error': 'Admin credentials required'}, status=400)
-    
-    try:
-        admin_user = Credential.objects.get(username=admin_username, role='admin')
-        if not admin_user.check_password(admin_password):
-            return Response({'error': 'Invalid admin credentials'}, status=401)
-    except Credential.DoesNotExist:
-        return Response({'error': 'Invalid admin credentials'}, status=401)
-
     # Check if there's already an active and non-expired meeting on the same date
     meeting_date = request.data.get('date')
     if meeting_date:
