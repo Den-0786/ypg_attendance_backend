@@ -1,9 +1,9 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import AttendanceForm from '@components/AttendanceForm';
-import ApologyForm from '@components/ApologyForm';
-import PINModal from '@components/PINModal';
+import AttendanceForm from '@components/forms/AttendanceForm';
+import ApologyForm from '@components/forms/ApologyForm';
+import PINModal from '@components/auth/PINModal';
 
 export default function MainApp({ activeTab, setActiveTab, handleLogout, meetingInfo, showManageMeeting = false, onManageMeeting }) {
     const router = useRouter();

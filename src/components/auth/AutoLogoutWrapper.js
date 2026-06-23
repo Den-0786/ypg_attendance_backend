@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "./store/authStore";
+import { useAuthStore } from "../store/authStore";
 import AutoLogout from "./AutoLogout";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
