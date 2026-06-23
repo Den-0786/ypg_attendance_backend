@@ -61,8 +61,11 @@ urlpatterns = [
 
     # Meeting management
     path('set-meeting', set_meeting, name='set_meeting'),
+    path('api/set-meeting', set_meeting, name='api_set_meeting'),
     path('current-meeting', current_meeting, name='current_meeting'),
+    path('api/current-meeting', current_meeting, name='api_current_meeting'),
     path('deactivate-meeting', deactivate_meeting, name='deactivate_meeting'),
+    path('api/deactivate-meeting', deactivate_meeting, name='api_deactivate_meeting'),
 
     #Records management
     path('records/<str:record_type>', core_views.records_list, name='records-list'),
