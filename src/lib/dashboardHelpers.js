@@ -1,3 +1,4 @@
+// Helper functions for dashboard components
 // Helper function to identify apology entries
 export function isApologyEntry(entry) {
   return entry && entry.reason && entry.reason.length > 0;
