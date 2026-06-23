@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
-import PINModal from './PINModal';
+import PINModal from '../auth/PINModal';
 import { toTitleCase } from '../lib/utils';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';

@@ -20,7 +20,7 @@ import {
 import toast from "react-hot-toast";
 import jsPDF from "jspdf";
 import { capitalizeFirst } from "../lib/utils";
-import PINModal from "./PINModal";
+import PINModal from "../auth/PINModal";
 import { BASE_URL } from "../lib/config";
 
 function useIsMobile() {
