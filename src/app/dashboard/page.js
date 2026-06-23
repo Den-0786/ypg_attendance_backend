@@ -102,8 +102,12 @@ export default function AdminPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const checkActiveMeeting = async () => {
     try {
+      const token = localStorage.getItem('access_token');
       const res = await fetch(`${API_URL}/api/current-meeting`, {
-        credentials: 'include'
+        credentials: 'include',
+        headers: {
+          Authorization: token ? `Bearer ${token}` : undefined,
+        },
       });
       const data = await res.json();
       
