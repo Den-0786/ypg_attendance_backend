@@ -19,7 +19,7 @@ import PINModal from "../auth/PINModal";
 import AttendanceChart from "./AttendanceChart";
 import { useMemo } from "react";
 import SearchBar from "../ui/inputs/SearchBar";
-import FilterButtons from "../ui/inputs/FilterButtons";
+import FilterButtons from "../ui/FilterButtons";
 import ProgressCards from "./ProgressCards";
 import DashboardStats from "./DashboardStats";
 import DashboardTable from "./DashboardTable";

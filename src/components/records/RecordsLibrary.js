@@ -19,9 +19,9 @@ import {
 } from "react-icons/fa";
 import toast from "react-hot-toast";
 import jsPDF from "jspdf";
-import { capitalizeFirst } from "../lib/utils";
+import { capitalizeFirst } from "../../lib/utils";
 import PINModal from "../auth/PINModal";
-import { BASE_URL } from "../lib/config";
+import { BASE_URL } from "../../lib/config";
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);

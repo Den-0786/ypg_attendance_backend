@@ -5,7 +5,7 @@ import { toast } from "react-hot-toast";
 import { capitalizeFirst } from "../../lib/utils";
 import PINModal from "../auth/PINModal";
 import SearchBar from "../ui/inputs/SearchBar";
-import FilterButtons from "../ui/inputs/FilterButtons";
+import FilterButtons from "../ui/FilterButtons";
 import AttendanceTable from "../ui/AttendanceTable";
 
 // Add capitalizeWords function
