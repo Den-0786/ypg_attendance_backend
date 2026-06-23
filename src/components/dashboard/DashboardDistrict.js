@@ -183,11 +183,11 @@ export default function DashboardDistrict({
       : `${API_URL}/api/delete-attendance/${entry.id}?pin=${encodeURIComponent(pin)}`;
     toast.custom(
       (t) => (
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-lg border border-red-400 max-w-xs mx-auto flex flex-col items-center">
+        <div className="bg-gray-800 p-4 rounded-xl shadow-lg border border-red-400 max-w-xs mx-auto flex flex-col items-center">
           <div className="text-lg font-bold text-red-600 mb-2">
             Confirm Delete
           </div>
-          <div className="text-gray-700 dark:text-gray-200 mb-4">
+          <div className="text-gray-200 mb-4">
             Are you sure you want to delete this entry?
           </div>
           <div className="flex gap-3">
@@ -385,11 +385,11 @@ export default function DashboardDistrict({
         </h1>
         <div className="flex flex-col md:flex-row gap-3 md:gap-4 items-center">
           <label className="text-sm flex items-center gap-2">
-            <span className="font-semibold text-gray-700 dark:text-gray-300">Year:</span>
+            <span className="font-semibold text-gray-300">Year:</span>
             <select
               value={selectedYear || ""}
               onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className="px-3 py-2 border-2 border-gray-200 dark:border-gray-600 rounded-xl dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+              className="px-3 py-2 border-2 border-amber-500/30 rounded-xl bg-gray-700 text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
               disabled={availableYears.length === 0}
             >
               {Array.isArray(availableYears) &&

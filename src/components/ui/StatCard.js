@@ -1,39 +1,39 @@
 import React from "react";
 
 const cardStyles = {
-  blue: "bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/50 dark:to-indigo-900/50 border-blue-200 dark:border-blue-700",
-  green: "bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/50 dark:to-emerald-900/50 border-green-200 dark:border-green-700",
-  purple: "bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-900/50 dark:to-violet-900/50 border-purple-200 dark:border-purple-700",
-  amber: "bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/50 dark:to-orange-900/50 border-amber-200 dark:border-amber-700",
-  emerald: "bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-900/50 dark:to-emerald-900/50 border-green-200 dark:border-green-700",
-  cyan: "bg-gradient-to-br from-blue-50 to-cyan-100 dark:from-blue-900/50 dark:to-cyan-900/50 border-blue-200 dark:border-blue-700",
+  blue: "bg-gray-800 border-amber-500/30 shadow-lg",
+  green: "bg-gray-800 border-amber-500/30 shadow-lg",
+  purple: "bg-gray-800 border-amber-500/30 shadow-lg",
+  amber: "bg-gray-800 border-amber-500/30 shadow-lg",
+  emerald: "bg-gray-800 border-amber-500/30 shadow-lg",
+  cyan: "bg-gray-800 border-amber-500/30 shadow-lg",
 };
 
 const iconColors = {
-  blue: "bg-blue-500",
-  green: "bg-green-500",
-  purple: "bg-purple-500",
+  blue: "bg-blue-700",
+  green: "bg-amber-500",
+  purple: "bg-blue-700",
   amber: "bg-amber-500",
-  emerald: "bg-green-500",
-  cyan: "bg-blue-500",
+  emerald: "bg-amber-500",
+  cyan: "bg-blue-700",
 };
 
 const textColors = {
-  blue: "text-blue-700 dark:text-blue-300",
-  green: "text-green-700 dark:text-green-300",
-  purple: "text-purple-700 dark:text-purple-300",
-  amber: "text-amber-700 dark:text-amber-300",
-  emerald: "text-green-700 dark:text-green-300",
-  cyan: "text-blue-700 dark:text-blue-300",
+  blue: "text-amber-400",
+  green: "text-amber-400",
+  purple: "text-amber-400",
+  amber: "text-amber-400",
+  emerald: "text-amber-400",
+  cyan: "text-amber-400",
 };
 
 const valueColors = {
-  blue: "text-blue-900 dark:text-blue-100",
-  green: "text-green-900 dark:text-green-100",
-  purple: "text-purple-900 dark:text-purple-100",
-  amber: "text-amber-900 dark:text-amber-100",
-  emerald: "text-green-900 dark:text-green-100",
-  cyan: "text-blue-900 dark:text-blue-100",
+  blue: "text-white",
+  green: "text-white",
+  purple: "text-white",
+  amber: "text-white",
+  emerald: "text-white",
+  cyan: "text-white",
 };
 
 const icons = {

@@ -16,9 +16,8 @@ export default function MeetingTypePieChart() {
     const fetchData = async () => {
         try {
             const params = new URLSearchParams({
-                start_date: startDate,
-                end_date: endDate,
-                meeting_type: meetingType
+                year: year,
+                congregation: congregation
             });
             
             const res = await fetch(`${API_URL}/api/attendance-by-meeting-title?${params}`);
@@ -40,30 +39,30 @@ export default function MeetingTypePieChart() {
     }, [year, congregation]);
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6 my-8">
+        <div className="bg-gray-800 rounded-xl shadow p-6 my-8 border border-amber-500/30">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
-            <h2 className="text-lg font-semibold text-gray-800 dark:text-white">Meeting Type Distribution</h2>
+            <h2 className="text-lg font-semibold text-amber-400">Meeting Type Distribution</h2>
             <div className="flex gap-2">
             <input
                 type="number"
                 min="2020"
                 value={year}
                 onChange={(e) => setYear(e.target.value)}
-                className="border px-2 py-1 rounded text-sm dark:bg-gray-700 dark:text-white"
+                className="border px-2 py-1 rounded text-sm bg-gray-700 text-white border-gray-600 focus:border-amber-500"
                 placeholder="Year"
             />
             <input
                 type="text"
                 value={congregation}
                 onChange={(e) => setCongregation(e.target.value)}
-                className="border px-2 py-1 rounded text-sm dark:bg-gray-700 dark:text-white"
+                className="border px-2 py-1 rounded text-sm bg-gray-700 text-white border-gray-600 focus:border-amber-500"
                 placeholder="Filter by congregation"
             />
             </div>
         </div>
 
         {data.length === 0 ? (
-            <p className="text-center text-gray-500 dark:text-gray-400">No data available.</p>
+            <p className="text-center text-gray-500">No data available.</p>
         ) : (
             <ResponsiveContainer width="100%" height={300}>
             <PieChart>
@@ -78,7 +77,20 @@ export default function MeetingTypePieChart() {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip 
+                contentStyle={{ 
+                  background: 'rgba(31, 41, 55, 0.98)', 
+                  color: '#fff',
+                  border: '1px solid #f59e0b',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+                  backdropFilter: 'blur(8px)',
+                  padding: '8px 12px',
+                  fontSize: '12px'
+                }} 
+                animationDuration={200}
+                isAnimationActive={true}
+              />
                 <Legend />
             </PieChart>
             </ResponsiveContainer>

@@ -1,12 +1,10 @@
+'use client';
 import React from 'react';
-import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area
-} from 'recharts';
+import CustomAreaChart from '../charts/CustomAreaChart';
 
 const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 function getMonthlyStats(attendanceData, year) {
-  // Returns [{month: 'Jan', unique: 0, total: 0}, ...]
   const stats = monthNames.map((m, i) => ({ month: m, unique: 0, total: 0 }));
   const seen = Array(12).fill().map(() => new Set());
   attendanceData.forEach(entry => {
@@ -28,31 +26,80 @@ export default function MonthlyAttendanceTrendChart({ attendanceData, previousYe
   const currentStats = getMonthlyStats(attendanceData, currentYear);
   const prevStats = previousYearData ? getMonthlyStats(previousYearData, prevYear) : null;
 
-  // Y-axis max: 10 or max attendance, whichever is higher
-  const maxY = Math.max(10, ...currentStats.map(s => s.total), ...(prevStats ? prevStats.map(s => s.total) : []));
+  const totalAttendance = currentStats.reduce((sum, s) => sum + s.total, 0);
+  const totalUnique = currentStats.reduce((sum, s) => sum + s.unique, 0);
+  const prevTotalAttendance = prevStats ? prevStats.reduce((sum, s) => sum + s.total, 0) : 0;
+  const avgMonthly = currentStats.length > 0 ? (totalAttendance / currentStats.length).toFixed(1) : 0;
+
+  // Prepare data for Area Chart
+  const chartData = currentStats.map((stat, index) => {
+    const dataPoint = {
+      name: stat.month,
+      'Current Year': stat.total,
+      'Current Year Change': prevStats ? stat.total - prevStats[index].total : 0,
+    };
+    if (prevStats) {
+      dataPoint['Previous Year'] = prevStats[index].total;
+      dataPoint['Previous Year Change'] = 0;
+    }
+    return dataPoint;
+  });
+
+  // Configure series
+  const seriesConfig = [
+    {
+      dataKey: 'Current Year',
+      label: 'Current Year',
+      color: '#f59e0b', // Amber/Orange
+      showChange: true,
+    },
+  ];
+
+  if (prevStats) {
+    seriesConfig.push({
+      dataKey: 'Previous Year',
+      label: 'Previous Year',
+      color: '#fbbf24', // Lighter amber
+      showChange: false,
+    });
+  }
 
   return (
-    <div className="w-full h-96 bg-white dark:bg-gray-900 rounded-xl shadow-md p-4">
-      <h3 className="text-lg font-bold mb-4 text-gray-800 dark:text-white">Monthly Attendance Trend ({currentYear}{prevStats ? ` vs ${prevYear}` : ''})</h3>
-      <ResponsiveContainer width="100%" height="90%">
-        <LineChart data={currentStats} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#444' : '#eee'} />
-          <XAxis dataKey="month" stroke={darkMode ? '#fff' : '#333'} />
-          <YAxis domain={[0, maxY]} stroke={darkMode ? '#fff' : '#333'} allowDecimals={false} />
-          <Tooltip contentStyle={{ background: darkMode ? '#222' : '#fff', color: darkMode ? '#fff' : '#333' }} />
-          <Legend />
-          {/* Area for total attendance */}
-          <Area type="monotone" dataKey="total" stroke="#6366f1" fill="#6366f1" fillOpacity={0.15} name="Total Attendance" />
-          {/* Line for total attendance */}
-          <Line type="monotone" dataKey="total" stroke="#6366f1" strokeWidth={3} dot={{ r: 4 }} name="Total Attendance" />
-          {/* Line for unique attendees */}
-          <Line type="monotone" dataKey="unique" stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} name="Unique Attendees" />
-          {/* Previous year comparison */}
+    <div className="w-full bg-gray-800 rounded-xl shadow-md p-4 md:p-6 border border-amber-500/30">
+      <h3 className="text-lg font-bold mb-4 text-amber-400">Monthly Attendance Analytics ({currentYear}{prevStats ? ` vs ${prevYear}` : ''})</h3>
+      
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-gray-700 p-4 rounded-lg border border-amber-500/30">
+          <div className="text-3xl font-bold text-white mb-1">{totalAttendance}</div>
+          <div className="text-xs text-gray-400">Total Attendance</div>
           {prevStats && (
-            <Line type="monotone" data={prevStats} dataKey="total" stroke="#f59e42" strokeDasharray="5 5" strokeWidth={2} dot={false} name={`Total (${prevYear})`} />
+            <div className="text-xs text-green-400 mt-1">
+              {totalAttendance > prevTotalAttendance ? '+' : ''}{totalAttendance - prevTotalAttendance} vs last year
+            </div>
           )}
-        </LineChart>
-      </ResponsiveContainer>
+        </div>
+        <div className="bg-gray-700 p-4 rounded-lg border border-amber-500/30">
+          <div className="text-3xl font-bold text-white mb-1">{totalUnique}</div>
+          <div className="text-xs text-gray-400">Unique Attendees</div>
+        </div>
+        <div className="bg-gray-700 p-4 rounded-lg border border-amber-500/30">
+          <div className="text-3xl font-bold text-white mb-1">{avgMonthly}</div>
+          <div className="text-xs text-gray-400">Avg Per Month</div>
+        </div>
+        <div className="bg-gray-700 p-4 rounded-lg border border-amber-500/30">
+          <div className="text-3xl font-bold text-white mb-1">{currentStats.filter(s => s.total > 0).length}</div>
+          <div className="text-xs text-gray-400">Active Months</div>
+        </div>
+      </div>
+
+      {/* Area Chart */}
+      <CustomAreaChart
+        data={chartData}
+        seriesConfig={seriesConfig}
+        title=""
+        darkMode={darkMode}
+      />
     </div>
   );
 } 

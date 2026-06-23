@@ -3,17 +3,17 @@ import { getLocalProgress, getDistrictProgress } from "../../lib/dashboardHelper
 
 export default function ProgressCards({ localProgress, districtProgress, selectedYear }) {
   const progressCardClass =
-    "flex flex-col justify-between items-center p-5 rounded-2xl shadow-xl min-w-[260px] max-w-xs w-full backdrop-blur-sm border border-white/20";
+    "flex flex-col justify-between items-center p-5 rounded-xl shadow-xl min-w-[260px] max-w-xs w-full backdrop-blur-sm border";
 
   return (
     <div className="flex gap-4 mb-6 mt-2 items-center overflow-x-auto custom-scrollbar snap-x snap-mandatory pl-8 pr-4">
       <div
         className={
           progressCardClass +
-          " bg-gradient-to-br from-blue-600 to-indigo-700 text-white min-w-[280px] snap-start"
+          " bg-gray-800 border-amber-500/30 text-white min-w-[280px] snap-start"
         }
       >
-        <div className="font-bold text-lg mb-3 flex items-center gap-2">
+        <div className="font-bold text-lg mb-3 flex items-center gap-2 text-amber-400">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
           </svg>
@@ -26,7 +26,7 @@ export default function ProgressCards({ localProgress, districtProgress, selecte
                 cx="32"
                 cy="32"
                 r="28"
-                stroke="#e5e7eb"
+                stroke="#374151"
                 strokeWidth="8"
                 fill="none"
               />
@@ -51,14 +51,14 @@ export default function ProgressCards({ localProgress, districtProgress, selecte
                   y2="64"
                   gradientUnits="userSpaceOnUse"
                 >
-                  <stop stopColor="#3b82f6" />
-                  <stop offset="1" stopColor="#60a5fa" />
+                  <stop stopColor="#1e40af" />
+                  <stop offset="1" stopColor="#3b82f6" />
                 </linearGradient>
               </defs>
             </svg>
-            <span className="absolute text-xl font-bold">{localProgress}%</span>
+            <span className="absolute text-xl font-bold text-white">{localProgress}%</span>
           </div>
-          <div className="flex flex-col text-sm">
+          <div className="flex flex-col text-sm text-gray-300">
             <span>Yearly Progress: {localProgress}%</span>
             <span>Current Year: {selectedYear || new Date().getFullYear()}</span>
           </div>
@@ -67,10 +67,10 @@ export default function ProgressCards({ localProgress, districtProgress, selecte
       <div
         className={
           progressCardClass +
-          " bg-gradient-to-br from-emerald-600 to-green-700 text-white min-w-[280px] snap-center"
+          " bg-gray-800 border-amber-500/30 text-white min-w-[280px] snap-center"
         }
       >
-        <div className="font-bold text-lg mb-3 flex items-center gap-2">
+        <div className="font-bold text-lg mb-3 flex items-center gap-2 text-amber-400">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
@@ -83,7 +83,7 @@ export default function ProgressCards({ localProgress, districtProgress, selecte
                 cx="32"
                 cy="32"
                 r="28"
-                stroke="#e5e7eb"
+                stroke="#374151"
                 strokeWidth="8"
                 fill="none"
               />
@@ -91,7 +91,7 @@ export default function ProgressCards({ localProgress, districtProgress, selecte
                 cx="32"
                 cy="32"
                 r="28"
-                stroke="url(#greenGradient)"
+                stroke="url(#amberGradient)"
                 strokeWidth="8"
                 fill="none"
                 strokeDasharray={2 * Math.PI * 28}
@@ -101,21 +101,21 @@ export default function ProgressCards({ localProgress, districtProgress, selecte
               />
               <defs>
                 <linearGradient
-                  id="greenGradient"
+                  id="amberGradient"
                   x1="0"
                   y1="0"
                   x2="64"
                   y2="64"
                   gradientUnits="userSpaceOnUse"
                 >
-                  <stop stopColor="#10b981" />
-                  <stop offset="1" stopColor="#6ee7b7" />
+                  <stop stopColor="#d97706" />
+                  <stop offset="1" stopColor="#f59e0b" />
                 </linearGradient>
               </defs>
             </svg>
-            <span className="absolute text-xl font-bold">{districtProgress}%</span>
+            <span className="absolute text-xl font-bold text-white">{districtProgress}%</span>
           </div>
-          <div className="flex flex-col text-sm">
+          <div className="flex flex-col text-sm text-gray-300">
             <span>Yearly Progress: {districtProgress}%</span>
             <span>Current Year: {selectedYear || new Date().getFullYear()}</span>
           </div>

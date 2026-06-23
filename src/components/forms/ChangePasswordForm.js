@@ -327,13 +327,13 @@ export default function ChangePasswordForm({
   if (currentUser && currentUser.role !== "admin") {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
-        <div className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-sm shadow-xl">
+        <div className="bg-gray-900 rounded-lg p-6 w-full max-w-sm shadow-xl">
           <div className="text-center">
             <FaTimes className="text-red-500 text-3xl mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+            <h3 className="text-lg font-bold text-white mb-2">
               Access Denied
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
+            <p className="text-gray-400 mb-4">
               Only administrators can change credentials.
             </p>
             <button
@@ -353,20 +353,20 @@ export default function ChangePasswordForm({
       {/* PIN Modal */}
       {showPINModal && (
         <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-900 rounded-lg p-3 w-full max-w-xs shadow-xl">
+          <div className="bg-gray-900 rounded-lg p-3 w-full max-w-xs shadow-xl">
             {pinStatus === null ? (
               <div className="text-center py-4">
                 <div className="inline-block w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mb-2"></div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-gray-400">
                   Checking PIN status...
                 </p>
               </div>
             ) : (
               <>
-                <h2 className="text-lg font-bold mb-2 text-center text-blue-700 dark:text-blue-300">
+                <h2 className="text-lg font-bold mb-2 text-center text-amber-400">
                   {pinStatus === "not_setup" ? "Setup PIN" : "Enter PIN"}
                 </h2>
-                <p className="text-gray-500 dark:text-gray-300 mb-4 text-center text-sm">
+                <p className="text-gray-300 mb-4 text-center text-sm">
                   {pinStatus === "not_setup"
                     ? "Setup a 4-digit PIN for credential changes"
                     : "Enter 4-digit PIN to access credential change"}
@@ -387,9 +387,9 @@ export default function ChangePasswordForm({
       {/* Credentials Form */}
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-900 rounded-lg p-3 w-full max-w-xs shadow-xl">
+          <div className="bg-gray-900 rounded-lg p-3 w-full max-w-xs shadow-xl">
             <div className="flex justify-between items-center mb-2">
-              <h3 className="text-base font-bold text-blue-700 dark:text-blue-300">
+              <h3 className="text-base font-bold text-amber-400">
                 Change Credentials
               </h3>
               <button
@@ -402,8 +402,8 @@ export default function ChangePasswordForm({
 
             {/* User Selection */}
             {!isAdminMode && (
-              <div className="mb-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                <h4 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1">
+              <div className="mb-2 p-2 bg-gray-800 rounded-lg">
+                <h4 className="text-xs font-semibold text-gray-300 mb-1 flex items-center gap-1">
                   <FaUsers /> Select User to Manage
                 </h4>
                 <div className="space-y-1 max-h-24 overflow-y-auto">
@@ -411,7 +411,7 @@ export default function ChangePasswordForm({
                     <button
                       key={user.id}
                       onClick={() => handleUserSelect(user)}
-                      className="w-full text-left p-1.5 bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 hover:bg-blue-50 dark:hover:bg-gray-600 transition"
+                      className="w-full text-left p-1.5 bg-gray-700 rounded border border-amber-500/30 hover:bg-blue-50 dark:hover:bg-gray-600 transition"
                     >
                       <div className="flex items-center gap-2">
                         <div
@@ -428,7 +428,7 @@ export default function ChangePasswordForm({
                           )}
                         </div>
                         <div>
-                          <p className="text-xs font-medium text-gray-900 dark:text-white">
+                          <p className="text-xs font-medium text-white">
                             {user.username}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -445,7 +445,7 @@ export default function ChangePasswordForm({
             {/* Selected User Display */}
             {isAdminMode && selectedTargetUser && (
               <div className="mb-2 p-1.5 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-700">
-                <p className="text-xs text-blue-700 dark:text-blue-300">
+                <p className="text-xs text-amber-400">
                   <strong>Managing:</strong> {selectedTargetUser.username} (
                   {selectedTargetUser.role === "admin"
                     ? "Administrator"
@@ -485,7 +485,7 @@ export default function ChangePasswordForm({
               {activeTab === "credentials" ? (
                 <>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-xs font-medium text-gray-300 mb-1">
                       Current Username
                     </label>
                     <input
@@ -504,7 +504,7 @@ export default function ChangePasswordForm({
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-xs font-medium text-gray-300 mb-1">
                       Current Password
                     </label>
                     <div className="relative">
@@ -532,7 +532,7 @@ export default function ChangePasswordForm({
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-xs font-medium text-gray-300 mb-1">
                       New Username
                     </label>
                     <input
@@ -551,7 +551,7 @@ export default function ChangePasswordForm({
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-xs font-medium text-gray-300 mb-1">
                       New Password
                     </label>
                     <div className="relative">
@@ -627,7 +627,7 @@ export default function ChangePasswordForm({
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-xs font-medium text-gray-300 mb-1">
                       Confirm New Password
                     </label>
                     <div className="relative">
@@ -685,7 +685,7 @@ export default function ChangePasswordForm({
               ) : (
                 <>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-xs font-medium text-gray-300 mb-1">
                       Current PIN
                     </label>
                     <div className="relative">
@@ -713,7 +713,7 @@ export default function ChangePasswordForm({
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-xs font-medium text-gray-300 mb-1">
                       New PIN
                     </label>
                     <div className="relative">
@@ -741,7 +741,7 @@ export default function ChangePasswordForm({
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-xs font-medium text-gray-300 mb-1">
                       Confirm New PIN
                     </label>
                     <div className="relative">
@@ -887,7 +887,7 @@ function PINInput({ onSuccess, onCancel, pinStatus, onSetupPIN }) {
           value={pin}
           onChange={(e) => setPin(e.target.value.slice(0, 4))}
           onKeyPress={handleKeyPress}
-          className="w-full px-2 py-1.5 border border-gray-300 dark:border-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400  dark:text-white text-center tracking-widest bg-gray-50 dark:bg-gray-800 placeholder-gray-400 text-sm"
+          className="w-full px-2 py-1.5 border border-gray-300 dark:border-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400  dark:text-white text-center tracking-widest bg-gray-800 placeholder-gray-400 text-sm"
           placeholder="••••"
           maxLength={4}
           autoFocus

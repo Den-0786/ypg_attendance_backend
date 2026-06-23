@@ -1,7 +1,7 @@
 'use client';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import CustomAreaChart from '../charts/CustomAreaChart';
 
-// COMPACT LAYOUT: Ensured short month names, reduced table spacing, and made congregation names adjacent to months.
 const months = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
@@ -12,18 +12,14 @@ export default function MonthlyAttendanceGrid({ attendanceData, darkMode }) {
   const [congregations, setCongregations] = useState([]);
 
   useEffect(() => {
-    // Always process data to show the grid, even if no attendance data
     processAttendanceData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [attendanceData]);
 
   const processAttendanceData = () => {
-    // Get current date to determine which months to show
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
-    const currentMonth = currentDate.getMonth(); // 0-11
+    const currentMonth = currentDate.getMonth();
     
-    // Define all system congregations
     const allSystemCongregations = [
       "Emmanuel Congregation Ahinsan", 
       "Peniel Congregation Esreso No 1",
@@ -36,20 +32,17 @@ export default function MonthlyAttendanceGrid({ attendanceData, darkMode }) {
       "NOM"
     ];
     
-    // Group data by congregation and month
     const congregationMap = new Map();
     
-    // Initialize all system congregations
     allSystemCongregations.forEach(congregation => {
       congregationMap.set(congregation, new Map());
     });
     
-    // Process attendance data if available
     if (attendanceData && attendanceData.length > 0) {
       attendanceData.forEach(entry => {
-        if (entry.type !== 'local') return; // Only count local entries
+        if (entry.type !== 'local') return;
         const date = new Date(entry.meeting_date);
-        const month = date.getMonth(); // 0-11
+        const month = date.getMonth();
         const year = date.getFullYear();
         const key = `${year}-${month}`;
         if (congregationMap.has(entry.congregation)) {
@@ -62,19 +55,18 @@ export default function MonthlyAttendanceGrid({ attendanceData, darkMode }) {
       });
     }
 
-    // Always show all months up to current month (including current month)
     const monthsToShow = months.slice(0, currentMonth + 1);
     const processed = monthsToShow.map((monthName, monthIndex) => {
       const monthData = {};
       allSystemCongregations.forEach(congregation => {
         const key = `${currentYear}-${monthIndex}`;
         const entries = congregationMap.get(congregation)?.get(key) || [];
-        monthData[congregation] = entries;
+        monthData[congregation] = entries.length;
       });
       
       return {
         month: monthName,
-        data: monthData
+        ...monthData
       };
     });
 
@@ -82,93 +74,104 @@ export default function MonthlyAttendanceGrid({ attendanceData, darkMode }) {
     setCongregations(allSystemCongregations);
   };
 
-  const getAttendanceStatus = (entries) => {
-    if (entries.length === 0) return { present: 0, absent: 2, status: 'none' };
-    if (entries.length === 1) return { present: 1, absent: 1, status: 'partial' };
-    if (entries.length >= 2) return { present: 2, absent: 0, status: 'full' };
-    return { present: 0, absent: 2, status: 'none' };
-  };
-
-  const renderAttendanceBoxes = (entries) => {
-    const { present, absent } = getAttendanceStatus(entries);
-    
-    return (
-      <div className="flex gap-1">
-        {[...Array(2)].map((_, index) => (
-          <div
-            key={index}
-            className={`w-3 h-3 rounded-sm border ${
-              index < present 
-                ? 'bg-green-500 border-green-600' 
-                : 'bg-gray-400 border-gray-500'
-            }`}
-            title={index < present ? 'Present' : 'Absent'}
-          />
-        ))}
-      </div>
-    );
-  };
-
   if (!processedData.length) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 md:p-6">
+      <div className="bg-gray-800 rounded-xl shadow-lg p-4 md:p-6 border border-amber-500/30">
         <div className="flex justify-center items-center h-64">
-          <div className="text-gray-500 dark:text-gray-400">
-            Loading monthly attendance grid...
+          <div className="text-gray-500">
+            Loading monthly attendance analytics...
           </div>
         </div>
       </div>
     );
   }
 
-  // Restore the original layout: months as rows (y-axis), congregations as columns (x-axis)
+  const totalAttendance = processedData.reduce((sum, month) => sum + Object.values(month).reduce((a, b) => a + (typeof b === 'number' ? b : 0), 0), 0);
+
+  // Prepare data for Area Chart - show top 5 congregations
+  const topCongregations = congregations.slice(0, 5);
+  const chartData = processedData.map(month => {
+    const dataPoint = { name: month.month };
+    topCongregations.forEach(cong => {
+      const shortName = cong.split(' ').slice(0, 2).join(' ');
+      dataPoint[shortName] = month[cong] || 0;
+    });
+    return dataPoint;
+  });
+
+  // Configure series with orange/amber colors
+  const seriesConfig = topCongregations.map((cong, index) => {
+    const shortName = cong.split(' ').slice(0, 2).join(' ');
+    const colors = ['#f59e0b', '#fbbf24', '#fcd34d', '#fde68a', '#fed7aa'];
+    return {
+      dataKey: shortName,
+      label: shortName,
+      color: colors[index % colors.length],
+      showChange: false,
+    };
+  });
+
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-4 md:p-6">
-      <h2 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white mb-4 md:mb-6">
-        Monthly Attendance Grid
+    <div className="bg-gray-800 rounded-xl shadow-2xl p-4 md:p-6 border border-amber-500/30">
+      <h2 className="text-lg md:text-xl font-bold text-amber-400 mb-4 md:mb-6">
+        Monthly Attendance Analytics
       </h2>
-      <div className="overflow-x-auto custom-scrollbar pb-4">
-        <div className="min-w-max">
-          {/* Data Rows - January at bottom, December at top */}
-          {processedData.slice().reverse().map((monthData, index) => (
-            <div key={monthData.month} className="grid grid-cols-10 gap-2 py-2 border-b border-gray-200 dark:border-gray-700">
-              <div className="w-24 md:w-32 font-medium text-gray-900 dark:text-white text-sm md:text-base sticky left-0 bg-white dark:bg-gray-800 z-10">
-                {monthData.month}
-              </div>
-              {congregations.map(congregation => (
-                <div key={congregation} className="w-16 md:w-20 flex justify-center">
-                  {renderAttendanceBoxes(monthData.data[congregation] || [])}
-                </div>
-              ))}
-            </div>
-          ))}
-          {/* Header with congregation names - at the bottom */}
-          <div className="grid grid-cols-10 gap-2 mt-4 pt-4 border-t-2 border-gray-300 dark:border-gray-600">
-            <div className="w-24 md:w-32 font-semibold text-gray-700 dark:text-gray-300 text-sm md:text-base sticky left-0 bg-white dark:bg-gray-800 z-10">
-              Congregation
-            </div>
-            {congregations.map(congregation => (
-              <div key={congregation} className="w-16 md:w-20 text-center text-xs font-medium text-gray-700 dark:text-gray-300">
-                {congregation.length > 8 ? congregation.substring(0, 8) + '...' : congregation}
-              </div>
-            ))}
-          </div>
-        </div>
+      
+      {/* Summary Card */}
+      <div className="bg-gray-700 p-4 rounded-lg border border-amber-500/30 mb-6">
+        <div className="text-4xl font-bold text-white mb-1">{totalAttendance}</div>
+        <div className="text-sm text-gray-400">Total Attendance (All Congregations)</div>
       </div>
+
+      {/* Area Chart */}
+      <div className="mb-6">
+        <CustomAreaChart
+          data={chartData}
+          seriesConfig={seriesConfig}
+          title=""
+          darkMode={darkMode}
+        />
+      </div>
+
+      {/* Congregation Analytics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {congregations.map(congregation => {
+          const congregationTotal = processedData.reduce((sum, month) => sum + (month[congregation] || 0), 0);
+          const maxPossible = processedData.length * 2;
+          const percentage = maxPossible > 0 ? ((congregationTotal / maxPossible) * 100).toFixed(0) : 0;
+          
+          return (
+            <div key={congregation} className="bg-gray-700 p-4 rounded-lg border border-amber-500/30 hover:border-amber-500 transition-colors">
+              <h3 className="text-sm font-semibold text-amber-400 mb-2 truncate">
+                {congregation}
+              </h3>
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-2xl font-bold text-white">{congregationTotal}</div>
+                <div className="text-xs text-gray-400">{percentage}%</div>
+              </div>
+              {/* Progress Bar */}
+              <div className="w-full bg-gray-600 rounded-full h-2">
+                <div 
+                  className="bg-gradient-to-r from-amber-500 to-amber-600 h-2 rounded-full transition-all"
+                  style={{ width: `${percentage}%` }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
       {/* Legend */}
       <div className="mt-4 md:mt-6 flex flex-wrap items-center justify-center gap-3 md:gap-6 text-xs md:text-sm">
         <div className="flex items-center gap-1 md:gap-2">
           <div className="w-3 h-3 bg-green-500 border border-green-600 rounded-sm"></div>
-          <span className="text-gray-700 dark:text-gray-300">Present</span>
+          <span className="text-gray-300">Present</span>
         </div>
         <div className="flex items-center gap-1 md:gap-2">
           <div className="w-3 h-3 bg-gray-400 border border-gray-500 rounded-sm"></div>
-          <span className="text-gray-700 dark:text-gray-300">Absent</span>
+          <span className="text-gray-300">Absent</span>
         </div>
-        <div className="text-gray-500 dark:text-gray-400 text-center">
-          • 2 boxes per month per congregation (representing 2 participants)
-        </div>
-        <div className="text-gray-500 dark:text-gray-400 text-center">
+        <div className="text-gray-400 text-center">
           • Shows months up to current month ({months[new Date().getMonth()]})
         </div>
       </div>

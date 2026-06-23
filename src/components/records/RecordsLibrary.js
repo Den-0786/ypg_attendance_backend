@@ -652,7 +652,7 @@ export default function RecordsLibrary({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={`Search ${tab === "local" ? "congregation" : "executive"}...`}
-            className="w-full md:max-w-xs border-2 border-gray-200 dark:border-gray-600 px-4 py-2.5 rounded-xl dark:bg-gray-700 dark:text-white text-sm md:text-base focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+            className="w-full md:max-w-xs border-2 border-amber-500/30 px-4 py-2.5 rounded-xl dark:bg-gray-700 dark:text-white text-sm md:text-base focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
           />
           <svg className="w-5 h-5 absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -687,19 +687,19 @@ export default function RecordsLibrary({
             <h3 className="text-xl font-bold mb-3 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">{cong}</h3>
             {Object.keys(groupedRecords[cong]).map((month) => (
               <div key={month} className="mb-4">
-                <h4 className="text-base font-semibold text-blue-700 dark:text-blue-300 mb-1">
+                <h4 className="text-base font-semibold text-amber-400 mb-1">
                   {month}
                 </h4>
                 {Object.keys(groupedRecords[cong][month]).map((day) => (
                   <div
                     key={day}
-                    className="mb-2 pl-2 border-l-2 border-blue-300 dark:border-blue-600"
+                    className="mb-2 pl-2 border-l-2 border-blue-600"
                   >
-                    <div className="font-medium text-sm text-gray-700 dark:text-gray-200 mb-1">
+                    <div className="font-medium text-sm text-gray-200 mb-1">
                       {day}
                     </div>
                     <div className="overflow-x-auto w-full">
-                      <table className="min-w-max w-full text-gray-900 dark:text-gray-100 mb-2 border-collapse">
+                      <table className="min-w-max w-full text-gray-100 mb-2 border-collapse">
                         <thead
                           className={
                             darkMode
@@ -708,35 +708,35 @@ export default function RecordsLibrary({
                           }
                         >
                           <tr>
-                            <th className="px-3 md:px-4 py-3 border-r border-gray-300 dark:border-gray-600 text-xs md:text-sm">
+                            <th className="px-3 md:px-4 py-3 border-r border-gray-600 text-xs md:text-sm">
                               <input
                                 type="checkbox"
                                 checked={isAllSelected}
                                 onChange={toggleSelectAll}
                               />
                             </th>
-                            <th className="text-center px-3 md:px-4 py-3 border-r border-gray-300 dark:border-gray-600 text-xs md:text-sm font-semibold">
+                            <th className="text-center px-3 md:px-4 py-3 border-r border-gray-600 text-xs md:text-sm font-semibold">
                               Name
                             </th>
-                            <th className="text-center px-3 md:px-4 py-3 border-r border-gray-300 dark:border-gray-600 text-xs md:text-sm font-semibold">
+                            <th className="text-center px-3 md:px-4 py-3 border-r border-gray-600 text-xs md:text-sm font-semibold">
                               Congregation
                             </th>
-                            <th className="text-center px-3 md:px-4 py-3 border-r border-gray-300 dark:border-gray-600 text-xs md:text-sm font-semibold">
+                            <th className="text-center px-3 md:px-4 py-3 border-r border-gray-600 text-xs md:text-sm font-semibold">
                               Position
                             </th>
-                            <th className="px-3 md:px-4 py-3 border-r border-gray-300 dark:border-gray-600 text-xs md:text-sm font-semibold">
+                            <th className="px-3 md:px-4 py-3 border-r border-gray-600 text-xs md:text-sm font-semibold">
                               Type
                             </th>
-                            <th className="px-3 md:px-4 py-3 border-r border-gray-300 dark:border-gray-600 text-xs md:text-sm font-semibold">
+                            <th className="px-3 md:px-4 py-3 border-r border-gray-600 text-xs md:text-sm font-semibold">
                               Meeting Date
                             </th>
-                            <th className="px-3 md:px-4 py-3 border-r border-gray-300 dark:border-gray-600 text-xs md:text-sm font-semibold">
+                            <th className="px-3 md:px-4 py-3 border-r border-gray-600 text-xs md:text-sm font-semibold">
                               Timestamp
                             </th>
-                            <th className="px-3 md:px-4 py-3 border-r border-gray-300 dark:border-gray-600 text-xs md:text-sm font-semibold">
+                            <th className="px-3 md:px-4 py-3 border-r border-gray-600 text-xs md:text-sm font-semibold">
                               Kind
                             </th>
-                            <th className="px-3 md:px-4 py-3 border-r border-gray-300 dark:border-gray-600 text-xs md:text-sm font-semibold">
+                            <th className="px-3 md:px-4 py-3 border-r border-gray-600 text-xs md:text-sm font-semibold">
                               Notes
                             </th>
                             <th className="text-center px-3 md:px-4 py-3 text-xs md:text-sm font-semibold">
@@ -748,37 +748,37 @@ export default function RecordsLibrary({
                           {groupedRecords[cong][month][day].map((record, i) => (
                             <tr
                               key={record.id || i}
-                              className="text-sm md:text-base hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                              className="text-sm md:text-base hover:bg-gray-700/50 transition-colors"
                             >
-                              <td className="border px-3 md:px-4 py-3 border-r border-gray-300 dark:border-gray-600 text-center">
+                              <td className="border px-3 md:px-4 py-3 border-r border-gray-600 text-center">
                                 <input
                                   type="checkbox"
                                   checked={selectedRecords.includes(record.id)}
                                   onChange={() => toggleSelect(record.id)}
                                 />
                               </td>
-                              <td className="border px-3 md:px-4 py-3 text-xs md:text-sm border-r border-gray-300 dark:border-gray-600 text-center font-semibold">
+                              <td className="border px-3 md:px-4 py-3 text-xs md:text-sm border-r border-gray-600 text-center font-semibold">
                                 {record.name}
                               </td>
-                              <td className="border px-3 md:px-4 py-3 text-xs md:text-sm border-r border-gray-300 dark:border-gray-600 text-center">
+                              <td className="border px-3 md:px-4 py-3 text-xs md:text-sm border-r border-gray-600 text-center">
                                 {record.congregation}
                               </td>
-                              <td className="border px-3 md:px-4 py-3 text-xs md:text-sm border-r border-gray-300 dark:border-gray-600 text-center">
+                              <td className="border px-3 md:px-4 py-3 text-xs md:text-sm border-r border-gray-600 text-center">
                                 {record.position}
                               </td>
-                              <td className="border px-3 md:px-4 py-3 border-r border-gray-300 dark:border-gray-600 text-center">
+                              <td className="border px-3 md:px-4 py-3 border-r border-gray-600 text-center">
                                 {record.type}
                               </td>
-                              <td className="border px-3 md:px-4 py-3 border-r border-gray-300 dark:border-gray-600 text-center">
+                              <td className="border px-3 md:px-4 py-3 border-r border-gray-600 text-center">
                                 {record.meeting_date}
                               </td>
-                              <td className="border px-3 md:px-4 py-3 border-r border-gray-300 dark:border-gray-600 text-center">
+                              <td className="border px-3 md:px-4 py-3 border-r border-gray-600 text-center">
                                 {record.timestamp}
                               </td>
-                              <td className="border px-3 md:px-4 py-3 border-r border-gray-300 dark:border-gray-600 text-center">
+                              <td className="border px-3 md:px-4 py-3 border-r border-gray-600 text-center">
                                 {record.record_kind}
                               </td>
-                              <td className="border px-3 md:px-4 py-3 border-r border-gray-300 dark:border-gray-600 text-center">
+                              <td className="border px-3 md:px-4 py-3 border-r border-gray-600 text-center">
                                 {record.notes}
                               </td>
                               <td className="border px-3 md:px-4 py-3 text-center">
@@ -889,16 +889,16 @@ export default function RecordsLibrary({
           onClick={() => setShowDetails(false)}
         >
           <div
-            className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-2xl w-full max-w-sm border border-gray-200 dark:border-gray-600"
+            className="bg-gray-800 p-4 rounded-xl shadow-2xl w-full max-w-sm border border-amber-500/30"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-between items-center mb-3 pb-2 border-b border-gray-200 dark:border-gray-600">
-              <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+            <div className="flex justify-between items-center mb-3 pb-2 border-b border-amber-500/30">
+              <h2 className="text-base font-semibold text-white">
                 Record Details
               </h2>
               <button
                 onClick={() => setShowDetails(false)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-lg font-bold w-5 h-5 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                className="text-gray-400 hover:text-gray-300 text-lg font-bold w-5 h-5 flex items-center justify-center rounded-full hover:bg-gray-700 transition-colors"
               >
                 ×
               </button>
@@ -907,28 +907,28 @@ export default function RecordsLibrary({
               {Object.entries(detailsRecord).map(([field, value]) => (
                 <div
                   key={field}
-                  className="flex items-center py-1.5 px-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  className="flex items-center py-1.5 px-2 rounded-lg hover:bg-gray-700 transition-colors"
                 >
-                  <span className="font-medium capitalize text-gray-600 dark:text-gray-400 text-xs min-w-20">
+                  <span className="font-medium capitalize text-gray-400 text-xs min-w-20">
                     {field.replace(/_/g, " ")}
                   </span>
-                  <span className="text-gray-900 dark:text-gray-100 text-xs ml-2 flex-1 break-words">
+                  <span className="text-gray-100 text-xs ml-2 flex-1 break-words">
                     {String(value || "N/A")}
                   </span>
                 </div>
               ))}
             </div>
             {/* Audit log placeholder: Backend required */}
-            <div className="mt-3 p-2 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-600 rounded-lg border border-blue-100 dark:border-gray-600">
-              <span className="font-medium text-blue-700 dark:text-blue-300 text-xs">
+            <div className="mt-3 p-2 bg-gray-700 rounded-lg border border-amber-500/30">
+              <span className="font-medium text-amber-400 text-xs">
                 Audit Log:
               </span>
-              <span className="text-blue-600 dark:text-blue-400 text-xs block mt-1">
+              <span className="text-blue-400 text-xs block mt-1">
                 (Show who edited/deleted this record and when. Backend support
                 required.)
               </span>
             </div>
-            <div className="flex justify-end mt-3 pt-2 border-t border-gray-200 dark:border-gray-600">
+            <div className="flex justify-end mt-3 pt-2 border-t border-amber-500/30">
               <button
                 onClick={() => setShowDetails(false)}
                 className="px-3 py-1.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg transition-all duration-200 text-xs font-medium shadow-sm hover:shadow-md"
@@ -942,7 +942,7 @@ export default function RecordsLibrary({
       {/* Edit Modal */}
       {showEdit && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-[9998]">
-          <div className="bg-white dark:bg-gray-800 p-3 rounded shadow-lg w-full max-w-xs">
+          <div className="bg-gray-800 p-3 rounded shadow-lg w-full max-w-xs">
             <h2 className="text-lg font-bold mb-4">Edit Record</h2>
             {Object.keys(editForm).length === 0 ? (
               <p className="text-gray-500 mb-4">
@@ -1000,10 +1000,10 @@ export default function RecordsLibrary({
       {/* Delete Confirmation Modal */}
       {showConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-[9998]">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded shadow-lg text-center">
-            <p className="text-gray-900 dark:text-white">
+          <div className="bg-gray-800 p-6 rounded shadow-lg text-center">
+            <p className="text-white">
               Are you sure you want to delete all records for{" "}
-              <strong className="text-gray-900 dark:text-white">
+              <strong className="text-white">
                 {deleteName}
               </strong>
               ?
@@ -1028,8 +1028,8 @@ export default function RecordsLibrary({
       {/* Bulk Delete Confirmation Modal */}
       {showBulkConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-[9998]">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded shadow-lg text-center">
-            <p className="text-gray-900 dark:text-white">
+          <div className="bg-gray-800 p-6 rounded shadow-lg text-center">
+            <p className="text-white">
               Are you sure you want to delete all selected records?
             </p>
             <div className="mt-4 flex justify-center gap-4">
@@ -1052,7 +1052,7 @@ export default function RecordsLibrary({
       {/* Notes Modal */}
       {showNotesModal && notesRecord && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 p-4 rounded shadow-lg w-full max-w-md">
+          <div className="bg-gray-800 p-4 rounded shadow-lg w-full max-w-md">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-bold">
                 Notes for {notesRecord.name}
