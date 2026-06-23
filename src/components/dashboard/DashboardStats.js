@@ -1,16 +1,18 @@
 import React from "react";
 import StatCard from "../ui/StatCard";
+import { 
+  getGrandTotalProgress,
+  getTop3Congregations,
+  getTop3Attendees,
+  getUniquePeopleLessThan5,
+  isApologyEntry
+} from "../../lib/dashboardHelpers";
 
 export default function DashboardStats({
   filteredData,
   totalCongregationsCount,
   totalMeetingsCount,
-  getGrandTotalProgress,
-  getTop3Congregations,
-  getTop3Attendees,
-  getUniquePeopleLessThan5,
-  selectedYear,
-  isApologyEntry
+  selectedYear
 }) {
   return (
     <>

@@ -5,7 +5,16 @@ import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 import AttendanceForm from "../forms/AttendanceForm";
 import ApologyForm from "../forms/ApologyForm";
 import toast from "react-hot-toast";
-import { capitalizeFirst, toTitleCase } from "../lib/utils";
+import { capitalizeFirst, toTitleCase } from "../../lib/utils";
+import { 
+  isApologyEntry, 
+  getLocalProgress, 
+  getDistrictProgress, 
+  getGrandTotalProgress,
+  getUniquePeopleLessThan5,
+  getTop3Attendees,
+  getTop3Congregations
+} from "../../lib/dashboardHelpers";
 import PINModal from "../auth/PINModal";
 import AttendanceChart from "./AttendanceChart";
 import { useMemo } from "react";
@@ -30,60 +39,12 @@ function useIsMobile() {
   return isMobile;
 }
 
-// Helper function to identify apology entries
-function isApologyEntry(entry) {
-  // This function will be defined in the main component, but we need it here too
-  // For now, we'll check if the entry has a reason field which indicates it's an apology
-  return entry && entry.reason && entry.reason.length > 0;
-}
-
-// Helper functions for progress calculations
-function getLocalProgress(attendanceData, year) {
-  if (!Array.isArray(attendanceData)) return 0;
-  const targetYear = year || new Date().getFullYear();
-  const congregationsWithAttendance = new Set();
-  attendanceData.forEach((entry) => {
-    const date = new Date(entry.meeting_date);
-    if (
-      date.getFullYear() === targetYear &&
-      entry.type !== "district" &&
-      !isApologyEntry(entry)
-    ) {
-      congregationsWithAttendance.add(entry.congregation);
-    }
-  });
-  const totalCongregations = 9;
-  const progress =
-    (congregationsWithAttendance.size / totalCongregations) * 100;
-  return Math.round(progress);
-}
-
-function getDistrictProgress(attendanceData, year) {
-  if (!Array.isArray(attendanceData)) return 0;
-  const targetYear = year || new Date().getFullYear();
-  const executivesWithAttendance = new Set();
-  attendanceData.forEach((entry) => {
-    const date = new Date(entry.meeting_date);
-    if (
-      date.getFullYear() === targetYear &&
-      entry.type === "district" &&
-      !isApologyEntry(entry)
-    ) {
-      executivesWithAttendance.add(entry.position);
-    }
-  });
-  const totalExecutives = 8;
-  const progress = (executivesWithAttendance.size / totalExecutives) * 100;
-  return Math.round(progress);
-}
-
-function getGrandTotalProgress(attendanceData, year) {
-  if (!Array.isArray(attendanceData)) return 0;
-  const targetYear = year || new Date().getFullYear();
-  const localProgress = getLocalProgress(attendanceData, targetYear);
-  const districtProgress = getDistrictProgress(attendanceData, targetYear);
-  const grandTotal = (localProgress + districtProgress) / 2;
-  return Math.round(grandTotal);
+// Add capitalizeWords function
+function capitalizeWords(str) {
+  return str
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
 }
 
 // Color palette for cards
@@ -98,95 +59,6 @@ const cardColors = [
   "bg-indigo-50 dark:bg-indigo-900",
   "bg-red-50 dark:bg-red-900",
 ];
-
-// Add capitalizeWords function
-function capitalizeWords(str) {
-  return str
-    .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(" ");
-}
-
-// Function to get unique people with less than 5 meetings (local only)
-function getUniquePeopleLessThan5(attendanceData, year) {
-  if (!Array.isArray(attendanceData)) return [];
-
-  // Use the provided year parameter instead of hardcoded current year
-  const targetYear = year || new Date().getFullYear();
-  const personCounts = {};
-
-  attendanceData.forEach((entry) => {
-    const date = new Date(entry.meeting_date);
-    // Only count entries from the specified year (Jan 1 to Dec 31)
-    if (
-      date.getFullYear() === targetYear &&
-      entry.type === "local" &&
-      entry.name
-    ) {
-      personCounts[entry.name] = (personCounts[entry.name] || 0) + 1;
-    }
-  });
-
-  // Filter people who attended less than 5 meetings and sort by count
-  return Object.entries(personCounts)
-    .filter(([person, count]) => count < 5)
-    .sort((a, b) => b[1] - a[1])
-    .map(([person]) => person);
-}
-
-// Function to get top 3 attendees with 5 or more meetings (local only)
-function getTop3Attendees(attendanceData, year) {
-  if (!Array.isArray(attendanceData)) return [];
-
-  // Use the provided year parameter instead of hardcoded current year
-  const targetYear = year || new Date().getFullYear();
-  const personCounts = {};
-
-  attendanceData.forEach((entry) => {
-    const date = new Date(entry.meeting_date);
-    // Only count entries from the specified year (Jan 1 to Dec 31)
-    if (
-      date.getFullYear() === targetYear &&
-      entry.type === "local" &&
-      entry.name
-    ) {
-      personCounts[entry.name] = (personCounts[entry.name] || 0) + 1;
-    }
-  });
-
-  // Filter people who attended 5 or more meetings and sort by count
-  return Object.entries(personCounts)
-    .filter(([person, count]) => count >= 5)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3);
-}
-
-// Function to get top 3 congregations (local only)
-function getTop3Congregations(attendanceData, year) {
-  if (!Array.isArray(attendanceData)) return [];
-
-  // Use the provided year parameter instead of hardcoded current year
-  const targetYear = year || new Date().getFullYear();
-  const congregationCounts = {};
-
-  attendanceData.forEach((entry) => {
-    const date = new Date(entry.meeting_date);
-    // Only count entries from the specified year (Jan 1 to Dec 31)
-    if (
-      date.getFullYear() === targetYear &&
-      entry.type === "local" &&
-      entry.congregation
-    ) {
-      congregationCounts[entry.congregation] =
-        (congregationCounts[entry.congregation] || 0) + 1;
-    }
-  });
-
-  // Sort by count and get top 3
-  return Object.entries(congregationCounts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3);
-}
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8001";
 
@@ -616,12 +488,7 @@ export default function DashboardHome({
         filteredData={filteredData}
         totalCongregationsCount={totalCongregationsCount}
         totalMeetingsCount={totalMeetingsCount}
-        getGrandTotalProgress={getGrandTotalProgress}
-        getTop3Congregations={getTop3Congregations}
-        getTop3Attendees={getTop3Attendees}
-        getUniquePeopleLessThan5={getUniquePeopleLessThan5}
         selectedYear={selectedYear}
-        isApologyEntry={isApologyEntry}
       />
       {/* Search Bar and Attendance/Apology Buttons */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 md:mb-6 space-y-3 md:space-y-0">
@@ -642,7 +509,6 @@ export default function DashboardHome({
         congregationColors={congregationColors}
         handleEdit={handleEdit}
         handleDelete={handleDelete}
-        isApologyEntry={isApologyEntry}
       />
       <div>
         <button
@@ -656,16 +522,11 @@ export default function DashboardHome({
       <DashboardCharts
         filteredData={filteredData}
         darkMode={darkMode}
-        isApologyEntry={isApologyEntry}
       />
 
       <TopLists
         filteredData={filteredData}
         selectedYear={selectedYear}
-        getTop3Congregations={getTop3Congregations}
-        getTop3Attendees={getTop3Attendees}
-        getUniquePeopleLessThan5={getUniquePeopleLessThan5}
-        isApologyEntry={isApologyEntry}
       />
 
       <DashboardModals

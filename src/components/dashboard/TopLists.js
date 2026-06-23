@@ -1,12 +1,14 @@
 import React from "react";
-
-export default function TopLists({
-  filteredData,
-  selectedYear,
+import { 
   getTop3Congregations,
   getTop3Attendees,
   getUniquePeopleLessThan5,
   isApologyEntry
+} from "../../lib/dashboardHelpers";
+
+export default function TopLists({
+  filteredData,
+  selectedYear
 }) {
   return (
     <div className="mb-6">

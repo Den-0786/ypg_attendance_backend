@@ -1,13 +1,13 @@
 import React from "react";
 import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
+import { isApologyEntry } from "../../lib/dashboardHelpers";
 
 export default function DashboardTable({
   darkMode,
   groupedSummary,
   congregationColors,
   handleEdit,
-  handleDelete,
-  isApologyEntry
+  handleDelete
 }) {
   return (
     <div className="overflow-x-auto custom-scrollbar mb-6 md:mb-10 max-w-full">

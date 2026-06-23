@@ -2,8 +2,9 @@ import React from "react";
 import YearEndChart from "./YearEndChart";
 import MonthlyAttendanceTrendChart from "./MonthlyAttendanceTrendChart";
 import AttendanceChart from "./AttendanceChart";
+import { isApologyEntry } from "../../lib/dashboardHelpers";
 
-export default function DashboardCharts({ filteredData, darkMode, isApologyEntry }) {
+export default function DashboardCharts({ filteredData, darkMode }) {
   const attendanceData = filteredData.filter((entry) => !isApologyEntry(entry));
   
   return (

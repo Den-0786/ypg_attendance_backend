@@ -1,4 +1,5 @@
 import React from "react";
+import { getLocalProgress, getDistrictProgress } from "../../lib/dashboardHelpers";
 
 export default function ProgressCards({ localProgress, districtProgress, selectedYear }) {
   const progressCardClass =
