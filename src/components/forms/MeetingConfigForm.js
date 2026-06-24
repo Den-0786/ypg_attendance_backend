@@ -15,6 +15,8 @@ export default function MeetingConfigForm({ onMeetingConfigured, darkMode = fals
   const [customLimit, setCustomLimit] = useState('');
   const [meetingUsername, setMeetingUsername] = useState('');
   const [meetingPassword, setMeetingPassword] = useState('');
+  const [startTime, setStartTime] = useState('08:00');
+  const [durationHours, setDurationHours] = useState(2);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPINModal, setShowPINModal] = useState(false);
@@ -43,6 +45,8 @@ export default function MeetingConfigForm({ onMeetingConfigured, darkMode = fals
         title,
         date,
         meeting_type: meetingType,
+        start_time: startTime,
+        duration_hours: durationHours,
         login_username: meetingUsername,
         login_password: meetingPassword,
       };
@@ -77,6 +81,8 @@ export default function MeetingConfigForm({ onMeetingConfigured, darkMode = fals
         setDate('');
         setMeetingType('general');
         setCustomLimit('');
+        setStartTime('08:00');
+        setDurationHours(2);
         setMeetingUsername('');
         setMeetingPassword('');
         
@@ -190,6 +196,31 @@ export default function MeetingConfigForm({ onMeetingConfigured, darkMode = fals
           <p className={`text-xs mt-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
             Effective limit: <span className={`font-semibold ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>{getEffectiveLimit()}</span> members per local
           </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Start Time</label>
+            <input
+              type="time"
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${darkMode ? 'border-gray-600 text-white bg-gray-700' : 'border-gray-300 text-gray-900 bg-gray-50'}`}
+              required
+            />
+          </div>
+          <div>
+            <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Duration (hours)</label>
+            <input
+              type="number"
+              min="1"
+              max="72"
+              value={durationHours}
+              onChange={(e) => setDurationHours(e.target.value)}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${darkMode ? 'border-gray-600 text-white bg-gray-700' : 'border-gray-300 text-gray-900 bg-gray-50'}`}
+              required
+            />
+          </div>
         </div>
 
         <div className="border-t border-gray-200 dark:border-gray-700 pt-4">

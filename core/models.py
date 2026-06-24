@@ -132,6 +132,10 @@ class Meeting(models.Model):
     login_username = models.CharField(max_length=150, blank=True, null=True)
     login_password = models.CharField(max_length=128, blank=True, null=True)  # hashed
 
+    # Meeting schedule window
+    start_time = models.TimeField(default=datetime.time(8, 0))
+    duration_hours = models.IntegerField(default=24)
+
     def set_password(self, raw_password):
         self.login_password = make_password(raw_password)
 
@@ -140,11 +144,26 @@ class Meeting(models.Model):
             return False
         return check_password(raw_password, self.login_password)
 
-    def is_expired(self):
-        """Check if meeting has been active for more than 24 hours"""
+    def get_end_datetime(self):
+        """Return the datetime when this meeting ends."""
         from django.utils import timezone
-        from datetime import timedelta
-        return timezone.now() > self.created_at + timedelta(hours=24)
+        from datetime import datetime, timedelta
+        naive_start = datetime.combine(self.date, self.start_time)
+        aware_start = timezone.make_aware(naive_start, timezone.get_current_timezone())
+        return aware_start + timedelta(hours=self.duration_hours)
+
+    def is_expired(self):
+        """Check if the meeting's scheduled duration has passed."""
+        from django.utils import timezone
+        return timezone.now() > self.get_end_datetime()
+
+    def has_started(self):
+        """Check if the meeting's scheduled start time has passed."""
+        from django.utils import timezone
+        from datetime import datetime
+        naive_start = datetime.combine(self.date, self.start_time)
+        aware_start = timezone.make_aware(naive_start, timezone.get_current_timezone())
+        return timezone.now() >= aware_start
 
     def __str__(self):
         return f"{self.title} ({self.date})"

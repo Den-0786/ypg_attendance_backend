@@ -18,6 +18,8 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
   const [titleInput, setTitleInput] = useState('');
   const [meetingUsername, setMeetingUsername] = useState('');
   const [meetingPassword, setMeetingPassword] = useState('');
+  const [startTime, setStartTime] = useState('08:00');
+  const [durationHours, setDurationHours] = useState(2);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [deactivating, setDeactivating] = useState(false);
@@ -50,6 +52,8 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
         body: JSON.stringify({
           title: titleInput,
           date: dateInput,
+          start_time: startTime,
+          duration_hours: durationHours,
           login_username: meetingUsername,
           login_password: meetingPassword,
         }),
@@ -75,6 +79,8 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
         // Clear form
         setDateInput('');
         setTitleInput('');
+        setStartTime('08:00');
+        setDurationHours(2);
         setMeetingUsername('');
         setMeetingPassword('');
         setAuthError('');
@@ -246,6 +252,33 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
             min={new Date().toISOString().split('T')[0]}
             autoComplete="off"
           />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-gray-700">Start Time</label>
+            <input
+              type="time"
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+              className="w-full p-1 border border-yellow-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition"
+              required
+              autoComplete="off"
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-gray-700">Duration (hours)</label>
+            <input
+              type="number"
+              min="1"
+              max="72"
+              value={durationHours}
+              onChange={(e) => setDurationHours(e.target.value)}
+              className="w-full p-1 border border-yellow-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition"
+              required
+              autoComplete="off"
+            />
+          </div>
         </div>
 
         <div className="space-y-1">

@@ -771,18 +771,38 @@ def login_view(request):
 
         # 2. Try meeting login (Meeting model, only active meeting)
         meeting = Meeting.objects.filter(is_active=True, login_username=username).order_by('-date').first()
-        if meeting and meeting.check_password(password):
-            # Reset failed attempts on successful login
-            login_attempt.reset_attempts()
-            
-            request.session.flush()
-            request.session['meeting_id'] = meeting.id
-            request.session['username'] = username
-            request.session['role'] = 'meeting_user'
-            request.session.set_expiry(86400)
-            request.session.save()
-            
-            return Response({'success': True, 'message': 'Login successful', 'role': 'meeting_user'})
+        if meeting:
+            from django.utils import timezone
+            from datetime import date
+            today = timezone.now().date()
+
+            # If the meeting date is not today, reject the login
+            if meeting.date != today:
+                return Response({'error': 'Meeting is not scheduled for today.'}, status=400)
+
+            # If the meeting has not started yet, reject the login
+            if not meeting.has_started():
+                return Response({'error': f'Meeting has not started yet. It starts at {meeting.start_time.strftime("%H:%M")}.'}, status=400)
+
+            # If the meeting has expired, auto-deactivate and reject
+            if meeting.is_expired():
+                meeting.is_active = False
+                meeting.save()
+                Credential.objects.filter(meeting=meeting, role='meeting_user').delete()
+                return Response({'error': 'Meeting has ended.'}, status=400)
+
+            if meeting.check_password(password):
+                # Reset failed attempts on successful login
+                login_attempt.reset_attempts()
+                
+                request.session.flush()
+                request.session['meeting_id'] = meeting.id
+                request.session['username'] = username
+                request.session['role'] = 'meeting_user'
+                request.session.set_expiry(86400)
+                request.session.save()
+                
+                return Response({'success': True, 'message': 'Login successful', 'role': 'meeting_user'})
 
         # Record failed attempt
         login_attempt.record_failed_attempt()
@@ -877,6 +897,34 @@ def set_meeting(request):
             'error': 'Meeting username and password are required for members to log in.'
         }, status=400)
 
+    # Meeting schedule window
+    date_raw = request.data.get('date')
+    if not date_raw:
+        return Response({'error': 'Meeting date is required.'}, status=400)
+    try:
+        from datetime import datetime as dt
+        meeting_date = dt.strptime(date_raw, '%Y-%m-%d').date()
+    except (ValueError, TypeError, AttributeError):
+        return Response({'error': 'Date must be in YYYY-MM-DD format.'}, status=400)
+
+    start_time_raw = request.data.get('start_time', '08:00')
+    try:
+        start_time = dt.strptime(start_time_raw, '%H:%M').time()
+    except (ValueError, TypeError, AttributeError):
+        return Response({
+            'error': 'Start time must be in HH:MM format.'
+        }, status=400)
+
+    duration_hours = request.data.get('duration_hours', 24)
+    try:
+        duration_hours = int(duration_hours)
+        if duration_hours < 1 or duration_hours > 72:
+            raise ValueError
+    except (ValueError, TypeError):
+        return Response({
+            'error': 'Duration must be a whole number between 1 and 72 hours.'
+        }, status=400)
+
     # Prevent meeting username from colliding with admin/executive accounts
     if Credential.objects.filter(username=login_username).exclude(role='meeting_user').exists():
         return Response({
@@ -890,10 +938,12 @@ def set_meeting(request):
     try:
         meeting = Meeting.objects.create(
             title=request.data.get('title'),
-            date=request.data.get('date'),
+            date=meeting_date,
             meeting_type=request.data.get('meeting_type', 'general'),
             custom_participant_limit=request.data.get('custom_participant_limit'),
             login_username=login_username,
+            start_time=start_time,
+            duration_hours=duration_hours,
             is_active=True
         )
         meeting.set_password(login_password)
@@ -918,7 +968,10 @@ def set_meeting(request):
                 'date': meeting.date,
                 'meeting_type': meeting.meeting_type,
                 'custom_participant_limit': meeting.custom_participant_limit,
-                'login_username': meeting.login_username
+                'login_username': meeting.login_username,
+                'start_time': meeting.start_time.strftime('%H:%M'),
+                'duration_hours': meeting.duration_hours,
+                'end_time': meeting.get_end_datetime().strftime('%Y-%m-%d %H:%M')
             }
         }, status=201)
     except Exception as e:

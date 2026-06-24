@@ -16,6 +16,8 @@ export default function MeetingSettingsModal({ onClose, onSettingsUpdated }) {
   const [customLimit, setCustomLimit] = useState('');
   const [meetingUsername, setMeetingUsername] = useState('');
   const [meetingPassword, setMeetingPassword] = useState('');
+  const [startTime, setStartTime] = useState('08:00');
+  const [durationHours, setDurationHours] = useState(2);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPINModal, setShowPINModal] = useState(false);
@@ -43,6 +45,8 @@ export default function MeetingSettingsModal({ onClose, onSettingsUpdated }) {
         title,
         date,
         meeting_type: meetingType,
+        start_time: startTime,
+        duration_hours: durationHours,
         login_username: meetingUsername,
         login_password: meetingPassword,
       };
@@ -199,6 +203,35 @@ export default function MeetingSettingsModal({ onClose, onSettingsUpdated }) {
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                 Effective limit: <span className="font-semibold text-indigo-600 dark:text-indigo-400">{getEffectiveLimit()}</span> members per local
               </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  Start Time
+                </label>
+                <input
+                  type="time"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  Duration (hours)
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="72"
+                  value={durationHours}
+                  onChange={(e) => setDurationHours(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                  required
+                />
+              </div>
             </div>
 
             <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
