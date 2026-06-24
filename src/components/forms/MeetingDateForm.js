@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { capitalizeFirst, toTitleCase } from '../../lib/utils';
 import PINModal from '../auth/PINModal';
 import { BASE_URL } from '../../lib/config';
+import { fetchWithAuth } from '../hooks/useAuth';
 
 const API_URL = BASE_URL;
 
@@ -41,12 +42,10 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
     setAuthError('');
     setLoading(true);
     try {
-      const token = localStorage.getItem('access_token');
-      const res = await fetch(`${API_URL}/api/set-meeting`, {
+      const res = await fetchWithAuth(`${API_URL}/api/set-meeting`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : undefined,
         },
         body: JSON.stringify({
           title: titleInput,
@@ -55,7 +54,15 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
           login_password: meetingPassword,
         }),
       });
-      const data = await res.json();
+      const contentType = res.headers.get('content-type') || '';
+      let data = {};
+      if (contentType.includes('application/json')) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        console.error('Non-JSON response from set-meeting:', res.status, text.slice(0, 500));
+        data = { error: `Server returned ${res.status} (${res.statusText}). Please check the backend is running.` };
+      }
       if (res.ok) {
         toast.success('Meeting set successfully', { duration: 5000 });
         
@@ -142,16 +149,22 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
         return;
       }
       
-      const token = localStorage.getItem('access_token');
-      const res = await fetch(`${API_URL}/api/deactivate-meeting`, {
+      const res = await fetchWithAuth(`${API_URL}/api/deactivate-meeting`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : undefined,
         },
         body: JSON.stringify({ pin }),
       });
-      const data = await res.json();
+      const contentType = res.headers.get('content-type') || '';
+      let data = {};
+      if (contentType.includes('application/json')) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        console.error('Non-JSON response from deactivate-meeting:', res.status, text.slice(0, 500));
+        data = { error: `Server returned ${res.status} (${res.statusText}). Please check the backend is running.` };
+      }
       if (res.ok) {
         toast.success('Current meeting deactivated', { duration: 5000 });
         setMeetingDate('');

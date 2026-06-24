@@ -10,6 +10,7 @@ import {
   FaChartBar,
   FaMapMarkedAlt,
   FaBook,
+  FaCogs,
   FaChevronLeft,
   FaChevronRight,
   FaChevronDown,
@@ -506,6 +507,23 @@ export default function Dashboard({ onLogout }) {
                 </div>
               )}
             </div>
+          )}
+
+          {/* When collapsed on desktop, show a compact Actions icon to expand the sidebar and reveal actions */}
+          {sidebarCollapsed && !isMobile && (
+            <button
+              onClick={() => {
+                setSidebarCollapsed(false);
+                setShowActions(true);
+              }}
+              className={cn(
+                "w-full flex items-center justify-center py-3 rounded-lg border font-medium",
+                darkMode ? "text-amber-400 border-gray-700 hover:border-amber-500 hover:bg-gray-800" : "text-amber-600 border-gray-300 hover:border-amber-500 hover:bg-gray-100"
+              )}
+              title="Open actions"
+            >
+              <FaCogs size={18} />
+            </button>
           )}
 
           <button

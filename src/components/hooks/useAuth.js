@@ -104,15 +104,17 @@ export function useAuth() {
         );
         throw new Error("API_URL not configured");
       }
-      const token = localStorage.getItem(TOKEN_KEY);
-      const res = await fetch(`${API_URL}/api/session-status`, {
+      const res = await fetchWithAuth(`${API_URL}/api/session-status`, {
         headers: {
           Accept: "application/json",
-          Authorization: token ? `Bearer ${token}` : undefined,
         },
       });
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      }
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error(`Server returned non-JSON response (${res.status}). Please check the backend is running.`);
       }
       const data = await res.json();
       if (data.loggedIn) {
@@ -280,7 +282,8 @@ export async function fetchWithAuth(url, options = {}, logoutCallback) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refresh }),
     });
-    if (refreshRes.ok) {
+    const refreshType = refreshRes.headers.get('content-type') || '';
+    if (refreshRes.ok && refreshType.includes('application/json')) {
       const data = await refreshRes.json();
       if (data.access) {
         localStorage.setItem(TOKEN_KEY, data.access);

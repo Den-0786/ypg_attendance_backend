@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import { HiEye, HiEyeOff } from 'react-icons/hi';
 import PINModal from '../auth/PINModal';
 import { BASE_URL } from '../../lib/config';
+import { fetchWithAuth } from '../hooks/useAuth';
 
 const API_URL = BASE_URL;
 
@@ -38,7 +39,6 @@ export default function MeetingConfigForm({ onMeetingConfigured, darkMode = fals
   const handleConfigureWithPIN = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('access_token');
       const body = {
         title,
         date,
@@ -52,15 +52,23 @@ export default function MeetingConfigForm({ onMeetingConfigured, darkMode = fals
         body.custom_participant_limit = parseInt(customLimit);
       }
 
-      const res = await fetch(`${API_URL}/api/set-meeting`, {
+      const res = await fetchWithAuth(`${API_URL}/api/set-meeting`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : undefined,
         },
         body: JSON.stringify(body),
       });
-      const data = await res.json();
+
+      const contentType = res.headers.get('content-type') || '';
+      let data = {};
+      if (contentType.includes('application/json')) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        console.error('Non-JSON response from set-meeting:', res.status, text.slice(0, 500));
+        data = { error: `Server returned ${res.status} (${res.statusText}). Please check the backend is running.` };
+      }
       if (res.ok) {
         toast.success('Meeting configured successfully', { duration: 5000 });
         
