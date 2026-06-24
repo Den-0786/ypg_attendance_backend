@@ -96,14 +96,17 @@ export default function Page() {
               strokeWidth="2.5"
             />
             <defs>
-              <path id="curveText" d="M20,110 a90,90 0 1,1 180,0" fill="none" />
+              <path 
+                id="curveText" 
+                d="M25,125 A 85, 85 0 1,1 195,125" 
+                fill="none" />
             </defs>
             <text
               width="100%"
               style={{
                 fontFamily: "sans-serif",
                 fontWeight: "bold",
-                letterSpacing: 2,
+                letterSpacing: 1,
               }}
             >
               <textPath
@@ -112,7 +115,7 @@ export default function Page() {
                 textAnchor="middle"
                 fill="#c9a84c"
                 fontSize="1.05rem"
-                dominantBaseline="middle"
+                dominantBaseline="central"
               >
                 Ahinsan District YPG Attendance WebApp
               </textPath>
