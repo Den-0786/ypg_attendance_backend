@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import toast from 'react-hot-toast';
+import { BASE_URL } from '../../lib/config';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A855F7', '#F97316', '#10B981'];
 
@@ -11,7 +12,7 @@ export default function MeetingTypePieChart() {
     const [year, setYear] = useState(new Date().getFullYear());
     const [congregation, setCongregation] = useState('');
 
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+    const API_URL = BASE_URL;
 
     const fetchData = async () => {
         try {

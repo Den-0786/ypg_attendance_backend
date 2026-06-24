@@ -2,8 +2,9 @@
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import PINModal from '../auth/PINModal';
+import { BASE_URL } from '../../lib/config';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+const API_URL = BASE_URL;
 
 export default function MeetingConfigForm({ onMeetingConfigured, darkMode = false }) {
   const [title, setTitle] = useState('');

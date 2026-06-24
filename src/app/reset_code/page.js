@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import { FaCheckCircle, FaTimesCircle, FaEye, FaEyeSlash } from 'react-icons/fa';
 import PasswordInput from '@components/forms/PasswordInput';
+import { BASE_URL } from '../../lib/config';
 
 // Force dynamic rendering to prevent prerendering issues
 export const dynamic = 'force-dynamic';
@@ -61,8 +62,7 @@ function ResetCodeContent() {
 
         try {
         setIsSubmitting(true);
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
-        const res = await fetch(`${API_URL}/api/reset-password-confirm`, {
+        const res = await fetch(`${BASE_URL}/api/reset-password-confirm`, {
             method: 'POST',
             headers: {
             'Content-Type': 'application/json',

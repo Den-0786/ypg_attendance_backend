@@ -6,8 +6,9 @@ import { HiEye, HiEyeOff } from 'react-icons/hi';
 import { useRouter } from 'next/navigation';
 import { capitalizeFirst, toTitleCase } from '../../lib/utils';
 import PINModal from '../auth/PINModal';
+import { BASE_URL } from '../../lib/config';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+const API_URL = BASE_URL;
 
 export default function MeetingDateForm({ onClose, onMeetingSet }) {
   const { setMeetingDate, setMeetingTitle } = useMeetingDate();

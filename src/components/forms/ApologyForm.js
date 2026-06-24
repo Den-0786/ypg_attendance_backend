@@ -12,6 +12,7 @@ import {
 } from "react-icons/fa";
 import PINModal from "../auth/PINModal";
 import { capitalizeFirst } from "../../lib/utils";
+import { BASE_URL } from "../../lib/config";
 
 const congregations = [
   "Emmanuel Congregation Ahinsan",
@@ -63,7 +64,7 @@ function capitalizeWords(str) {
     .join(" ");
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8001";
+const API_URL = BASE_URL;
 
 export default function ApologyForm({ meetingInfo }) {
   // eslint-disable-next-line react-hooks/rules-of-hooks

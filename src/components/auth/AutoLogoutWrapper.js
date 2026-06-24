@@ -3,8 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "../store/authStore";
 import AutoLogout from "./AutoLogout";
+import { BASE_URL } from "../../lib/config";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
+const API_URL = BASE_URL;
 
 export default function AutoLogoutWrapper() {
   const router = useRouter();

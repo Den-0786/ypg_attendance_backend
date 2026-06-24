@@ -27,6 +27,7 @@ import TopLists from "./TopLists";
 import DashboardCharts from "./DashboardCharts";
 import DashboardModals from "./DashboardModals";
 import AdminCredentialsModal from "./AdminCredentialsModal";
+import { BASE_URL } from "../../lib/config";
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
@@ -60,7 +61,7 @@ const cardColors = [
   "bg-red-50 dark:bg-red-900",
 ];
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8001";
+const API_URL = BASE_URL;
 
 export default function DashboardHome({
   attendanceData = [],

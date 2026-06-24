@@ -4,8 +4,9 @@ import { useAuthStore } from "@components/store/authStore";
 import { toast } from "react-hot-toast";
 import { useState, useEffect, useRef } from "react";
 import { useMeetingDate } from "../context/MeetingDateContext";
+import { BASE_URL } from "../../lib/config";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
+const API_URL = BASE_URL;
 
 // Custom toast component for no meeting notification
 const NoMeetingToast = ({ onClose }) => {

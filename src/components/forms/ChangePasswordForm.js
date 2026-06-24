@@ -12,8 +12,9 @@ import {
 import toast from "react-hot-toast";
 import PasswordInput from "./PasswordInput";
 import { getPasswordStrength } from "../../lib/utils";
+import { BASE_URL } from "../../lib/config";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
+const API_URL = BASE_URL;
 
 export default function ChangePasswordForm({
   onClose,
@@ -48,6 +49,7 @@ export default function ChangePasswordForm({
   const [users, setUsers] = useState([]);
   const [selectedTargetUser, setSelectedTargetUser] = useState(null);
   const [isAdminMode, setIsAdminMode] = useState(false);
+  const [verifiedPIN, setVerifiedPIN] = useState("");
 
   useEffect(() => {
     if (propCurrentUser) {
@@ -136,15 +138,19 @@ export default function ChangePasswordForm({
       const data = await response.json();
       if (data.message) {
         setPinStatus("exists");
+        return true;
       }
+      return false;
     } catch (err) {
       console.error("Error setting PIN:", err);
       toast.error("Network error occurred");
       setPinStatus("not_setup");
+      return false;
     }
   };
 
-  const handlePINSuccess = () => {
+  const handlePINSuccess = (pin) => {
+    setVerifiedPIN(pin);
     setShowPINModal(false);
     setShowForm(true);
   };
@@ -175,6 +181,7 @@ export default function ChangePasswordForm({
           current_password: formData.currentPassword,
           new_username: formData.newUsername,
           new_password: formData.newPassword,
+          pin: verifiedPIN,
         };
 
         if (isAdminMode && selectedTargetUser) {
@@ -825,7 +832,7 @@ function PINInput({ onSuccess, onCancel, pinStatus, onSetupPIN, darkMode = false
         // Setup initial PIN
         const success = await onSetupPIN(pin);
         if (success) {
-          onSuccess();
+          onSuccess(pin);
         }
       } else {
         // Verify existing PIN
@@ -839,7 +846,7 @@ function PINInput({ onSuccess, onCancel, pinStatus, onSetupPIN, darkMode = false
         const data = await res.json();
 
         if (res.ok && data.is_valid) {
-          onSuccess();
+          onSuccess(pin);
         } else {
           // Handle different types of error responses
           if (res.status === 429) {

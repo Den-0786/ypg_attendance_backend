@@ -19,8 +19,9 @@ import MeetingConfigForm from "../forms/MeetingConfigForm";
 import DashboardHome from "./DashboardHome";
 import DashboardLocal from "./DashboardLocal";
 import DashboardDistrict from "./DashboardDistrict";
+import { BASE_URL } from "../../lib/config";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
+const API_URL = BASE_URL;
 
 export default function Dashboard({ onLogout }) {
   const [view, setView] = useState("home");

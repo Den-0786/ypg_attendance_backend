@@ -6,8 +6,9 @@ import { useAuth } from "@components/hooks/useAuth";
 import { useAuthStore } from "@components/store/authStore";
 import LoginForm from "@components/forms/LoginForm";
 import { toast } from "react-hot-toast";
+import { BASE_URL } from "../../lib/config";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
+const API_URL = BASE_URL;
 
 export default function LoginPage() {
   const { handleLogin, loggedIn, userRole } = useAuth();

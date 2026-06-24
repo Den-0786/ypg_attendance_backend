@@ -7,6 +7,7 @@ import PINModal from "../auth/PINModal";
 import SearchBar from "../ui/inputs/SearchBar";
 import FilterButtons from "../ui/FilterButtons";
 import AttendanceTable from "../ui/AttendanceTable";
+import { BASE_URL } from "../../lib/config";
 
 // Add capitalizeWords function
 function capitalizeWords(str) {
@@ -27,7 +28,7 @@ function useIsMobile() {
   return isMobile;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
+const API_URL = BASE_URL;
 
 export default function DashboardLocal({
   attendanceData = [],

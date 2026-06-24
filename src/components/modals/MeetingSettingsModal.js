@@ -3,8 +3,9 @@ import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import PINModal from '../auth/PINModal';
 import { toTitleCase } from '../lib/utils';
+import { BASE_URL } from '../lib/config';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+const API_URL = BASE_URL;
 
 export default function MeetingSettingsModal({ onClose, onSettingsUpdated }) {
   const [title, setTitle] = useState('');

@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import Dashboard from '@components/dashboard/DashboardComponent';
 import { useAuth } from '@components/hooks/useAuth';
 import { toast } from 'react-hot-toast';
+import { BASE_URL } from '../../lib/config';
 
 // Custom toast component for no meeting notification (same as in useAuth)
 const NoMeetingToast = ({ onClose }) => {
@@ -72,7 +73,7 @@ export default function AdminPage() {
   const [meetingInfo, setMeetingInfo] = useState(null);
   const [showMeetingForm, setShowMeetingForm] = useState(false);
   const [loadingMeeting, setLoadingMeeting] = useState(false);
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+  const API_URL = BASE_URL;
 
   // Check localStorage for toast state on mount
   useEffect(() => {

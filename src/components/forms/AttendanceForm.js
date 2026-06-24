@@ -6,6 +6,7 @@ import { MdMoreVert, MdEdit, MdDelete } from "react-icons/md";
 import toast from "react-hot-toast";
 import { FaExclamationCircle } from "react-icons/fa";
 import { capitalizeFirst } from "../../lib/utils";
+import { BASE_URL } from "../../lib/config";
 
 const congregations = [
   "Emmanuel Congregation Ahinsan",
@@ -77,9 +78,8 @@ export default function AttendanceForm({ meetingInfo }) {
     const fetchCurrentMeeting = async () => {
       setLoadingMeeting(true);
       try {
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8001";
         const token = localStorage.getItem("access_token");
-        const res = await fetch(`${API_URL}/api/current-meeting`, {
+        const res = await fetch(`${BASE_URL}/api/current-meeting`, {
           headers: {
             Authorization: token ? `Bearer ${token}` : undefined,
           },
@@ -345,10 +345,8 @@ export default function AttendanceForm({ meetingInfo }) {
           timestamp: new Date().toTimeString().slice(0, 8),
         })
       );
-      const API_URL =
-        process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8001";
       const token = localStorage.getItem("access_token");
-      const res = await fetch(`${API_URL}/api/submit-attendance`, {
+      const res = await fetch(`${BASE_URL}/api/submit-attendance`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
