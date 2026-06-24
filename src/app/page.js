@@ -102,7 +102,7 @@ export default function Page() {
                 fill="none" />
               <path
                 id="curveBottom"
-                d="M32,110 a78,78 0 0,0 156,0"
+                d="M22,110 a88,88 0 0,0 176,0"
                 fill="none" />
             </defs>
             <text style={{fontFamily: 'sans-serif', fontWeight: 'bold'}}>
