@@ -520,7 +520,7 @@ export default function DashboardHome({
           className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm font-semibold mt-2 md:mt-0 md:ml-8"
           title="Clear all attendance and apology data"
         >
-          🗑️ Clear All Data
+          Clear All Data
         </button>
       </div>
       <DashboardCharts

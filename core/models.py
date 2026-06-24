@@ -7,10 +7,19 @@ from django.utils.timezone import now
 
 from django.contrib.auth.hashers import make_password, check_password
 
+
 class Credential(models.Model):
     username = models.CharField(max_length=150, unique=True)
     password = models.CharField(max_length=128)  # stores hashed password
     role = models.CharField(max_length=20, default='user')
+    meeting = models.ForeignKey(
+        'Meeting',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='member_credentials',
+        help_text='Set when this credential is for meeting-member login'
+    )
 
     def set_password(self, raw_password):
         self.password = make_password(raw_password)
@@ -118,6 +127,18 @@ class Meeting(models.Model):
     custom_participant_limit = models.IntegerField(null=True, blank=True, help_text="Custom limit per local. If null, uses default: General=5, Council=2, Emergency=unlimited")
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)  # Track when meeting was created
+
+    # Member login credentials for this meeting
+    login_username = models.CharField(max_length=150, blank=True, null=True)
+    login_password = models.CharField(max_length=128, blank=True, null=True)  # hashed
+
+    def set_password(self, raw_password):
+        self.login_password = make_password(raw_password)
+
+    def check_password(self, raw_password):
+        if not self.login_password:
+            return False
+        return check_password(raw_password, self.login_password)
 
     def is_expired(self):
         """Check if meeting has been active for more than 24 hours"""

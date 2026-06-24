@@ -15,8 +15,8 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
   const router = useRouter();
   const [dateInput, setDateInput] = useState('');
   const [titleInput, setTitleInput] = useState('');
-  const [adminUsername, setAdminUsername] = useState('');
-  const [adminPassword, setAdminPassword] = useState('');
+  const [meetingUsername, setMeetingUsername] = useState('');
+  const [meetingPassword, setMeetingPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [deactivating, setDeactivating] = useState(false);
@@ -51,8 +51,8 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
         body: JSON.stringify({
           title: titleInput,
           date: dateInput,
-          admin_username: adminUsername,
-          admin_password: adminPassword,
+          login_username: meetingUsername,
+          login_password: meetingPassword,
         }),
       });
       const data = await res.json();
@@ -68,8 +68,8 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
         // Clear form
         setDateInput('');
         setTitleInput('');
-        setAdminUsername('');
-        setAdminPassword('');
+        setMeetingUsername('');
+        setMeetingPassword('');
         setAuthError('');
         
        
@@ -81,7 +81,7 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
         }
       } else {
         
-        if (data.error && data.error.includes('Cannot set two meetings same day')) {
+        if (data.error && data.error.includes('There is an active meeting')) {
 
           toast.custom((t) => (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 max-w-sm mx-auto">
@@ -94,7 +94,7 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
                   </div>
                   <div className="ml-3">
                     <p className="text-sm font-medium text-red-800">
-                      Cannot set two meetings same day
+                      Active meeting in progress
                     </p>
                   </div>
                 </div>
@@ -109,7 +109,7 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
                 <div className="bg-red-600 h-2 rounded-full animate-pulse" style={{ width: '100%' }}></div>
               </div>
               <p className="text-sm text-red-700">
-                Deactivate the current meeting details before you can set another one.
+                There is an active meeting. New meeting cannot be initiated. Deactivate the current meeting before you can set another one.
               </p>
             </div>
           ), { duration: 8000 });
@@ -236,26 +236,28 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
         </div>
 
         <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">Admin Username</label>
+          <label className="block text-sm font-medium text-gray-700">Meeting Username</label>
           <input
             type="text"
-            value={adminUsername}
-            onChange={(e) => setAdminUsername(e.target.value)}
-            placeholder="Admin username"
+            value={meetingUsername}
+            onChange={(e) => setMeetingUsername(e.target.value)}
+            placeholder="Username for members to log in"
             className="w-full p-1 border border-yellow-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition"
             required
+            autoComplete="off"
           />
         </div>
         <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">Admin Password</label>
+          <label className="block text-sm font-medium text-gray-700">Meeting Password</label>
           <div className="relative">
             <input
               type={showPassword ? 'text' : 'password'}
-              value={adminPassword}
-              onChange={(e) => setAdminPassword(e.target.value)}
-              placeholder="Admin password"
+              value={meetingPassword}
+              onChange={(e) => setMeetingPassword(e.target.value)}
+              placeholder="Password for members to log in"
               className="w-full p-1 border border-yellow-300 rounded-xl text-gray-900 pr-10 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition"
               required
+              autoComplete="off"
             />
             <button
               type="button"

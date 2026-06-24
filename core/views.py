@@ -853,22 +853,39 @@ def set_meeting(request):
     if not user_id:
         return Response({'error': 'Authentication required'}, status=401)
     
-    # Check if there's already an active and non-expired meeting on the same date
-    meeting_date = request.data.get('date')
-    if meeting_date:
-        existing_meeting = Meeting.objects.filter(date=meeting_date, is_active=True).first()
-        if existing_meeting and not existing_meeting.is_expired():
-            return Response({
-                'error': 'Cannot set two meetings same day, deactivate the current meeting details before you can set another one.'
-            }, status=400)
-        elif existing_meeting and existing_meeting.is_expired():
-            # Auto-deactivate expired meeting
-            existing_meeting.is_active = False
-            existing_meeting.save()
-
-    # Deactivate all existing meetings
-    Meeting.objects.filter(is_active=True).update(is_active=False)
+    # Only admins can create meetings
+    if not hasattr(request.user, 'role') or request.user.role != 'admin':
+        return Response({'error': 'Admin access required'}, status=403)
     
+    # Check if there's already any active meeting
+    active_meeting = Meeting.objects.filter(is_active=True).first()
+    if active_meeting and not active_meeting.is_expired():
+        return Response({
+            'error': 'There is an active meeting. New meeting cannot be initiated. Deactivate the current meeting before you can set another one.'
+        }, status=400)
+    elif active_meeting and active_meeting.is_expired():
+        # Auto-deactivate expired meeting and remove its member credentials
+        active_meeting.is_active = False
+        active_meeting.save()
+        Credential.objects.filter(meeting=active_meeting, role='meeting_user').delete()
+
+    # Required meeting credentials for members
+    login_username = request.data.get('login_username')
+    login_password = request.data.get('login_password')
+    if not login_username or not login_password:
+        return Response({
+            'error': 'Meeting username and password are required for members to log in.'
+        }, status=400)
+
+    # Prevent meeting username from colliding with admin/executive accounts
+    if Credential.objects.filter(username=login_username).exclude(role='meeting_user').exists():
+        return Response({
+            'error': 'This username is already used by an admin or executive account. Choose a different meeting username.'
+        }, status=400)
+
+    # Deactivate all existing meetings (safety net)
+    Meeting.objects.filter(is_active=True).update(is_active=False)
+
     # Create new meeting
     try:
         meeting = Meeting.objects.create(
@@ -876,8 +893,23 @@ def set_meeting(request):
             date=request.data.get('date'),
             meeting_type=request.data.get('meeting_type', 'general'),
             custom_participant_limit=request.data.get('custom_participant_limit'),
+            login_username=login_username,
             is_active=True
         )
+        meeting.set_password(login_password)
+        meeting.save()
+
+        # Create a member credential linked to this meeting so members can log in
+        from .models import Credential
+        # Remove any existing meeting-member credential using the same username to avoid unique conflicts
+        Credential.objects.filter(username=login_username, role='meeting_user').delete()
+        member_credential = Credential.objects.create(
+            username=login_username,
+            role='meeting_user',
+            meeting=meeting
+        )
+        member_credential.set_password(login_password)
+        member_credential.save()
 
         return Response({
             'message': 'Meeting set successfully',
@@ -886,7 +918,8 @@ def set_meeting(request):
                 'title': meeting.title,
                 'date': meeting.date,
                 'meeting_type': meeting.meeting_type,
-                'custom_participant_limit': meeting.custom_participant_limit
+                'custom_participant_limit': meeting.custom_participant_limit,
+                'login_username': meeting.login_username
             }
         }, status=201)
     except Exception as e:
@@ -907,6 +940,7 @@ def current_meeting(request):
             meeting.is_active = False
             meeting.save()
             expired_meetings.append(meeting)
+            Credential.objects.filter(meeting=meeting, role='meeting_user').delete()
     
     # If any meetings were deactivated, log it
     if expired_meetings:
@@ -926,13 +960,21 @@ def deactivate_meeting(request):
     if not user or not user.is_authenticated:
         return Response({'error': 'Authentication required'}, status=401)
     
+    # Only admins can deactivate meetings
+    if not hasattr(user, 'role') or user.role != 'admin':
+        return Response({'error': 'Admin access required'}, status=403)
+    
     # Require PIN for meeting deactivation
     pin = request.data.get('pin')
     from .models import SecurityPIN
     if not pin or not SecurityPIN.verify_pin(pin):
         return Response({'error': 'Valid PIN required for this action.'}, status=403)
     
-    count = Meeting.objects.filter(is_active=True).update(is_active=False)
+    # Deactivate the meeting(s) and remove the linked member credentials
+    active_meetings = Meeting.objects.filter(is_active=True)
+    from .models import Credential
+    Credential.objects.filter(meeting__in=active_meetings, role='meeting_user').delete()
+    count = active_meetings.update(is_active=False)
     return Response({'message': f'Deactivated {count} meeting(s)'}, status=200)
 
 @api_view(['DELETE'])
@@ -1621,8 +1663,8 @@ def get_all_users(request):
     if current_user.role != 'admin':
         return Response({'error': 'Admin access required'}, status=403)
     
-    # Get all users with basic info (excluding password)
-    users = Credential.objects.all().values('id', 'username', 'role')  # type: ignore
+    # Get all users with basic info (excluding password and meeting-member accounts)
+    users = Credential.objects.exclude(role='meeting_user').values('id', 'username', 'role')  # type: ignore
     
     return Response({
         'users': list(users),

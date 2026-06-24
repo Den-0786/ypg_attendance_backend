@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { HiEye, HiEyeOff } from 'react-icons/hi';
 import PINModal from '../auth/PINModal';
 import { toTitleCase } from '../lib/utils';
 import { BASE_URL } from '../lib/config';
@@ -12,8 +13,9 @@ export default function MeetingSettingsModal({ onClose, onSettingsUpdated }) {
   const [date, setDate] = useState('');
   const [meetingType, setMeetingType] = useState('general');
   const [customLimit, setCustomLimit] = useState('');
-  const [adminUsername, setAdminUsername] = useState('');
-  const [adminPassword, setAdminPassword] = useState('');
+  const [meetingUsername, setMeetingUsername] = useState('');
+  const [meetingPassword, setMeetingPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPINModal, setShowPINModal] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
@@ -41,8 +43,8 @@ export default function MeetingSettingsModal({ onClose, onSettingsUpdated }) {
         title,
         date,
         meeting_type: meetingType,
-        admin_username: adminUsername,
-        admin_password: adminPassword,
+        login_username: meetingUsername,
+        login_password: meetingPassword,
       };
 
       if (customLimit && parseInt(customLimit) > 0) {
@@ -65,7 +67,33 @@ export default function MeetingSettingsModal({ onClose, onSettingsUpdated }) {
         }
         onClose();
       } else {
-        toast.error(data.error || 'Failed to activate meeting');
+        if (data.error && data.error.includes('There is an active meeting')) {
+          toast.custom((t) => (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 max-w-sm mx-auto">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm font-medium text-red-800">Active meeting in progress</p>
+                  </div>
+                </div>
+                <button onClick={() => toast.dismiss(t.id)} className="text-red-400 hover:text-red-600">✕</button>
+              </div>
+              <div className="w-full bg-red-200 rounded-full h-2 mb-2">
+                <div className="bg-red-600 h-2 rounded-full animate-pulse" style={{ width: '100%' }}></div>
+              </div>
+              <p className="text-sm text-red-700">
+                There is an active meeting. New meeting cannot be initiated. Deactivate the current meeting before you can set another one.
+              </p>
+            </div>
+          ), { duration: 8000 });
+        } else {
+          toast.error(data.error || 'Failed to activate meeting');
+        }
       }
     } catch (error) {
       console.error('Meeting activation error:', error);
@@ -166,32 +194,51 @@ export default function MeetingSettingsModal({ onClose, onSettingsUpdated }) {
               </p>
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Admin Username
-              </label>
-              <input
-                type="text"
-                value={adminUsername}
-                onChange={(e) => setAdminUsername(e.target.value)}
-                placeholder="Admin username"
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
-                required
-              />
-            </div>
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+              <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">
+                Member Login Credentials
+              </h4>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    Meeting Username
+                  </label>
+                  <input
+                    type="text"
+                    value={meetingUsername}
+                    onChange={(e) => setMeetingUsername(e.target.value)}
+                    placeholder="Username for members to log in"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                    required
+                    autoComplete="off"
+                  />
+                </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Admin Password
-              </label>
-              <input
-                type="password"
-                value={adminPassword}
-                onChange={(e) => setAdminPassword(e.target.value)}
-                placeholder="Admin password"
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
-                required
-              />
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    Meeting Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={meetingPassword}
+                      onChange={(e) => setMeetingPassword(e.target.value)}
+                      placeholder="Password for members to log in"
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all pr-10"
+                      required
+                      autoComplete="off"
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-3 top-3.5 text-gray-500 hover:text-indigo-600"
+                      onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? <HiEye size={20} /> : <HiEyeOff size={20} />}
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="flex gap-3 pt-4">

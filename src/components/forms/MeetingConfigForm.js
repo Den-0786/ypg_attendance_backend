@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { HiEye, HiEyeOff } from 'react-icons/hi';
 import PINModal from '../auth/PINModal';
 import { BASE_URL } from '../../lib/config';
 
@@ -11,6 +12,9 @@ export default function MeetingConfigForm({ onMeetingConfigured, darkMode = fals
   const [date, setDate] = useState('');
   const [meetingType, setMeetingType] = useState('general');
   const [customLimit, setCustomLimit] = useState('');
+  const [meetingUsername, setMeetingUsername] = useState('');
+  const [meetingPassword, setMeetingPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPINModal, setShowPINModal] = useState(false);
 
@@ -39,6 +43,8 @@ export default function MeetingConfigForm({ onMeetingConfigured, darkMode = fals
         title,
         date,
         meeting_type: meetingType,
+        login_username: meetingUsername,
+        login_password: meetingPassword,
       };
 
       // Only include custom_limit if it's set and greater than 0
@@ -63,12 +69,40 @@ export default function MeetingConfigForm({ onMeetingConfigured, darkMode = fals
         setDate('');
         setMeetingType('general');
         setCustomLimit('');
+        setMeetingUsername('');
+        setMeetingPassword('');
         
         if (typeof onMeetingConfigured === 'function') {
           setTimeout(() => onMeetingConfigured(), 500);
         }
       } else {
-        toast.error(data.error || 'Failed to configure meeting');
+        if (data.error && data.error.includes('There is an active meeting')) {
+          toast.custom((t) => (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 max-w-sm mx-auto">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm font-medium text-red-800">Active meeting in progress</p>
+                  </div>
+                </div>
+                <button onClick={() => toast.dismiss(t.id)} className="text-red-400 hover:text-red-600">✕</button>
+              </div>
+              <div className="w-full bg-red-200 rounded-full h-2 mb-2">
+                <div className="bg-red-600 h-2 rounded-full animate-pulse" style={{ width: '100%' }}></div>
+              </div>
+              <p className="text-sm text-red-700">
+                There is an active meeting. New meeting cannot be initiated. Deactivate the current meeting before you can set another one.
+              </p>
+            </div>
+          ), { duration: 8000 });
+        } else {
+          toast.error(data.error || 'Failed to configure meeting');
+        }
       }
     } catch (error) {
       console.error('Meeting configuration error:', error);
@@ -148,6 +182,46 @@ export default function MeetingConfigForm({ onMeetingConfigured, darkMode = fals
           <p className={`text-xs mt-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
             Effective limit: <span className={`font-semibold ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>{getEffectiveLimit()}</span> members per local
           </p>
+        </div>
+
+        <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+          <h4 className={`text-sm font-semibold mb-3 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Member Login Credentials</h4>
+          <div className="space-y-3">
+            <div>
+              <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Meeting Username</label>
+              <input
+                type="text"
+                value={meetingUsername}
+                onChange={(e) => setMeetingUsername(e.target.value)}
+                placeholder="Username for members to log in"
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${darkMode ? 'border-gray-600 text-white bg-gray-700' : 'border-gray-300 text-gray-900 bg-gray-50'}`}
+                required
+                autoComplete="off"
+              />
+            </div>
+            <div>
+              <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Meeting Password</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={meetingPassword}
+                  onChange={(e) => setMeetingPassword(e.target.value)}
+                  placeholder="Password for members to log in"
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 pr-10 ${darkMode ? 'border-gray-600 text-white bg-gray-700' : 'border-gray-300 text-gray-900 bg-gray-50'}`}
+                  required
+                  autoComplete="off"
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-2.5 text-gray-500 hover:text-indigo-600"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <HiEye size={20} /> : <HiEyeOff size={20} />}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <button

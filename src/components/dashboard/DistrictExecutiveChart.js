@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 import { useState, useEffect } from "react";
-import { FaUsers } from "react-icons/fa";
+import { FaUsers, FaFileExport } from "react-icons/fa";
 import CustomAreaChart from '../charts/CustomAreaChart';
 
 const months = [
@@ -220,7 +220,7 @@ export default function DistrictExecutiveChart({ attendanceData, darkMode }) {
               className="px-3 py-1 text-sm border rounded-md transition-colors bg-gray-700 border-amber-500/50 text-white hover:bg-gray-600 hover:border-amber-500"
               title="Export to CSV"
             >
-              📊 Export
+              <FaFileExport className="inline mr-2" /> Export
             </button>
           )}
         </div>

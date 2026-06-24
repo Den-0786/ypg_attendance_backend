@@ -44,7 +44,7 @@ class ApologyEntrySerializer(serializers.ModelSerializer):
 class MeetingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Meeting
-        fields = '__all__'
+        exclude = ('login_password',)
 
 class AuditLogSerializer(serializers.ModelSerializer):
     user = serializers.CharField(source='user.username', read_only=True)

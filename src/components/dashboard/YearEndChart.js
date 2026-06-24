@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { FaFileExport } from "react-icons/fa";
 import {
   BarChart,
   Bar,
@@ -374,7 +375,7 @@ export default function YearEndChart({ attendanceData, darkMode }) {
             }`}
             title="Export to CSV"
           >
-            📊 Export
+            <FaFileExport className="inline mr-2" /> Export
           </button>
         </div>
       </div>

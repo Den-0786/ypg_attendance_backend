@@ -6,7 +6,15 @@ import {
   FaSun,
   FaSignOutAlt,
   FaBars,
-  FaDatabase,
+  FaHome,
+  FaChartBar,
+  FaMapMarkedAlt,
+  FaBook,
+  FaChevronLeft,
+  FaChevronRight,
+  FaChevronDown,
+  FaChevronUp,
+  FaTimes,
 } from "react-icons/fa";
 
 import { useRouter } from "next/navigation";
@@ -30,6 +38,8 @@ export default function Dashboard({ onLogout }) {
   const [apologyData, setApologyData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showSidebar, setShowSidebar] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [showActions, setShowActions] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showManageMeetingModal, setShowManageMeetingModal] = useState(false);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
@@ -38,6 +48,8 @@ export default function Dashboard({ onLogout }) {
   const [showPINModal, setShowPINModal] = useState(false);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [currentUser, setCurrentUser] = useState(null);
+  const [currentMeeting, setCurrentMeeting] = useState(null);
+  const [loadingMeeting, setLoadingMeeting] = useState(false);
   const router = useRouter();
   const sidebarRef = useRef(null);
 
@@ -118,6 +130,34 @@ export default function Dashboard({ onLogout }) {
     document.documentElement.classList.toggle("dark", darkMode);
     localStorage.setItem("theme", darkMode ? "dark" : "light");
   }, [darkMode]);
+
+  const fetchCurrentMeeting = async () => {
+    setLoadingMeeting(true);
+    try {
+      const token = localStorage.getItem("access_token");
+      const res = await fetch(`${API_URL}/api/current-meeting`, {
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : undefined,
+        }
+      });
+      const data = await res.json();
+      if (res.ok && !data.error) {
+        setCurrentMeeting(data);
+      } else {
+        setCurrentMeeting(null);
+      }
+    } catch (error) {
+      console.error('Error fetching current meeting:', error);
+      setCurrentMeeting(null);
+    } finally {
+      setLoadingMeeting(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCurrentMeeting();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Fetch current user info
   const fetchCurrentUser = async () => {
@@ -225,6 +265,7 @@ export default function Dashboard({ onLogout }) {
       if (res.ok) {
         toast.success("Meeting deactivated successfully!");
         setShowPINModal(false);
+        setCurrentMeeting(null);
       } else {
         const data = await res.json();
         toast.error(data.error || "Failed to deactivate meeting");
@@ -256,30 +297,53 @@ export default function Dashboard({ onLogout }) {
         darkMode ? "bg-gray-950 text-white" : "bg-gray-100 text-gray-900"
       )}
     >
-      <div className="md:hidden fixed top-4 left-4 z-50">
-        <button
-          onClick={() => setShowSidebar(!showSidebar)}
-          className="text-2xl sidebar-toggle-button"
-        >
-          <FaBars />
-        </button>
-      </div>
+      {/* Mobile hamburger */}
+      <button
+        onClick={() => setShowSidebar(!showSidebar)}
+        className={cn(
+          "fixed top-4 left-4 z-50 p-2 rounded-lg border transition-all duration-300 sidebar-toggle-button md:hidden",
+          darkMode ? "bg-gray-800 text-amber-400 border-amber-500/30 hover:bg-gray-700" : "bg-white text-amber-600 border-gray-300 hover:bg-gray-100"
+        )}
+        aria-label={showSidebar ? "Close menu" : "Open menu"}
+      >
+        <FaBars size={20} />
+      </button>
 
       {/* Fixed Sidebar */}
       <div
         className={cn(
-          "fixed top-0 left-0 z-50 h-screen w-64 p-4 border-r flex flex-col justify-between transition-transform duration-300 overflow-y-auto border-amber-500/30",
+          "fixed top-0 left-0 z-40 h-screen border-r flex flex-col justify-between transition-all duration-300 overflow-y-auto border-amber-500/30",
           darkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900",
-          showSidebar ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+          isMobile ? (showSidebar ? "translate-x-0 w-64 p-4" : "-translate-x-full w-64 p-4") : (sidebarCollapsed ? "translate-x-0 w-20 p-2" : "translate-x-0 w-64 p-4")
         )}
         ref={sidebarRef}
       >
         <div>
           <div className="flex justify-between items-center mb-6">
-            <h2 className={`text-2xl font-bold ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>Dashboard</h2>
-            <button className={`md:hidden ${darkMode ? 'text-gray-400 hover:text-amber-400' : 'text-gray-500 hover:text-amber-600'}`} onClick={() => setShowSidebar(false)}>
-              ✖
-            </button>
+            <h2 className={cn(
+              "font-bold transition-all duration-300",
+              darkMode ? 'text-amber-400' : 'text-amber-600',
+              sidebarCollapsed && !isMobile ? "text-lg text-center w-full" : "text-2xl"
+            )}>
+              {sidebarCollapsed && !isMobile ? "D" : "Dashboard"}
+            </h2>
+            <div className="flex items-center gap-2">
+              {/* Desktop collapse/expand toggle */}
+              <button
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                className={cn(
+                  "hidden md:flex items-center justify-center p-1.5 rounded-lg transition-colors",
+                  darkMode ? "text-gray-400 hover:text-amber-400 hover:bg-gray-800" : "text-gray-500 hover:text-amber-600 hover:bg-gray-100"
+                )}
+                aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              >
+                {sidebarCollapsed ? <FaChevronRight size={16} /> : <FaChevronLeft size={16} />}
+              </button>
+              {/* Mobile close */}
+              <button className={`md:hidden ${darkMode ? 'text-gray-400 hover:text-amber-400' : 'text-gray-500 hover:text-amber-600'}`} onClick={() => setShowSidebar(false)}>
+                <FaTimes size={20} />
+              </button>
+            </div>
           </div>
           <div className="space-y-3">
             <button
@@ -288,14 +352,16 @@ export default function Dashboard({ onLogout }) {
                 if (isMobile) setShowSidebar(false);
               }}
               className={cn(
-                "w-full text-left px-4 py-3 rounded-lg transition-all duration-300 flex items-center gap-3 font-medium border",
+                "w-full rounded-lg transition-all duration-300 flex items-center font-medium border",
+                sidebarCollapsed && !isMobile ? "justify-center px-2 py-3" : "text-left px-4 py-3 gap-3",
                 view === "home"
                   ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white border-amber-500 shadow-lg shadow-amber-500/30"
                   : darkMode ? "bg-transparent text-gray-300 border-gray-700 hover:border-amber-500 hover:text-amber-400" : "bg-transparent text-gray-700 border-gray-300 hover:border-amber-500 hover:text-amber-600"
               )}
+              title="Home"
             >
-              <span>🏠</span>
-              Home
+              <FaHome size={18} />
+              {(!sidebarCollapsed || isMobile) && <span>Home</span>}
             </button>
             <button
               onClick={() => {
@@ -303,14 +369,16 @@ export default function Dashboard({ onLogout }) {
                 if (isMobile) setShowSidebar(false);
               }}
               className={cn(
-                "w-full text-left px-4 py-3 rounded-lg transition-all duration-300 flex items-center gap-3 font-medium border",
+                "w-full rounded-lg transition-all duration-300 flex items-center font-medium border",
+                sidebarCollapsed && !isMobile ? "justify-center px-2 py-3" : "text-left px-4 py-3 gap-3",
                 view === "local"
                   ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white border-amber-500 shadow-lg shadow-amber-500/30"
                   : darkMode ? "bg-transparent text-gray-300 border-gray-700 hover:border-amber-500 hover:text-amber-400" : "bg-transparent text-gray-700 border-gray-300 hover:border-amber-500 hover:text-amber-600"
               )}
+              title="Local"
             >
-              <span>📊</span>
-              Local
+              <FaChartBar size={18} />
+              {(!sidebarCollapsed || isMobile) && <span>Local</span>}
             </button>
             <button
               onClick={() => {
@@ -318,14 +386,16 @@ export default function Dashboard({ onLogout }) {
                 if (isMobile) setShowSidebar(false);
               }}
               className={cn(
-                "w-full text-left px-4 py-3 rounded-lg transition-all duration-300 flex items-center gap-3 font-medium border",
+                "w-full rounded-lg transition-all duration-300 flex items-center font-medium border",
+                sidebarCollapsed && !isMobile ? "justify-center px-2 py-3" : "text-left px-4 py-3 gap-3",
                 view === "district"
                   ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white border-amber-500 shadow-lg shadow-amber-500/30"
                   : darkMode ? "bg-transparent text-gray-300 border-gray-700 hover:border-amber-500 hover:text-amber-400" : "bg-transparent text-gray-700 border-gray-300 hover:border-amber-500 hover:text-amber-600"
               )}
+              title="District"
             >
-              <span>🗺️</span>
-              District
+              <FaMapMarkedAlt size={18} />
+              {(!sidebarCollapsed || isMobile) && <span>District</span>}
             </button>
             <button
               onClick={() => {
@@ -333,87 +403,142 @@ export default function Dashboard({ onLogout }) {
                 if (isMobile) setShowSidebar(false);
               }}
               className={cn(
-                "w-full text-left px-4 py-3 rounded-lg transition-all duration-300 flex items-center gap-3 font-medium border",
+                "w-full rounded-lg transition-all duration-300 flex items-center font-medium border",
+                sidebarCollapsed && !isMobile ? "justify-center px-2 py-3" : "text-left px-4 py-3 gap-3",
                 view === "records"
                   ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white border-amber-500 shadow-lg shadow-amber-500/30"
                   : darkMode ? "bg-transparent text-gray-300 border-gray-700 hover:border-amber-500 hover:text-amber-400" : "bg-transparent text-gray-700 border-gray-300 hover:border-amber-500 hover:text-amber-600"
               )}
+              title="Records"
             >
-              <span>📚</span>
-              Records
+              <FaBook size={18} />
+              {(!sidebarCollapsed || isMobile) && <span>Records</span>}
             </button>
           </div>
         </div>
         <div className="space-y-3">
-          {/* Year Selector */}
-          <div className={`space-y-2 p-3 rounded-lg border ${darkMode ? 'bg-gray-800 border-amber-500/30' : 'bg-gray-100 border-gray-300'}`}>
-            <h3 className={`text-sm font-semibold mb-2 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
-              Year Selection
-            </h3>
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-              className={`w-full px-3 py-2 border rounded-md text-sm ${darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'}`}
-            >
-              {Array.isArray(availableYearsArray) &&
-                availableYearsArray.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-            </select>
-            <p className={`text-xs ${darkMode ? 'text-gray-600' : 'text-gray-500'}`}>
-              Data closes on Dec 31st of each year
-            </p>
-          </div>
+          {/* Year Selector - hidden when collapsed on desktop */}
+          {(!sidebarCollapsed || isMobile) && (
+            <div className={`space-y-2 p-3 rounded-lg border ${darkMode ? 'bg-gray-800 border-amber-500/30' : 'bg-gray-100 border-gray-300'}`}>
+              <h3 className={`text-sm font-semibold mb-2 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
+                Year
+              </h3>
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                className={`w-full px-3 py-2 border rounded-md text-sm ${darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'}`}
+              >
+                {Array.isArray(availableYearsArray) &&
+                  availableYearsArray.map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+              </select>
+            </div>
+          )}
 
-          {/* Action Buttons Group */}
-          <div className={`space-y-2 p-4 rounded-xl border ${darkMode ? 'bg-gray-800 border-amber-500/30' : 'bg-gray-100 border-gray-300'}`}>
-            <h3 className={`text-sm font-semibold mb-3 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
-              Actions
-            </h3>
-            <button
-              onClick={() => setShowChangePasswordModal(true)}
-              className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-200 font-medium border ${darkMode ? 'text-gray-300 bg-transparent border-gray-700 hover:bg-gray-700 hover:border-amber-500' : 'text-gray-700 bg-transparent border-gray-300 hover:bg-gray-200 hover:border-amber-500'}`}
-            >
-              🔑 Change Credentials
-            </button>
-            <button
-              onClick={() => router.push("/forms")}
-              className="w-full text-left px-4 py-3 rounded-lg bg-gradient-to-r from-blue-700 to-blue-900 text-white hover:from-blue-800 hover:to-blue-900 transition-all duration-200 font-medium shadow-md hover:shadow-lg border border-blue-600"
-            >
-              📝 Go to Form
-            </button>
-            <button
-              onClick={() => setShowMeetingConfigModal(true)}
-              className="w-full text-left px-4 py-3 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 transition-all duration-200 font-medium shadow-md hover:shadow-lg border border-amber-500"
-            >
-              📅 Set Meeting
-            </button>
-            <button
-              onClick={handleManageMeeting}
-              className="w-full text-left px-4 py-3 rounded-lg bg-gradient-to-r from-blue-700 to-blue-900 text-white hover:from-blue-800 hover:to-blue-900 transition-all duration-200 font-medium shadow-md hover:shadow-lg border border-blue-600"
-            >
-              ⚙️ Manage Meeting
-            </button>
-          </div>
+          {/* Current Meeting Info - hidden when collapsed on desktop */}
+          {(!sidebarCollapsed || isMobile) && (
+            <div className={`space-y-2 p-4 rounded-xl border ${darkMode ? 'bg-gray-800 border-amber-500/30' : 'bg-gray-100 border-gray-300'}`}>
+              <h3 className={`text-sm font-semibold mb-3 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
+                Current Meeting
+              </h3>
+              {loadingMeeting ? (
+                <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Loading...</p>
+              ) : currentMeeting ? (
+                <div className="space-y-2">
+                  <div>
+                    <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Title</p>
+                    <p className={`text-sm font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{currentMeeting.title || '—'}</p>
+                  </div>
+                  <div>
+                    <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Date</p>
+                    <p className={`text-sm font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{currentMeeting.date || '—'}</p>
+                  </div>
+                  <div>
+                    <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Member Login</p>
+                    <p className={`text-sm font-semibold break-all ${darkMode ? 'text-amber-300' : 'text-amber-700'}`}>{currentMeeting.login_username || '—'}</p>
+                  </div>
+                </div>
+              ) : (
+                <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>No active meeting.</p>
+              )}
+            </div>
+          )}
+
+          {/* Actions accordion - hidden until toggled */}
+          {(!sidebarCollapsed || isMobile) && (
+            <div className={`rounded-xl border ${darkMode ? 'bg-gray-800 border-amber-500/30' : 'bg-gray-100 border-gray-300'}`}>
+              <button
+                onClick={() => setShowActions(!showActions)}
+                className={`w-full flex items-center justify-between p-4 text-sm font-semibold ${darkMode ? 'text-amber-400 hover:text-amber-300' : 'text-amber-600 hover:text-amber-700'} transition-colors`}
+              >
+                <span>Actions</span>
+                {showActions ? <FaChevronUp size={16} /> : <FaChevronDown size={16} />}
+              </button>
+              {showActions && (
+                <div className="px-4 pb-4 space-y-2">
+                  <button
+                    onClick={() => setShowChangePasswordModal(true)}
+                    className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-200 font-medium border ${darkMode ? 'text-gray-300 bg-transparent border-gray-700 hover:bg-gray-700 hover:border-amber-500' : 'text-gray-700 bg-transparent border-gray-300 hover:bg-gray-200 hover:border-amber-500'}`}
+                  >
+                    Change Credentials
+                  </button>
+                  <button
+                    onClick={() => router.push("/forms")}
+                    className="w-full text-left px-4 py-3 rounded-lg bg-gradient-to-r from-blue-700 to-blue-900 text-white hover:from-blue-800 hover:to-blue-900 transition-all duration-200 font-medium shadow-md hover:shadow-lg border border-blue-600"
+                  >
+                    Go to Form
+                  </button>
+                  <button
+                    onClick={() => setShowMeetingConfigModal(true)}
+                    className="w-full text-left px-4 py-3 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 transition-all duration-200 font-medium shadow-md hover:shadow-lg border border-amber-500"
+                  >
+                    Set Meeting
+                  </button>
+                  <button
+                    onClick={handleManageMeeting}
+                    className="w-full text-left px-4 py-3 rounded-lg bg-gradient-to-r from-blue-700 to-blue-900 text-white hover:from-blue-800 hover:to-blue-900 transition-all duration-200 font-medium shadow-md hover:shadow-lg border border-blue-600"
+                  >
+                    Manage Meeting
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           <button
             onClick={toggleDarkMode}
-            className="w-full flex items-center justify-between px-4 py-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-lg hover:from-amber-600 hover:to-amber-700 transition-all duration-200 font-medium shadow-md hover:shadow-lg border border-amber-500"
+            className={cn(
+              "w-full flex items-center rounded-lg transition-all duration-200 font-medium shadow-md hover:shadow-lg border border-amber-500 bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700",
+              sidebarCollapsed && !isMobile ? "justify-center px-2 py-3" : "justify-between px-4 py-3"
+            )}
+            title="Toggle dark mode"
           >
-            <span>Toggle Mode</span> {darkMode ? <FaMoon /> : <FaSun />}
+            {(!sidebarCollapsed || isMobile) && <span>Toggle Mode</span>}
+            {darkMode ? <FaMoon size={18} /> : <FaSun size={18} />}
           </button>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-between px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition-all duration-200 font-medium shadow-md hover:shadow-lg border border-red-600"
+            className={cn(
+              "w-full flex items-center rounded-lg transition-all duration-200 font-medium shadow-md hover:shadow-lg border border-red-600 bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800",
+              sidebarCollapsed && !isMobile ? "justify-center px-2 py-3" : "justify-between px-4 py-3"
+            )}
+            title="Logout"
           >
-            <span>Logout</span> <FaSignOutAlt />
+            {(!sidebarCollapsed || isMobile) && <span>Logout</span>}
+            <FaSignOutAlt size={18} />
           </button>
         </div>
       </div>
 
       {/* Main scrollable content area */}
-      <div className={`flex-1 p-3 md:p-6 overflow-y-auto md:ml-64 ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
+      <div className={cn(
+        "flex-1 p-3 md:p-6 overflow-y-auto transition-all duration-300",
+        darkMode ? 'bg-gray-900' : 'bg-gray-100',
+        isMobile ? "md:ml-0" : (sidebarCollapsed ? "md:ml-20" : "md:ml-64")
+      )}>
         {view === "home" ? (
           <DashboardHome
             darkMode={darkMode}
@@ -524,6 +649,7 @@ export default function Dashboard({ onLogout }) {
                   setShowMeetingConfigModal(false);
                   // Refresh data
                   fetchAttendance();
+                  fetchCurrentMeeting();
                 }}
                 darkMode={darkMode}
               />
