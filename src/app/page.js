@@ -96,28 +96,36 @@ export default function Page() {
               strokeWidth="2.5"
             />
             <defs>
-              <path 
-                id="curveText" 
-                d="M25,125 A 85, 85 0 1,1 195,125" 
+              <path
+                id="curveTop"
+                d="M15,110 a95,95 0 1,1 190,0"
+                fill="none" />
+              <path
+                id="curveBottom"
+                d="M15,110 a95,95 0 0,0 190,0"
                 fill="none" />
             </defs>
-            <text
-              width="100%"
-              style={{
-                fontFamily: "sans-serif",
-                fontWeight: "bold",
-                letterSpacing: 1,
-              }}
-            >
+            <text style={{fontFamily: 'sans-serif', fontWeight: 'bold'}}>
               <textPath
-                xlinkHref="#curveText"
+                xlinkHref="#curveTop"
                 startOffset="50%"
                 textAnchor="middle"
                 fill="#c9a84c"
-                fontSize="1.05rem"
-                dominantBaseline="central"
+                fontSize="0.72rem"
               >
-                Ahinsan District YPG Attendance WebApp
+                Ahinsan District YPG
+              </textPath>
+            </text>
+            <text style={{fontFamily: 'sans-serif', fontWeight: 'bold'}}>
+              <textPath
+                xlinkHref="#curveBottom"
+                startOffset="50%"
+                textAnchor="middle"
+                fill="#d4a843"
+                fontSize="0.72rem"
+                dy="-6"
+              >
+                Attendance WebApp
               </textPath>
             </text>
           </svg>
