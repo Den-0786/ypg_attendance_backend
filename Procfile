@@ -1,1 +1,1 @@
-web: python manage.py migrate && python manage.py create_initial_credential && gunicorn ypg_backend.wsgi:application --bind 0.0.0.0:$PORT --workers 3 --timeout 120
+web: python manage.py migrate && gunicorn ypg_backend.wsgi:application --bind 0.0.0.0:$PORT --workers 3 --timeout 120
