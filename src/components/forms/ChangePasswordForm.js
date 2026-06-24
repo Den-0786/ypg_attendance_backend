@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   FaEye,
   FaEyeSlash,
@@ -11,7 +11,7 @@ import {
 } from "react-icons/fa";
 import toast from "react-hot-toast";
 import PasswordInput from "./PasswordInput";
-import { getPasswordStrength } from "../../lib/utils";
+import { getPasswordStrength, validatePassword } from "../../lib/utils";
 import { BASE_URL } from "../../lib/config";
 
 const API_URL = BASE_URL;
@@ -44,6 +44,8 @@ export default function ChangePasswordForm({
   const [showForm, setShowForm] = useState(false);
   const [currentUser, setCurrentUser] = useState(propCurrentUser || null);
   const [isNewPasswordValid, setIsNewPasswordValid] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+  const [showPasswordError, setShowPasswordError] = useState(false);
   const [pinStatus, setPinStatus] = useState(null);
   const [activeTab, setActiveTab] = useState("credentials");
   const [users, setUsers] = useState([]);
@@ -165,7 +167,11 @@ export default function ChangePasswordForm({
       }
 
       if (!isNewPasswordValid) {
-        toast.error("Password doesn't meet requirements");
+        const validation = validatePassword(formData.newPassword);
+        const errorMsg = validation.error || "Password doesn't meet requirements";
+        setPasswordError(errorMsg);
+        setShowPasswordError(true);
+        toast.error(errorMsg);
         return;
       }
 
@@ -176,15 +182,6 @@ export default function ChangePasswordForm({
 
       setLoading(true);
       try {
-        console.log("Change credentials attempt:", {
-          currentUsername: formData.currentUsername,
-          newUsername: formData.newUsername,
-          hasCurrentPassword: !!formData.currentPassword,
-          hasNewPassword: !!formData.newPassword,
-          pin: verifiedPIN,
-          isAdminMode,
-          targetUser: selectedTargetUser?.id,
-        });
         const requestBody = {
           current_username: formData.currentUsername,
           current_password: formData.currentPassword,
@@ -198,7 +195,6 @@ export default function ChangePasswordForm({
         }
 
         const token = localStorage.getItem("access_token");
-        console.log("Sending change credentials request to:", `${API_URL}/api/change-credentials`);
         const response = await fetch(`${API_URL}/api/change-credentials`, {
           method: "POST",
           headers: {
@@ -209,7 +205,6 @@ export default function ChangePasswordForm({
         });
 
         const data = await response.json();
-        console.log("Change credentials response:", response.status, data);
 
         if (response.ok) {
           const successMessage =
@@ -340,6 +335,35 @@ export default function ChangePasswordForm({
 
   useEffect(() => {
     setIsNewPasswordValid(passwordStrength.isValid);
+  }, [formData.newPassword, passwordStrength.isValid]);
+
+  // Show specific password error after user stops typing, hide after 10 seconds
+  const passwordErrorTimerRef = useRef(null);
+  const passwordHideTimerRef = useRef(null);
+  useEffect(() => {
+    if (passwordErrorTimerRef.current) clearTimeout(passwordErrorTimerRef.current);
+    if (passwordHideTimerRef.current) clearTimeout(passwordHideTimerRef.current);
+
+    if (!formData.newPassword || passwordStrength.isValid) {
+      setShowPasswordError(false);
+      setPasswordError("");
+      return;
+    }
+
+    passwordErrorTimerRef.current = setTimeout(() => {
+      const validation = validatePassword(formData.newPassword);
+      setPasswordError(validation.error || "Password doesn't meet requirements");
+      setShowPasswordError(true);
+
+      passwordHideTimerRef.current = setTimeout(() => {
+        setShowPasswordError(false);
+      }, 10000);
+    }, 800);
+
+    return () => {
+      if (passwordErrorTimerRef.current) clearTimeout(passwordErrorTimerRef.current);
+      if (passwordHideTimerRef.current) clearTimeout(passwordHideTimerRef.current);
+    };
   }, [formData.newPassword, passwordStrength.isValid]);
 
   // Only show for admins
@@ -642,20 +666,11 @@ export default function ChangePasswordForm({
                         >
                           {passwordStrength.message}
                         </p>
-                        <ul className="mt-1 space-y-0.5 text-xs">
-                          {[
-                            { label: "Exactly 8 characters", check: passwordStrength.checks?.length },
-                            { label: "1 uppercase letter", check: passwordStrength.checks?.uppercase },
-                            { label: "1 lowercase letter", check: passwordStrength.checks?.lowercase },
-                            { label: "1 number", check: passwordStrength.checks?.number },
-                            { label: "1 special character", check: passwordStrength.checks?.special },
-                          ].map(({ label, check }) => (
-                            <li key={label} className={`flex items-center gap-1 ${check ? "text-green-600 dark:text-green-400" : "text-gray-500 dark:text-gray-400"}`}>
-                              <span className={check ? "✓" : "•"}>{check ? "✓" : "•"}</span>
-                              {label}
-                            </li>
-                          ))}
-                        </ul>
+                        {passwordError && showPasswordError && (
+                          <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                            {passwordError}
+                          </p>
+                        )}
                       </div>
                     )}
                   </div>

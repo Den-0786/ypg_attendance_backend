@@ -1,15 +1,4 @@
 from django.db import migrations
-from django.contrib.auth.hashers import make_password
-
-
-def create_initial_credential(apps, schema_editor):
-    Credential = apps.get_model('core', 'Credential')
-    if not Credential.objects.filter(username='admin').exists():
-        Credential.objects.create(
-            username='admin',
-            password=make_password('Ahinde@2'),
-            role='admin'
-        )
 
 
 class Migration(migrations.Migration):
@@ -19,5 +8,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(create_initial_credential),
+        migrations.RunPython(lambda apps, schema_editor: None),
     ]

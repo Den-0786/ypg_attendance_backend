@@ -3,11 +3,80 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 
+function LogoutWarningToast({ toastId, onStayLoggedIn }) {
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          return 100;
+        }
+        return prev + 100 / 60; // 60 steps over 60 seconds
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4 max-w-sm w-full shadow-lg">
+      <div className="flex items-start space-x-3">
+        <div className="flex-shrink-0">
+          <div className="w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center">
+            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path
+                fillRule="evenodd"
+                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </div>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+            Session Timeout Warning
+          </p>
+          <p className="text-sm text-yellow-600 dark:text-yellow-300 mt-1">
+            You will be logged out in 1 minute due to inactivity.
+            <br />
+            <span className="font-semibold">
+              Click or press any key to stay logged in.
+            </span>
+          </p>
+          <div className="mt-3 bg-yellow-200 dark:bg-yellow-700 rounded-full h-1">
+            <div
+              className="bg-yellow-500 h-1 rounded-full transition-all duration-1000 ease-linear"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+        <button
+          onClick={() => {
+            toast.dismiss(toastId);
+            onStayLoggedIn();
+          }}
+          className="flex-shrink-0 text-yellow-400 hover:text-yellow-600 dark:hover:text-yellow-300"
+        >
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path
+              fillRule="evenodd"
+              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+              clipRule="evenodd"
+            />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function AutoLogout({ loggedIn, onLogout }) {
   const logoutTimerRef = useRef(null);
   const warningTimerRef = useRef(null);
+  const logoutPendingRef = useRef(false);
   const [warningShown, setWarningShown] = useState(false);
-  const [logoutPending, setLogoutPending] = useState(false);
   const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes
   const WARNING_TIMEOUT = 4 * 60 * 1000; // 4 minutes (1 minute before logout)
 
@@ -19,75 +88,26 @@ export default function AutoLogout({ loggedIn, onLogout }) {
   const resetInactivityTimer = () => {
     clearTimers();
     setWarningShown(false);
-    setLogoutPending(false);
+    logoutPendingRef.current = false;
     if (loggedIn) {
       // Set warning timer (1 minute before logout)
       warningTimerRef.current = setTimeout(() => {
         setWarningShown(true);
-        setLogoutPending(true);
-        toast(
-          (t) => (
-            <div className="flex items-center space-x-3">
-              <div className="flex-shrink-0">
-                <div className="w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center">
-                  <svg
-                    className="w-4 h-4 text-white"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                  Session Timeout Warning
-                </p>
-                <p className="text-sm text-yellow-600 dark:text-yellow-300">
-                  You will be logged out in 1 minute due to inactivity.
-                  <br />
-                  <span className="font-semibold">
-                    Please click on the screen or press any key to stay logged
-                    in, or you will be logged out.
-                  </span>
-                </p>
-              </div>
-              <button
-                onClick={() => {
-                  toast.dismiss(t.id);
-                  handleUserActivity();
-                }}
-                className="flex-shrink-0 text-yellow-400 hover:text-yellow-600 dark:hover:text-yellow-300"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </button>
-            </div>
-          ),
+        logoutPendingRef.current = true;
+        const toastId = toast(
+          (t) => <LogoutWarningToast toastId={t.id} onStayLoggedIn={handleUserActivity} />,
           {
             duration: 60000, // 1 minute
             style: {
               background: "#fef3c7",
               border: "1px solid #f59e0b",
+              padding: 0,
             },
           }
         );
         // Set logout timer for 1 minute after warning
         logoutTimerRef.current = setTimeout(() => {
-          if (logoutPending) {
+          if (logoutPendingRef.current) {
             toast.error(
               "Session expired. You have been logged out due to inactivity."
             );
@@ -105,7 +125,7 @@ export default function AutoLogout({ loggedIn, onLogout }) {
     if (warningShown) {
       // If warning was shown and user interacts, cancel logout and reset everything
       setWarningShown(false);
-      setLogoutPending(false);
+      logoutPendingRef.current = false;
       clearTimers();
       toast.dismiss(); // Dismiss all toasts on user activity
       // Don't call resetInactivityTimer() here to avoid immediate restart
@@ -142,7 +162,7 @@ export default function AutoLogout({ loggedIn, onLogout }) {
       if (warningShown) {
         // If warning was shown and user interacts, cancel logout and reset everything
         setWarningShown(false);
-        setLogoutPending(false);
+        logoutPendingRef.current = false;
         clearTimers();
         toast.dismiss(); // Dismiss all toasts on user activity
         // Don't call resetInactivityTimer() here to avoid immediate restart
