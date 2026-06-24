@@ -102,13 +102,20 @@ DATABASES = {}
 # database_url = os.environ.get('DATABASE_URL')
 database_url = config('DATABASE_URL', default=None)
 if database_url:
-    DATABASES['default'] = dj_database_url.config(
-        default=database_url,
-        conn_max_age=600,
-        conn_health_checks=True,
-    )
+    try:
+        DATABASES['default'] = dj_database_url.config(
+            default=database_url,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
+    except Exception:
+        # Fallback to SQLite if DATABASE_URL is malformed (e.g. scheme '://')
+        DATABASES['default'] = {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
 else:
-    # Fallback to SQLite if DATABASE_URL is not set (optional)
+    # Fallback to SQLite if DATABASE_URL is not set
     DATABASES['default'] = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
