@@ -900,7 +900,6 @@ def set_meeting(request):
         meeting.save()
 
         # Create a member credential linked to this meeting so members can log in
-        from .models import Credential
         # Remove any existing meeting-member credential using the same username to avoid unique conflicts
         Credential.objects.filter(username=login_username, role='meeting_user').delete()
         member_credential = Credential.objects.create(
