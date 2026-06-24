@@ -37,7 +37,12 @@ export default function Page() {
   }, []);
 
   return (
-    <main className="min-h-screen w-full flex flex-col justify-between bg-gradient-to-br from-blue-200 via-blue-100 to-blue-300 relative overflow-hidden px-4 py-0">
+    <main className="min-h-screen w-full flex flex-col justify-between relative overflow-hidden px-4 py-0" style={{background: 'linear-gradient(135deg, #0a1628 0%, #0d2144 40%, #0f2d5c 70%, #1a3a6e 100%)'}}>
+      {/* Gold shimmer orbs */}
+      <div className="absolute top-[-6rem] left-[-6rem] w-96 h-96 rounded-full pointer-events-none" style={{background: 'radial-gradient(circle, rgba(201,168,76,0.18) 0%, transparent 70%)'}} />
+      <div className="absolute bottom-[-4rem] right-[-4rem] w-80 h-80 rounded-full pointer-events-none" style={{background: 'radial-gradient(circle, rgba(212,168,67,0.14) 0%, transparent 70%)'}} />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] rounded-full pointer-events-none" style={{background: 'radial-gradient(ellipse, rgba(201,168,76,0.06) 0%, transparent 70%)'}} />
+
       {/* Background wave design */}
       <svg
         width="100%"
@@ -48,9 +53,9 @@ export default function Page() {
       >
         <defs>
           <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#60a5fa" stopOpacity="0.3" />
-            <stop offset="50%" stopColor="#3b82f6" stopOpacity="0.2" />
-            <stop offset="100%" stopColor="#1d4ed8" stopOpacity="0.1" />
+            <stop offset="0%" stopColor="#c9a84c" stopOpacity="0.15" />
+            <stop offset="50%" stopColor="#d4a843" stopOpacity="0.1" />
+            <stop offset="100%" stopColor="#b8860b" stopOpacity="0.08" />
           </linearGradient>
         </defs>
         <path
@@ -59,8 +64,8 @@ export default function Page() {
         />
         <path
           d="M0,700 Q400,600 900,750 T1440,650 V800 H0 Z"
-          fill="#60a5fa"
-          opacity="0.1"
+          fill="#c9a84c"
+          opacity="0.07"
         />
       </svg>
 
@@ -79,7 +84,7 @@ export default function Page() {
               cy="110"
               r="100"
               fill="none"
-              stroke="#3b82f6"
+              stroke="#c9a84c"
               strokeWidth="5"
             />
             <circle
@@ -87,7 +92,7 @@ export default function Page() {
               cy="110"
               r="70"
               fill="none"
-              stroke="#60a5fa"
+              stroke="#d4a843"
               strokeWidth="2.5"
             />
             <defs>
@@ -105,16 +110,16 @@ export default function Page() {
                 xlinkHref="#curveText"
                 startOffset="50%"
                 textAnchor="middle"
-                fill="#3b82f6"
+                fill="#c9a84c"
                 fontSize="1.05rem"
                 dominantBaseline="middle"
               >
-                Ahinsan District YPG Markify
+                Ahinsan District YPG Attendance WebApp
               </textPath>
             </text>
           </svg>
 
-          <div className="absolute z-1 w-16 h-16 md:w-18 md:h-18 rounded-full bg-white flex items-center justify-center shadow-2xl border-4 border-blue-300">
+          <div className="absolute z-1 w-16 h-16 md:w-18 md:h-18 rounded-full bg-white flex items-center justify-center shadow-2xl border-4" style={{borderColor: '#c9a84c'}}>
             <Image
               src="/ypg.jpeg"
               alt="YPG Logo"
@@ -136,8 +141,8 @@ export default function Page() {
                   viewBox="0 0 44 56"
                   className="block"
                 >
-                  <polygon points="44,0 14,28 44,56" fill="#2563eb" />
-                  <circle cx="14" cy="28" r="12" fill="#2563eb" />
+                  <polygon points="44,0 14,28 44,56" fill="#c9a84c" />
+                  <circle cx="14" cy="28" r="12" fill="#c9a84c" />
                   <text
                     x="14"
                     y="34"
@@ -153,9 +158,9 @@ export default function Page() {
               </div>
 
               <div className="flex-1 relative">
-                <div className="flex flex-col justify-center h-full bg-white/90 rounded-lg shadow px-3 py-1 border-l-4 border-blue-400 text-xs md:text-sm">
-                  <div className="font-bold text-blue-700">{f.title}</div>
-                  <div className="text-gray-600 text-xs">{f.desc}</div>
+                <div className="flex flex-col justify-center h-full rounded-lg shadow px-3 py-1 border-l-4 text-xs md:text-sm" style={{background: 'rgba(255,255,255,0.07)', borderColor: '#c9a84c'}}>
+                  <div className="font-bold text-xs" style={{color: '#f0c040'}}>{f.title}</div>
+                  <div className="text-xs" style={{color: '#c8d6e8'}}>{f.desc}</div>
                 </div>
               </div>
             </div>
@@ -164,9 +169,29 @@ export default function Page() {
       </div>
 
       {/* Simple login button */}
-      <div className="relative bottom-[9rem] lg:bottom-[4rem] z-20 flex flex-col items-center pb-0 ">
+      <div className="relative bottom-[9rem] lg:bottom-[4rem] z-20 flex flex-row items-center justify-center gap-4 pb-0 ">
+        <a
+          href="https://ypg-website.vercel.app"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 text-sm font-medium transition-colors" style={{color: '#c9a84c'}}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-4 h-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M19 12H5M12 5l-7 7 7 7" />
+          </svg>
+          Back to Main Website
+        </a>
         <button
-          className="px-8 py-2 bg-blue-600 hover:bg-blue-700 text-white text-base font-semibold rounded-full shadow-lg transition-colors"
+          className="px-8 py-2 text-white text-base font-semibold rounded-full shadow-lg transition-colors" style={{background: 'linear-gradient(90deg, #b8860b, #d4a843, #c9a84c)'}}
           onClick={() => router.push("/login")}
         >
           Login
