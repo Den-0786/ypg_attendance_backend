@@ -98,7 +98,7 @@ export default function Page() {
             <defs>
               <path
                 id="curveTop"
-                d="M15,110 a95,95 0 1,1 190,0"
+                d="M32,110 a78,78 0 1,1 156,0"
                 fill="none" />
               <path
                 id="curveBottom"
