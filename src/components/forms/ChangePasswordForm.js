@@ -176,6 +176,15 @@ export default function ChangePasswordForm({
 
       setLoading(true);
       try {
+        console.log("Change credentials attempt:", {
+          currentUsername: formData.currentUsername,
+          newUsername: formData.newUsername,
+          hasCurrentPassword: !!formData.currentPassword,
+          hasNewPassword: !!formData.newPassword,
+          pin: verifiedPIN,
+          isAdminMode,
+          targetUser: selectedTargetUser?.id,
+        });
         const requestBody = {
           current_username: formData.currentUsername,
           current_password: formData.currentPassword,
@@ -189,6 +198,7 @@ export default function ChangePasswordForm({
         }
 
         const token = localStorage.getItem("access_token");
+        console.log("Sending change credentials request to:", `${API_URL}/api/change-credentials`);
         const response = await fetch(`${API_URL}/api/change-credentials`, {
           method: "POST",
           headers: {
@@ -199,6 +209,7 @@ export default function ChangePasswordForm({
         });
 
         const data = await response.json();
+        console.log("Change credentials response:", response.status, data);
 
         if (response.ok) {
           const successMessage =
@@ -631,6 +642,20 @@ export default function ChangePasswordForm({
                         >
                           {passwordStrength.message}
                         </p>
+                        <ul className="mt-1 space-y-0.5 text-xs">
+                          {[
+                            { label: "Exactly 8 characters", check: passwordStrength.checks?.length },
+                            { label: "1 uppercase letter", check: passwordStrength.checks?.uppercase },
+                            { label: "1 lowercase letter", check: passwordStrength.checks?.lowercase },
+                            { label: "1 number", check: passwordStrength.checks?.number },
+                            { label: "1 special character", check: passwordStrength.checks?.special },
+                          ].map(({ label, check }) => (
+                            <li key={label} className={`flex items-center gap-1 ${check ? "text-green-600 dark:text-green-400" : "text-gray-500 dark:text-gray-400"}`}>
+                              <span className={check ? "✓" : "•"}>{check ? "✓" : "•"}</span>
+                              {label}
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     )}
                   </div>
@@ -674,8 +699,8 @@ export default function ChangePasswordForm({
                     </button>
                     <button
                       type="submit"
-                      className="flex-1 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition flex items-center justify-center gap-2 text-sm"
-                      disabled={loading || !isNewPasswordValid}
+                      className="flex-1 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition flex items-center justify-center gap-2 text-sm disabled:opacity-50"
+                      disabled={loading}
                     >
                       {loading ? (
                         <>

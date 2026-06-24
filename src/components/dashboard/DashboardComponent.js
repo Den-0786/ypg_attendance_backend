@@ -523,7 +523,7 @@ export default function Dashboard({ onLogout }) {
                 onMeetingConfigured={() => {
                   setShowMeetingConfigModal(false);
                   // Refresh data
-                  fetchAttendanceData();
+                  fetchAttendance();
                 }}
                 darkMode={darkMode}
               />
