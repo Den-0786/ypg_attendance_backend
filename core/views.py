@@ -1740,17 +1740,68 @@ class CustomTokenObtainPairView(APIView):
             if not username or not password:
                 logger.warning("Missing username or password")
                 return Response({'detail': 'Username and password required.'}, status=400)
-            from .models import Credential
+            
+            from .models import Credential, Meeting
+            from django.utils import timezone
+            from datetime import date
+            
+            user = None
+            
+            # 1. Try executive login (Credential model)
             try:
                 user = Credential.objects.get(username=username)
                 logger.warning(f"User found: {user.username}, checking password...")
                 if not user.check_password(password):
                     logger.warning("Password check failed")
-                    return Response({'detail': 'No active account for the given credentials'}, status=401)
-                logger.warning("Password check passed")
+                    user = None
+                else:
+                    logger.warning("Password check passed")
             except Credential.DoesNotExist:
-                logger.warning("User not found")
+                logger.warning("Executive user not found, trying meeting login")
+                pass
+            
+            # 2. Try meeting login (Meeting model, only active meeting)
+            if user is None:
+                meeting = Meeting.objects.filter(is_active=True, login_username=username).order_by('-date').first()
+                if meeting:
+                    today = timezone.now().date()
+                    
+                    # If the meeting date is not today, reject the login
+                    if meeting.date != today:
+                        return Response({'detail': 'Meeting is not scheduled for today.'}, status=400)
+                    
+                    # If the meeting has not started yet, reject the login
+                    if not meeting.has_started():
+                        return Response({'detail': f'Meeting has not started yet. It starts at {meeting.start_time.strftime("%H:%M")}.'}, status=400)
+                    
+                    # If the meeting has expired, auto-deactivate and reject
+                    if meeting.is_expired():
+                        meeting.is_active = False
+                        meeting.save()
+                        Credential.objects.filter(meeting=meeting, role='meeting_user').delete()
+                        return Response({'detail': 'Meeting has ended.'}, status=400)
+                    
+                    if meeting.check_password(password):
+                        logger.warning(f"Meeting login successful for {username}")
+                        # Create a temporary Credential object for JWT token generation
+                        # Use the meeting's login_username as the username
+                        try:
+                            user = Credential.objects.get(username=username, role='meeting_user', meeting=meeting)
+                        except Credential.DoesNotExist:
+                            # Create a meeting_user credential if it doesn't exist
+                            user = Credential.objects.create(
+                                username=username,
+                                password=meeting.login_password,
+                                role='meeting_user',
+                                meeting=meeting
+                            )
+                    else:
+                        logger.warning("Meeting password check failed")
+            
+            if user is None:
+                logger.warning("No valid user found for credentials")
                 return Response({'detail': 'No active account for the given credentials'}, status=401)
+            
             # Create JWT tokens
             refresh = RefreshToken.for_user(user)
             # Add custom claims
