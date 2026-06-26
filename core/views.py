@@ -751,9 +751,9 @@ def login_view(request):
                     'error': f'Maximum attempts reached. Please try again in the next 30 minutes.'
                 }, status=429)
 
-        # 1. Try executive login (Credential model)
+        # 1. Try executive login (Credential model) - exclude meeting_user role
         try:
-            user = Credential.objects.get(username=username)
+            user = Credential.objects.get(username=username, role__in=['admin', 'user'])
             if user.check_password(password):
                 # Reset failed attempts on successful login
                 login_attempt.reset_attempts()
@@ -1028,6 +1028,147 @@ def deactivate_meeting(request):
     Credential.objects.filter(meeting__in=active_meetings, role='meeting_user').delete()
     count = active_meetings.update(is_active=False)
     return Response({'message': f'Deactivated {count} meeting(s)'}, status=200)
+
+@api_view(['PUT', 'PATCH'])
+@permission_classes([IsAuthenticated])
+def edit_meeting(request):
+    user = request.user
+    if not user or not user.is_authenticated:
+        return Response({'error': 'Authentication required'}, status=401)
+    
+    # Only admins can edit meetings
+    if not hasattr(user, 'role') or user.role != 'admin':
+        return Response({'error': 'Admin access required'}, status=403)
+    
+    # Require PIN for meeting editing
+    pin = request.data.get('pin')
+    from .models import SecurityPIN
+    if not pin or not SecurityPIN.verify_pin(pin):
+        return Response({'error': 'Valid PIN required for this action.'}, status=403)
+    
+    # Get the active meeting
+    meeting = Meeting.objects.filter(is_active=True).first()
+    if not meeting:
+        return Response({'error': 'No active meeting to edit.'}, status=404)
+    
+    from datetime import datetime as dt
+    
+    # Update title if provided
+    if 'title' in request.data:
+        meeting.title = request.data.get('title')
+    
+    # Update date if provided
+    if 'date' in request.data:
+        date_raw = request.data.get('date')
+        try:
+            meeting_date = dt.strptime(date_raw, '%Y-%m-%d').date()
+            meeting.date = meeting_date
+        except (ValueError, TypeError, AttributeError):
+            return Response({'error': 'Date must be in YYYY-MM-DD format.'}, status=400)
+    
+    # Update meeting type if provided
+    if 'meeting_type' in request.data:
+        meeting.meeting_type = request.data.get('meeting_type')
+    
+    # Update custom participant limit if provided
+    if 'custom_participant_limit' in request.data:
+        custom_limit = request.data.get('custom_participant_limit')
+        if custom_limit:
+            try:
+                meeting.custom_participant_limit = int(custom_limit)
+            except (ValueError, TypeError):
+                return Response({'error': 'Custom participant limit must be a number.'}, status=400)
+        else:
+            meeting.custom_participant_limit = None
+    
+    # Update start time if provided
+    if 'start_time' in request.data:
+        start_time_raw = request.data.get('start_time')
+        try:
+            start_time = dt.strptime(start_time_raw, '%H:%M').time()
+            meeting.start_time = start_time
+        except (ValueError, TypeError, AttributeError):
+            return Response({'error': 'Start time must be in HH:MM format.'}, status=400)
+    
+    # Update duration hours if provided
+    if 'duration_hours' in request.data:
+        duration_hours = request.data.get('duration_hours')
+        try:
+            duration_hours = int(duration_hours)
+            if duration_hours < 1 or duration_hours > 72:
+                raise ValueError
+            meeting.duration_hours = duration_hours
+        except (ValueError, TypeError):
+            return Response({'error': 'Duration must be a whole number between 1 and 72 hours.'}, status=400)
+    
+    # Update login username if provided
+    if 'login_username' in request.data:
+        login_username = request.data.get('login_username')
+        if not login_username:
+            return Response({'error': 'Meeting username cannot be empty.'}, status=400)
+        
+        # Prevent meeting username from colliding with admin/executive accounts
+        if Credential.objects.filter(username=login_username).exclude(role='meeting_user').exists():
+            return Response({
+                'error': 'This username is already used by an admin or executive account. Choose a different meeting username.'
+            }, status=400)
+        
+        # Check if username is being changed
+        if meeting.login_username != login_username:
+            # Remove old credential
+            Credential.objects.filter(username=meeting.login_username, role='meeting_user', meeting=meeting).delete()
+            meeting.login_username = login_username
+    
+    # Update login password if provided
+    if 'login_password' in request.data:
+        login_password = request.data.get('login_password')
+        if login_password:
+            meeting.set_password(login_password)
+            # Update the linked credential password
+            Credential.objects.filter(username=meeting.login_username, role='meeting_user', meeting=meeting).update(
+                password=meeting.login_password
+            )
+    
+    # Save the meeting
+    meeting.save()
+    
+    # Ensure the credential exists with updated username/password
+    if not Credential.objects.filter(username=meeting.login_username, role='meeting_user', meeting=meeting).exists():
+        member_credential = Credential.objects.create(
+            username=meeting.login_username,
+            role='meeting_user',
+            meeting=meeting
+        )
+        member_credential.set_password(meeting.login_password)
+        member_credential.save()
+    
+    # Log the edit in audit log
+    try:
+        from .models import AuditLog
+        AuditLog.objects.create(
+            user=user,
+            action='edit',
+            model='Meeting',
+            object_id=meeting.id,
+            details=f'Edited meeting: {meeting.title}'
+        )
+    except Exception as e:
+        logger.warning(f'Failed to log audit entry: {str(e)}')
+    
+    return Response({
+        'message': 'Meeting updated successfully',
+        'meeting': {
+            'id': meeting.id,
+            'title': meeting.title,
+            'date': meeting.date,
+            'meeting_type': meeting.meeting_type,
+            'custom_participant_limit': meeting.custom_participant_limit,
+            'login_username': meeting.login_username,
+            'start_time': meeting.start_time.strftime('%H:%M'),
+            'duration_hours': meeting.duration_hours,
+            'end_time': meeting.get_end_datetime().strftime('%Y-%m-%d %H:%M')
+        }
+    }, status=200)
 
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
@@ -1747,9 +1888,9 @@ class CustomTokenObtainPairView(APIView):
             
             user = None
             
-            # 1. Try executive login (Credential model)
+            # 1. Try executive login (Credential model) - exclude meeting_user role
             try:
-                user = Credential.objects.get(username=username)
+                user = Credential.objects.get(username=username, role__in=['admin', 'user'])
                 logger.warning(f"User found: {user.username}, checking password...")
                 if not user.check_password(password):
                     logger.warning("Password check failed")

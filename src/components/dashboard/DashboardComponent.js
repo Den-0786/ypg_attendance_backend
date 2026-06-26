@@ -25,6 +25,7 @@ import ChangePasswordForm from "../forms/ChangePasswordForm";
 import RecordsLibrary from "../records/RecordsLibrary";
 import PINModal from "../auth/PINModal";
 import MeetingConfigForm from "../forms/MeetingConfigForm";
+import EditMeetingForm from "../forms/EditMeetingForm";
 import DashboardHome from "./DashboardHome";
 import DashboardLocal from "./DashboardLocal";
 import DashboardDistrict from "./DashboardDistrict";
@@ -43,6 +44,7 @@ export default function Dashboard({ onLogout }) {
   const [showActions, setShowActions] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showManageMeetingModal, setShowManageMeetingModal] = useState(false);
+  const [showEditMeetingModal, setShowEditMeetingModal] = useState(false);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [showMeetingConfigModal, setShowMeetingConfigModal] = useState(false);
   const [deactivating, setDeactivating] = useState(false);
@@ -605,31 +607,37 @@ export default function Dashboard({ onLogout }) {
               Manage Meeting
             </h2>
             <p className="text-gray-700 dark:text-gray-300 mb-6">
-              Are you sure you want to deactivate the current meeting? This will
-              allow you to set a new meeting with different details.
+              Choose an action for the current meeting.
             </p>
             {deactivating ? (
               <div className="flex flex-col items-center justify-center py-6">
                 <div className="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-12 w-12 mb-4 animate-spin border-t-blue-600"></div>
                 <span className="text-blue-600 dark:text-blue-300 font-semibold">
-                  Deactivating meeting...
+                  Processing...
                 </span>
               </div>
             ) : (
-              <div className="flex justify-end gap-3">
+              <div className="flex flex-col gap-3">
                 <button
-                  onClick={() => setShowManageMeetingModal(false)}
-                  className="px-4 py-2 bg-gray-400 rounded text-white hover:bg-gray-500"
-                  disabled={deactivating}
+                  onClick={() => {
+                    setShowManageMeetingModal(false);
+                    setShowEditMeetingModal(true);
+                  }}
+                  className="w-full px-4 py-3 bg-blue-600 rounded text-white hover:bg-blue-700 font-medium"
                 >
-                  Cancel
+                  Edit Meeting
                 </button>
                 <button
                   onClick={handleDeactivateMeeting}
-                  className="px-4 py-2 bg-red-600 rounded text-white hover:bg-red-700"
-                  disabled={deactivating}
+                  className="w-full px-4 py-3 bg-red-600 rounded text-white hover:bg-red-700 font-medium"
                 >
                   Deactivate Meeting
+                </button>
+                <button
+                  onClick={() => setShowManageMeetingModal(false)}
+                  className="w-full px-4 py-2 bg-gray-400 rounded text-white hover:bg-gray-500"
+                >
+                  Cancel
                 </button>
               </div>
             )}
@@ -665,8 +673,6 @@ export default function Dashboard({ onLogout }) {
               <MeetingConfigForm
                 onMeetingConfigured={() => {
                   setShowMeetingConfigModal(false);
-                  // Refresh data
-                  fetchAttendance();
                   fetchCurrentMeeting();
                 }}
                 darkMode={darkMode}
@@ -674,6 +680,18 @@ export default function Dashboard({ onLogout }) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Edit Meeting Modal */}
+      {showEditMeetingModal && (
+        <EditMeetingForm
+          onClose={() => setShowEditMeetingModal(false)}
+          onMeetingEdited={() => {
+            setShowEditMeetingModal(false);
+            fetchCurrentMeeting();
+          }}
+          currentMeeting={currentMeeting}
+        />
       )}
 
       {/* PIN Modal */}

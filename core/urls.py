@@ -4,7 +4,7 @@ from .views import (
     delete_attendance, delete_apology, edit_attendance, edit_apology,
     login_view, logout_view, session_status, change_credentials, request_password_reset,
     reset_password_confirm, verify_pin, clear_all_data,
-    set_meeting, current_meeting, deactivate_meeting,
+    set_meeting, current_meeting, deactivate_meeting, edit_meeting,
     soft_delete_record, restore_record, bulk_soft_delete, bulk_restore,
     update_notes_tags, export_record_pdf, advanced_records_list, advanced_combined_records_list, audit_log_list,
     local_attendance, district_attendance, attendance_by_meeting_title,
@@ -66,6 +66,8 @@ urlpatterns = [
     path('api/current-meeting', current_meeting, name='api_current_meeting'),
     path('deactivate-meeting', deactivate_meeting, name='deactivate_meeting'),
     path('api/deactivate-meeting', deactivate_meeting, name='api_deactivate_meeting'),
+    path('edit-meeting', edit_meeting, name='edit_meeting'),
+    path('api/edit-meeting', edit_meeting, name='api_edit_meeting'),
 
     #Records management
     path('records/<str:record_type>', core_views.records_list, name='records-list'),
