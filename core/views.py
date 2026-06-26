@@ -778,18 +778,18 @@ def login_view(request):
 
             # If the meeting date is not today, reject the login
             if meeting.date != today:
-                return Response({'error': 'Meeting is not scheduled for today.'}, status=400)
+                return Response({'error': 'No active meeting found. Please contact the district admin.'}, status=400)
 
             # If the meeting has not started yet, reject the login
             if not meeting.has_started():
-                return Response({'error': f'Meeting has not started yet. It starts at {meeting.start_time.strftime("%H:%M")}.'}, status=400)
+                return Response({'error': 'Meeting has not started yet. Please contact the district admin.'}, status=400)
 
             # If the meeting has expired, auto-deactivate and reject
             if meeting.is_expired():
                 meeting.is_active = False
                 meeting.save()
                 Credential.objects.filter(meeting=meeting, role='meeting_user').delete()
-                return Response({'error': 'Meeting has ended.'}, status=400)
+                return Response({'error': 'Meeting has ended. Please contact the district admin.'}, status=400)
 
             if meeting.check_password(password):
                 # Reset failed attempts on successful login
@@ -1768,18 +1768,18 @@ class CustomTokenObtainPairView(APIView):
                     
                     # If the meeting date is not today, reject the login
                     if meeting.date != today:
-                        return Response({'detail': 'Meeting is not scheduled for today.'}, status=400)
+                        return Response({'detail': 'No active meeting found. Please contact the district admin.'}, status=400)
                     
                     # If the meeting has not started yet, reject the login
                     if not meeting.has_started():
-                        return Response({'detail': f'Meeting has not started yet. It starts at {meeting.start_time.strftime("%H:%M")}.'}, status=400)
+                        return Response({'detail': 'Meeting has not started yet. Please contact the district admin.'}, status=400)
                     
                     # If the meeting has expired, auto-deactivate and reject
                     if meeting.is_expired():
                         meeting.is_active = False
                         meeting.save()
                         Credential.objects.filter(meeting=meeting, role='meeting_user').delete()
-                        return Response({'detail': 'Meeting has ended.'}, status=400)
+                        return Response({'detail': 'Meeting has ended. Please contact the district admin.'}, status=400)
                     
                     if meeting.check_password(password):
                         logger.warning(f"Meeting login successful for {username}")
