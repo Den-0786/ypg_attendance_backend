@@ -49,6 +49,7 @@ export default function Dashboard({ onLogout }) {
   const [showMeetingConfigModal, setShowMeetingConfigModal] = useState(false);
   const [deactivating, setDeactivating] = useState(false);
   const [showPINModal, setShowPINModal] = useState(false);
+  const [pendingModalAction, setPendingModalAction] = useState(null);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [currentUser, setCurrentUser] = useState(null);
   const [currentMeeting, setCurrentMeeting] = useState(null);
@@ -241,8 +242,15 @@ export default function Dashboard({ onLogout }) {
     setShowManageMeetingModal(true);
   };
 
+  const handleEditMeeting = () => {
+    setShowManageMeetingModal(false);
+    setPendingModalAction('edit');
+    setShowPINModal(true);
+  };
+
   const handleDeactivateMeeting = () => {
     setShowManageMeetingModal(false);
+    setPendingModalAction('deactivate');
     setShowPINModal(true);
   };
 
@@ -281,7 +289,14 @@ export default function Dashboard({ onLogout }) {
   };
 
   const handlePINSuccess = (pin) => {
-    handleDeactivateWithPIN(pin);
+    if (pendingModalAction === 'edit') {
+      setShowPINModal(false);
+      setPendingModalAction(null);
+      setShowEditMeetingModal(true);
+    } else {
+      handleDeactivateWithPIN(pin);
+      setPendingModalAction(null);
+    }
   };
 
   if (loading) {
@@ -619,10 +634,7 @@ export default function Dashboard({ onLogout }) {
             ) : (
               <div className="flex flex-col gap-3">
                 <button
-                  onClick={() => {
-                    setShowManageMeetingModal(false);
-                    setShowEditMeetingModal(true);
-                  }}
+                  onClick={handleEditMeeting}
                   className="w-full px-4 py-3 bg-blue-600 rounded text-white hover:bg-blue-700 font-medium"
                 >
                   Edit Meeting
@@ -697,10 +709,10 @@ export default function Dashboard({ onLogout }) {
       {/* PIN Modal */}
       <PINModal
         isOpen={showPINModal}
-        onClose={() => setShowPINModal(false)}
+        onClose={() => { setShowPINModal(false); setPendingModalAction(null); }}
         onSuccess={handlePINSuccess}
-        title="Enter PIN to Deactivate Meeting"
-        message="Please enter the 4-digit PIN to deactivate the current meeting"
+        title={pendingModalAction === 'edit' ? 'Enter PIN to Edit Meeting' : 'Enter PIN to Deactivate Meeting'}
+        message={pendingModalAction === 'edit' ? 'Please enter the 4-digit PIN to edit the current meeting' : 'Please enter the 4-digit PIN to deactivate the current meeting'}
       />
     </div>
   );

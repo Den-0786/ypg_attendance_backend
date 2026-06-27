@@ -2,13 +2,13 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { FaFileExport } from "react-icons/fa";
 import {
-  BarChart,
-  Bar,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  Cell,
+  Legend,
 } from "recharts";
 
 const months = [
@@ -26,14 +26,64 @@ const months = [
   "December",
 ];
 
+const monthAbbr = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+const allSystemCongregations = [
+  "Emmanuel Congregation Ahinsan",
+  "Peniel Congregation Esreso No 1",
+  "Favour Congregation Esreso No 2",
+  "Christ Congregation Ahinsan Estate",
+  "Ebenezer Congregation Aprabo",
+  "Mizpah Congregation Odagya No 1",
+  "Odagya No 2",
+  "Liberty Congregation High Tension",
+  "NOM",
+];
+
+const congregationColors = [
+  "#10B981",
+  "#3B82F6",
+  "#8B5CF6",
+  "#F59E0B",
+  "#EF4444",
+  "#06B6D4",
+  "#84CC16",
+  "#F97316",
+  "#EC4899",
+];
+
+const congregationShortNames = {
+  "Emmanuel Congregation Ahinsan": "Emmanuel",
+  "Peniel Congregation Esreso No 1": "Peniel",
+  "Favour Congregation Esreso No 2": "Favour",
+  "Christ Congregation Ahinsan Estate": "Christ",
+  "Ebenezer Congregation Aprabo": "Ebenezer",
+  "Mizpah Congregation Odagya No 1": "Mizpah",
+  "Odagya No 2": "Odagya No 2",
+  "Liberty Congregation High Tension": "Liberty",
+  "NOM": "NOM",
+};
+
 export default function YearEndChart({ attendanceData, darkMode }) {
-  const [chartData, setChartData] = useState([]);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [availableYears, setAvailableYears] = useState([]);
+  const [chartHeight, setChartHeight] = useState(320);
   const chartContainerRef = useRef(null);
 
   useEffect(() => {
-    
+    const updateHeight = () => {
+      const w = window.innerWidth;
+      if (w < 480) setChartHeight(220);
+      else if (w < 768) setChartHeight(270);
+      else if (w < 1024) setChartHeight(320);
+      else setChartHeight(380);
+    };
+    updateHeight();
+    window.addEventListener('resize', updateHeight);
+    return () => window.removeEventListener('resize', updateHeight);
+  }, []);
+
+  useEffect(() => {
     extractAvailableYears();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [attendanceData, selectedYear]);
@@ -41,281 +91,151 @@ export default function YearEndChart({ attendanceData, darkMode }) {
   const extractAvailableYears = () => {
     const years = new Set();
     const currentYear = new Date().getFullYear();
-
-
     years.add(currentYear);
-
-
     if (attendanceData && attendanceData.length > 0) {
       attendanceData.forEach((entry) => {
         const date = new Date(entry.meeting_date);
         years.add(date.getFullYear());
       });
     }
-
     const sortedYears = Array.from(years).sort((a, b) => b - a);
     setAvailableYears(sortedYears);
-
-
     if (!selectedYear || !sortedYears.includes(selectedYear)) {
       setSelectedYear(currentYear);
     }
   };
 
-  const processData = useMemo(() => {
-    
+  // processData for export/summary: per-congregation stats
+  const congregationStats = useMemo(() => {
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
     const currentMonth = currentDate.getMonth();
-
-    
-    const allSystemCongregations = [
-      "Emmanuel Congregation Ahinsan",
-      "Peniel Congregation Esreso No 1",
-      "Favour Congregation Esreso No 2",
-      "Christ Congregation Ahinsan Estate",
-      "Ebenezer Congregation Aprabo",
-      "Mizpah Congregation Odagya No 1",
-      "Odagya No 2",
-      "Liberty Congregation High Tension",
-      "NOM",
-    ];
-
-
     const congregationMap = new Map();
-
-   
-    allSystemCongregations.forEach((congregation) => {
-      congregationMap.set(congregation, Array(12).fill(0));
-    });
-
-    
+    allSystemCongregations.forEach((c) => congregationMap.set(c, Array(12).fill(0)));
     attendanceData.forEach((entry) => {
       const date = new Date(entry.meeting_date);
       if (date.getFullYear() === selectedYear) {
-        const congregation = entry.congregation;
         const month = date.getMonth();
-
-        if (congregationMap.has(congregation)) {
-          congregationMap.get(congregation)[month]++;
+        if (congregationMap.has(entry.congregation)) {
+          congregationMap.get(entry.congregation)[month]++;
         }
       }
     });
-
-    const congregationsList = Array.from(congregationMap.keys()).sort();
-
-
-    const data = congregationsList.map((congregation) => {
+    return allSystemCongregations.map((congregation) => {
       const monthlyData = congregationMap.get(congregation);
-
-
-      const barData = {
-        congregation: congregation,
-
-// sourcery skip: flip-comparison
-        january: selectedYear === currentYear && 0 <= currentMonth ? 1 : 0,
-        february: selectedYear === currentYear && 1 <= currentMonth ? 1 : 0,
-        march: selectedYear === currentYear && 2 <= currentMonth ? 1 : 0,
-        april: selectedYear === currentYear && 3 <= currentMonth ? 1 : 0,
-        may: selectedYear === currentYear && 4 <= currentMonth ? 1 : 0,
-        june: selectedYear === currentYear && 5 <= currentMonth ? 1 : 0,
-        july: selectedYear === currentYear && 6 <= currentMonth ? 1 : 0,
-        august: selectedYear === currentYear && 7 <= currentMonth ? 1 : 0,
-        september: selectedYear === currentYear && 8 <= currentMonth ? 1 : 0,
-        october: selectedYear === currentYear && 9 <= currentMonth ? 1 : 0,
-        november: selectedYear === currentYear && 10 <= currentMonth ? 1 : 0,
-        december: selectedYear === currentYear && 11 <= currentMonth ? 1 : 0,
-
-        totalMeetings: monthlyData.reduce((sum, count) => sum + count, 0),
-        attendanceRate: (
-          (monthlyData.filter((count) => count > 0).length / 12) *
-          100
-        ).toFixed(1),
-
+      return {
+        congregation,
+        totalMeetings: monthlyData.reduce((s, c) => s + c, 0),
+        attendanceRate: ((monthlyData.filter((c) => c > 0).length / 12) * 100).toFixed(1),
         currentYearProgress:
           selectedYear === currentYear
             ? (
-                (monthlyData
-                  .slice(0, currentMonth + 1)
-                  .filter((count) => count > 0).length /
+                (monthlyData.slice(0, currentMonth + 1).filter((c) => c > 0).length /
                   (currentMonth + 1)) *
                 100
               ).toFixed(1)
             : null,
-       
         monthlyAttendance: [...monthlyData],
       };
-      return barData;
     });
-
-   
-    data.sort(
-      (a, b) => parseFloat(b.attendanceRate) - parseFloat(a.attendanceRate)
-    );
-
-    return data;
   }, [attendanceData, selectedYear]);
 
-  const getBarColor = useCallback((monthIndex, data) => {
-
-    const hasAttendance =
-      data.monthlyAttendance && data.monthlyAttendance[monthIndex] > 0;
-
-    if (hasAttendance) {
-
-      const attendanceColors = [
-        "#10B981", // Green - January
-        "#3B82F6", // Blue - February
-        "#8B5CF6", // Purple - March
-        "#F59E0B", // Yellow - April
-        "#EF4444", // Red - May
-        "#06B6D4", // Cyan - June
-        "#84CC16", // Lime - July
-        "#F97316", // Orange - August
-        "#EC4899", // Pink - September
-        "#6366F1", // Indigo - October
-        "#14B8A6", // Teal - November
-        "#F43F5E", // Rose - December
-      ];
-      const color = attendanceColors[monthIndex];
-      return color;
-    } else {
-      
-      const color = "#D1D5DB";
-      return color;
-    }
-  }, []);
-
+  // streamData: month-based rows, each congregation as a key with value 1 (attended) or 0
+  const streamData = useMemo(() => {
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth();
+    const limit = selectedYear === currentYear ? currentMonth + 1 : 12;
+    return months.slice(0, limit).map((month, index) => {
+      const row = { month: monthAbbr[index] };
+      congregationStats.forEach((cs) => {
+        row[cs.congregation] = cs.monthlyAttendance[index] > 0 ? 1 : 0;
+      });
+      return row;
+    });
+  }, [congregationStats, selectedYear]);
 
   const CustomTooltip = useCallback(
-    ({ active, payload, label }) => {
+    ({ active, payload, label, coordinate }) => {
       if (!active || !payload || !payload.length) return null;
 
+      const attending = payload.filter((p) => p.value > 0).map((p) => p.dataKey);
+      const absent = allSystemCongregations.filter((c) => !attending.includes(c));
 
-      const congregationData = processData.find(
-        (item) => item.congregation === label
-      );
-      if (!congregationData) return null;
+      // Smart position: flip earlier on smaller screens
+      const chartWidth = chartContainerRef.current?.offsetWidth || 600;
+      const cx = coordinate?.x || 0;
+      const vw = window.innerWidth;
+      const isXs = vw < 480;
+      const isSm = vw < 768;
+      const flipThreshold = isXs ? 0.45 : isSm ? 0.5 : 0.6;
+      const flipLeft = cx > chartWidth * flipThreshold;
 
-
-      const congregationIndex = processData.findIndex(
-        (item) => item.congregation === label
-      );
-
-      const isMobile = window.innerWidth < 768;
-
-      let tooltipPosition = "center";
-      if (!isMobile) {
-
-        tooltipPosition = congregationIndex < 5 ? "right" : "left";
-      }
-
-      const currentDate = new Date();
-      const currentYear = currentDate.getFullYear();
-      const currentMonth = currentDate.getMonth();
-
-      
-      const getPositionClasses = () => {
-        if (isMobile) {
-          return "mx-2 max-w-[280px]";
-        }
-        return tooltipPosition === "right" ? "ml-4" : "mr-4";
-      };
-
-      const getPositionStyle = () => {
-        if (isMobile) {
-          return { transform: "translateX(-50%)" };
-        }
-        return tooltipPosition === "right"
-          ? { transform: "translateX(0)" }
-          : { transform: "translateX(-100%)" };
-      };
+      const tipWidth = isXs ? 110 : isSm ? 130 : 160;
+      const tipPad = isXs ? "3px 5px" : isSm ? "4px 6px" : "6px 8px";
+      const labelSize = isXs ? 9 : 10;
 
       return (
         <div
-          className={`p-3 sm:p-4 rounded-xl shadow-2xl border backdrop-blur-sm text-white ${darkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-300 text-gray-900'} ${getPositionClasses()}`}
-          style={getPositionStyle()}
+          className={`rounded-lg shadow-xl border pointer-events-none ${
+            darkMode
+              ? "bg-gray-900 border-gray-700 text-gray-100"
+              : "bg-white border-gray-200 text-gray-800"
+          }`}
+          style={{
+            width: tipWidth,
+            padding: tipPad,
+            transform: flipLeft ? "translateX(-105%)" : "translateX(5%)",
+          }}
         >
-          <p className={`font-bold text-base sm:text-lg mb-2 sm:mb-3 text-center break-words ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+          <p
+            className={`font-bold mb-0.5 ${darkMode ? "text-white" : "text-gray-900"}`}
+            style={{ fontSize: labelSize + 1 }}
+          >
             {label}
           </p>
-
-          <div className="space-y-2 text-xs sm:text-sm">
-            <div className="grid grid-cols-2 gap-2 sm:gap-4">
+          <div className="space-y-0.5">
+            {attending.length > 0 && (
               <div>
-                <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Meetings</p>
-                <p className={`font-semibold text-sm sm:text-lg ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                  {congregationData.totalMeetings}
+                <p className="text-green-500 font-semibold" style={{ fontSize: labelSize }}>
+                  Present ({attending.length})
                 </p>
+                {attending.map((c) => (
+                  <div key={c} className="flex items-center gap-1">
+                    <div
+                      className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: congregationColors[allSystemCongregations.indexOf(c)] }}
+                    />
+                    <span style={{ fontSize: labelSize }}>{congregationShortNames[c] || c}</span>
+                  </div>
+                ))}
               </div>
-              <div>
-                <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Full Year Rate</p>
-                <p className={`font-semibold text-sm sm:text-lg ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                  {congregationData.attendanceRate}%
+            )}
+            {absent.length > 0 && (
+              <div className={`mt-0.5 pt-0.5 border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
+                <p className="text-gray-400 font-semibold" style={{ fontSize: labelSize }}>
+                  Absent ({absent.length})
                 </p>
+                {absent.map((c) => (
+                  <div key={c} className="flex items-center gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-gray-400 flex-shrink-0" />
+                    <span className="text-gray-400" style={{ fontSize: labelSize }}>{congregationShortNames[c] || c}</span>
+                  </div>
+                ))}
               </div>
-            </div>
-            <div className={`mt-2 sm:mt-3 pt-2 sm:pt-3 border-t ${darkMode ? 'border-gray-700' : 'border-gray-300'}`}>
-              <p className={`text-xs mb-1 sm:mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Monthly Breakdown:
-              </p>
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-1">
-                {months.map((month, index) => {
-                  const hasAttendance =
-                    congregationData.monthlyAttendance &&
-                    congregationData.monthlyAttendance[index] > 0;
-                  const isCurrentMonth =
-                    selectedYear === currentYear && index === currentMonth;
-                  const isFutureMonth =
-                    selectedYear === currentYear && index > currentMonth;
-
-                  // Only show months up to current month when viewing current year
-                  if (selectedYear === currentYear && index > currentMonth) {
-                    return null;
-                  }
-
-                  return (
-                    <div key={index} className="flex items-center gap-1">
-                      <div
-                        className={`w-2 h-2 rounded-full ${
-                          hasAttendance ? "bg-green-500" : "bg-gray-400"
-                        }`}
-                      />
-                      <span
-                        className={`text-xs ${
-                          isCurrentMonth
-                            ? "font-bold text-blue-500"
-                            : darkMode ? "text-gray-300" : "text-gray-700"
-                        }`}
-                      >
-                        {month.slice(0, 3)}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+            )}
           </div>
         </div>
       );
     },
-    [processData, selectedYear]
+    [darkMode]
   );
 
   const exportData = useCallback(() => {
     const csvContent = [
-      [
-        "Congregation",
-        "Total Meetings",
-        "Attendance Rate (%)",
-        "Present Months",
-        "Absent Months",
-        ...months,
-      ],
-      ...processData.map((data) => {
-        const presentMonths = months.filter(
-          (month) => data[month.toLowerCase()] === 1
-        ).length;
+      ["Congregation", "Total Meetings", "Attendance Rate (%)", "Present Months", "Absent Months", ...months],
+      ...congregationStats.map((data) => {
+        const presentMonths = data.monthlyAttendance.filter((c) => c > 0).length;
         const absentMonths = 12 - presentMonths;
         return [
           data.congregation,
@@ -323,9 +243,7 @@ export default function YearEndChart({ attendanceData, darkMode }) {
           data.attendanceRate,
           presentMonths,
           absentMonths,
-          ...months.map((month) =>
-            data[month.toLowerCase()] === 1 ? "Present" : "Absent"
-          ),
+          ...data.monthlyAttendance.map((c) => (c > 0 ? "Present" : "Absent")),
         ];
       }),
     ]
@@ -341,9 +259,9 @@ export default function YearEndChart({ attendanceData, darkMode }) {
     a.click();
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
-  }, [processData, selectedYear]);
+  }, [congregationStats, selectedYear]);
 
-  if (!processData.length) {
+  if (!congregationStats.length) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 md:p-6">
         <div className="flex justify-center items-center h-64">
@@ -360,12 +278,27 @@ export default function YearEndChart({ attendanceData, darkMode }) {
       className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-3 sm:p-4 md:p-6 lg:p-8 relative"
       ref={chartContainerRef}
     >
-      {/* Chart title and export button above scrollable area */}
+      {/* Title, year selector, export */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-3 sm:mb-4 md:mb-6">
         <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
           Year-End Attendance Summary
         </h2>
         <div className="flex items-center gap-2 mt-2 md:mt-0">
+          {availableYears.length > 1 && (
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+              className={`px-2 py-1 text-xs border rounded-md ${
+                darkMode
+                  ? "bg-gray-700 border-gray-600 text-white"
+                  : "bg-white border-gray-300 text-gray-900"
+              }`}
+            >
+              {availableYears.map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+          )}
           <button
             onClick={exportData}
             className={`px-2 sm:px-3 py-1 text-xs sm:text-sm border rounded-md transition-colors ${
@@ -379,160 +312,94 @@ export default function YearEndChart({ attendanceData, darkMode }) {
           </button>
         </div>
       </div>
-      {/* Chart with horizontal scroll - only the chart is scrollable */}
-      <div className="w-full overflow-x-auto justify-start">
-        <div className="min-w-[900px] lg:min-w-[1100px] xl:min-w-[1300px]">
-          <ResponsiveContainer width="100%" height={400}>
-            <BarChart
-              data={processData}
-              layout="horizontal"
-              margin={{
-                top: 20,
-                right: 20,
-                left: 0,
-                bottom: processData.length > 5 ? 100 : 60,
-              }}
-              barGap={4}
-              barCategoryGap={12}
-            >
-              <XAxis
-                type="category"
-                dataKey="congregation"
-                stroke={darkMode ? "white" : "black"}
-                fontSize={10}
-                angle={-45}
-                textAnchor="end"
-                height={processData.length > 5 ? 120 : 80}
-                interval={0}
-                tick={{ fontSize: 10 }}
-                axisLine={true}
-                tickLine={true}
-              />
-              <YAxis
-                type="number"
-                stroke={darkMode ? "white" : "black"}
-                fontSize={12}
-                allowDecimals={false}
-                domain={[0, 12]}
-                ticks={[0, 2, 4, 6, 8, 10, 12]}
-                label={{
-                  value: "Months with Attendance",
-                  angle: -90,
-                  position: "insideLeft",
-                  style: {
-                    textAnchor: "middle",
-                    fontSize: 12,
-                    fill: darkMode ? "white" : "black",
-                  },
-                }}
-                axisLine={true}
-                tickLine={true}
-              />
-              {/* Custom tooltip */}
-              <Tooltip content={<CustomTooltip />} />
 
-              {months.map((month, monthIndex) => (
-                <Bar
-                  key={month}
-                  dataKey={month.toLowerCase()}
-                  barSize={10}
-                  radius={[3, 3, 3, 3]}
-                  stackId="a"
-                >
-                  {processData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={getBarColor(monthIndex, entry)}
-                    />
-                  ))}
-                </Bar>
-              ))}
-            </BarChart>
-          </ResponsiveContainer>
+      {/* Stream Chart */}
+      <div className="w-full">
+        <ResponsiveContainer width="100%" height={chartHeight}>
+          <AreaChart
+            data={streamData}
+            margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
+            stackOffset="wiggle"
+          >
+            <XAxis
+              dataKey="month"
+              stroke={darkMode ? "#9ca3af" : "#6b7280"}
+              fontSize={11}
+              tick={{ fontSize: 11 }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis hide />
+            <Tooltip
+              content={<CustomTooltip />}
+              cursor={{ stroke: darkMode ? "#6b7280" : "#d1d5db", strokeWidth: 1 }}
+            />
+            {allSystemCongregations.map((congregation, index) => (
+              <Area
+                key={congregation}
+                type="monotone"
+                dataKey={congregation}
+                stackId="stream"
+                stroke={congregationColors[index]}
+                fill={congregationColors[index]}
+                fillOpacity={0.75}
+                strokeWidth={1.5}
+              />
+            ))}
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Legend */}
+      <div className="mt-3 flex flex-wrap justify-center gap-x-2 gap-y-1.5 px-1">
+        {allSystemCongregations.map((congregation, index) => (
+          <div key={congregation} className="flex items-center gap-1 min-w-0">
+            <div
+              className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-sm flex-shrink-0"
+              style={{ backgroundColor: congregationColors[index] }}
+            />
+            <span className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-300 truncate">
+              {congregationShortNames[congregation]}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* Summary stats */}
+      <div className="mt-4 p-2 sm:p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 text-center text-xs sm:text-sm">
+          <div>
+            <p className="font-semibold text-gray-900 dark:text-white text-sm">
+              {congregationStats.length}
+            </p>
+            <p className="text-gray-600 dark:text-gray-400 text-xs">Congregations</p>
+          </div>
+          <div>
+            <p className="font-semibold text-gray-900 dark:text-white text-sm">
+              {congregationStats.reduce((sum, d) => sum + d.totalMeetings, 0)}
+            </p>
+            <p className="text-gray-600 dark:text-gray-400 text-xs">Meetings</p>
+          </div>
+          <div>
+            <p className="font-semibold text-gray-900 dark:text-white text-sm">
+              {(
+                congregationStats.reduce((sum, d) => sum + parseFloat(d.attendanceRate), 0) /
+                congregationStats.length
+              ).toFixed(1)}%
+            </p>
+            <p className="text-gray-600 dark:text-gray-400 text-xs">Avg Rate</p>
+          </div>
+          <div>
+            <p className="font-semibold text-gray-900 dark:text-white text-sm">
+              {congregationStats.filter((d) => parseFloat(d.attendanceRate) === 100).length}
+            </p>
+            <p className="text-gray-600 dark:text-gray-400 text-xs">Perfect</p>
+          </div>
         </div>
       </div>
-      {/* Legend and summary below the chart and scrollbar */}
-      <div className="mt-8 sm:mt-6 md:-mt-12 space-y-2 sm:space-y-3">
-        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 md:gap-6 text-xs sm:text-sm">
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 sm:w-3 sm:h-3 bg-green-500 border border-green-600 rounded-sm"></div>
-            <span className="text-gray-700 dark:text-gray-300">Present</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 sm:w-3 sm:h-3 bg-gray-300 border border-gray-400 rounded-sm"></div>
-            <span className="text-gray-700 dark:text-gray-300">Absent</span>
-          </div>
-          {selectedYear === new Date().getFullYear() && (
-            <>
-              <div className="flex items-center gap-1">
-                <div className="w-2 h-2 sm:w-3 sm:h-3 bg-gray-300 dark:bg-gray-600 border border-gray-400 dark:border-gray-500 rounded-sm"></div>
-                <span className="text-gray-700 dark:text-gray-300">Future</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-2 h-2 sm:w-3 sm:h-3 bg-blue-500 border border-blue-600 rounded-sm"></div>
-                <span className="text-gray-700 dark:text-gray-300">
-                  Current
-                </span>
-              </div>
-            </>
-          )}
-        </div>
-        <div className="text-center relative top-[1.3rem] text-xs sm:text-sm text-gray-500 dark:text-gray-400 space-y-1 px-2">
-          <p>• Each bar shows congregation attendance for {selectedYear}</p>
-          <p>• All 9 congregations displayed with monthly segments</p>
-        </div>
 
-        {processData.length > 0 && (
-          <div className="mt-3 relative top-[1rem] sm:mt-4 p-2 sm:p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 text-center text-xs sm:text-sm">
-              <div>
-                <p className="font-semibold text-gray-900 dark:text-white text-sm">
-                  {processData.length}
-                </p>
-                <p className="text-gray-600 dark:text-gray-400 text-xs">
-                  Congregations
-                </p>
-              </div>
-              <div>
-                <p className="font-semibold text-gray-900 dark:text-white text-sm">
-                  {processData.reduce(
-                    (sum, data) => sum + data.totalMeetings,
-                    0
-                  )}
-                </p>
-                <p className="text-gray-600 dark:text-gray-400 text-xs">
-                  Meetings
-                </p>
-              </div>
-              <div>
-                <p className="font-semibold text-gray-900 dark:text-white text-sm">
-                  {(
-                    processData.reduce(
-                      (sum, data) => sum + parseFloat(data.attendanceRate),
-                      0
-                    ) / processData.length
-                  ).toFixed(1)}
-                  %
-                </p>
-                <p className="text-gray-600 dark:text-gray-400 text-xs">
-                  Avg Rate
-                </p>
-              </div>
-              <div>
-                <p className="font-semibold text-gray-900 dark:text-white text-sm">
-                  {
-                    processData.filter(
-                      (data) => parseFloat(data.attendanceRate) === 100
-                    ).length
-                  }
-                </p>
-                <p className="text-gray-600 dark:text-gray-400 text-xs">
-                  Perfect
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
+      <div className="text-center mt-2 text-xs text-gray-400 dark:text-gray-500">
+        <p>Stream shows congregation attendance flow across months for {selectedYear}</p>
       </div>
     </div>
   );
