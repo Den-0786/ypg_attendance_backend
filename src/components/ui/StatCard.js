@@ -10,21 +10,21 @@ const cardStyles = {
 };
 
 const textColors = {
-  blue: "text-amber-600",
-  green: "text-amber-600",
-  purple: "text-amber-600",
+  blue: "text-blue-600",
+  green: "text-green-600",
+  purple: "text-purple-600",
   amber: "text-amber-600",
-  emerald: "text-amber-600",
-  cyan: "text-amber-600",
+  emerald: "text-emerald-600",
+  cyan: "text-cyan-600",
 };
 
 const textColorsDark = {
-  blue: "text-amber-400",
-  green: "text-amber-400",
-  purple: "text-amber-400",
+  blue: "text-blue-400",
+  green: "text-green-400",
+  purple: "text-purple-400",
   amber: "text-amber-400",
-  emerald: "text-amber-400",
-  cyan: "text-amber-400",
+  emerald: "text-emerald-400",
+  cyan: "text-cyan-400",
 };
 
 const valueColors = {

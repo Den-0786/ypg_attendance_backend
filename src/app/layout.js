@@ -17,24 +17,14 @@ const geistMono = Geist_Mono({
 export const metadata = {
   title: "YPG Attendance App",
   description: "Ahinsan District YPG Attendance Management System",
-  "Cache-Control": "no-cache, no-store, must-revalidate",
-  Pragma: "no-cache",
-  Expires: "0",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <head>
-        <meta
-          httpEquiv="Cache-Control"
-          content="no-cache, no-store, must-revalidate"
-        />
-        <meta httpEquiv="Pragma" content="no-cache" />
-        <meta httpEquiv="Expires" content="0" />
-      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        style={{ fontFamily: 'var(--font-geist-sans), system-ui, sans-serif' }}
       >
         <MeetingDateProvider>
           <AutoLogoutWrapper />

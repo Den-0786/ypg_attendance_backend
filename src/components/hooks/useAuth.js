@@ -229,8 +229,9 @@ export function useAuth() {
         throw error;
       }
     } catch (err) {
-      toast.error("Login failed. Please try again.");
-      err.isLoginError = true;
+      if (!err.isLoginError) {
+        toast.error("Login failed. Please try again.");
+      }
       throw err;
     }
   };

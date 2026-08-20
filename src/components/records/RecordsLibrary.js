@@ -124,6 +124,11 @@ export default function RecordsLibrary({
     filterRecordKind,
   ]);
 
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [search, filterType, filterYear, filterRecordKind, startDate, endDate, tab]);
+
   const fetchRecords = async () => {
     setLoading(true);
     try {
@@ -214,12 +219,11 @@ export default function RecordsLibrary({
   const confirmDelete = async (pin) => {
     try {
       const record = records.find((r) => r.id === deleteId);
-      // Use hard delete endpoint
+      // Send PIN in request body, not query string (security fix)
       let endpoint =
         record.record_kind === "apology"
           ? `${API_URL}/api/delete-apology/${deleteId}`
           : `${API_URL}/api/delete-attendance/${deleteId}`;
-      endpoint += `?pin=${encodeURIComponent(pin)}`;
       const token = localStorage.getItem("access_token");
       await fetch(endpoint, {
         method: "DELETE",
@@ -227,6 +231,7 @@ export default function RecordsLibrary({
           Authorization: token ? `Bearer ${token}` : undefined,
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({ pin }),
       });
       setShowConfirm(false);
       setDeleteId(null);
@@ -434,11 +439,11 @@ export default function RecordsLibrary({
     try {
       for (const id of selectedRecords) {
         const record = records.find((r) => r.id === id);
+        // Send PIN in request body, not query string (security fix)
         let endpoint =
           record.record_kind === "apology"
             ? `${API_URL}/api/delete-apology/${id}`
             : `${API_URL}/api/delete-attendance/${id}`;
-        endpoint += `?pin=${encodeURIComponent(pin)}`;
         const token = localStorage.getItem("access_token");
         await fetch(endpoint, {
           method: "DELETE",
@@ -447,6 +452,7 @@ export default function RecordsLibrary({
             Authorization: token ? `Bearer ${token}` : undefined,
             "Content-Type": "application/json",
           },
+          body: JSON.stringify({ pin }),
         });
       }
       setShowBulkConfirm(false);
@@ -486,7 +492,7 @@ export default function RecordsLibrary({
 
   // Group records by congregation, then by month, then by day
   const groupedRecords = {};
-  filteredRecords.forEach((record) => {
+  paginatedRecords.forEach((record) => {
     const cong = record.congregation || "Unknown";
     const dateObj = new Date(record.meeting_date);
     const monthKey = dateObj.toLocaleString("default", {

@@ -82,14 +82,8 @@ export default function AdminPage() {
       hasShownNoMeetingToast.current = true;
     }
     
-    // Check if PIN was verified (from URL params or localStorage)
-    const urlParams = new URLSearchParams(window.location.search);
-    const pinVerifiedParam = urlParams.get('pin_verified');
-    if (pinVerifiedParam === 'true') {
-      setPinVerified(true);
-      // Clean up URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
+    // PIN verification is handled only through the PIN modal, not URL params
+    // This prevents unauthorized access via ?pin_verified=true
   }, []);
 
  

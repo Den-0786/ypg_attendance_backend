@@ -154,8 +154,8 @@ export default function AttendanceForm({ meetingInfo }) {
   const validateField = (name, value) => {
     let error = "";
     if (name === "name") {
-      if (!/^[a-zA-Z\s\-]+$/.test(value)) {
-        error = "Only letters, spaces, and hyphens allowed.";
+      if (!/^[a-zA-ZÀ-ÿ\s\-'.]+$/.test(value)) {
+        error = "Only letters, spaces, hyphens, apostrophes, and periods allowed.";
       }
     }
     if (name === "phone") {
@@ -252,7 +252,19 @@ export default function AttendanceForm({ meetingInfo }) {
       return;
     }
 
-    // For local, max 2 per congregation per meeting
+    // Determine participant limit based on meeting config
+    const getParticipantLimit = () => {
+      if (currentMeeting?.custom_participant_limit) {
+        return parseInt(currentMeeting.custom_participant_limit);
+      }
+      if (currentMeeting?.meeting_type === 'council') return 2;
+      if (currentMeeting?.meeting_type === 'emergency') return Infinity;
+      return 5; // general meeting default
+    };
+
+    const participantLimit = getParticipantLimit();
+
+    // For local, check per-congregation limit
     const sameCongregationCount = attendees.filter(
       (a) =>
         a.congregation === cleaned.congregation &&
@@ -262,10 +274,11 @@ export default function AttendanceForm({ meetingInfo }) {
     if (
       type === "local" &&
       editingIndex === null &&
-      sameCongregationCount >= 2
+      participantLimit !== Infinity &&
+      sameCongregationCount >= participantLimit
     ) {
       toast.error(
-        `You have exceeded the 2-attendee limit for ${cleaned.congregation}`
+        `You have exceeded the ${participantLimit}-attendee limit for ${cleaned.congregation}`
       );
       return;
     }

@@ -285,10 +285,10 @@ export default function DashboardHome({
 
   const handleDeleteWithPIN = async (entry, pin) => {
     const isApology = isApologyEntry(entry);
-    // Use hard delete endpoint
+    // Send PIN in request body, not query string (security fix)
     const endpoint = isApology
-      ? `${API_URL}/api/delete-apology/${entry.id}?pin=${encodeURIComponent(pin)}`
-      : `${API_URL}/api/delete-attendance/${entry.id}?pin=${encodeURIComponent(pin)}`;
+      ? `${API_URL}/api/delete-apology/${entry.id}`
+      : `${API_URL}/api/delete-attendance/${entry.id}`;
     toast.custom(
       (t) => (
         <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-lg border border-red-400 max-w-xs mx-auto flex flex-col items-center">
@@ -311,6 +311,7 @@ export default function DashboardHome({
                       "Content-Type": "application/json",
                       Authorization: token ? `Bearer ${token}` : undefined,
                     },
+                    body: JSON.stringify({ pin }),
                   });
                   if (res.ok) {
                     toast.success("Entry deleted successfully");
