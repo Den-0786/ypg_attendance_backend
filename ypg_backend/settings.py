@@ -344,3 +344,24 @@ LOGGING = {
 
 
 os.makedirs(BASE_DIR / 'logs', exist_ok=True)
+
+
+# ==============================================================================
+# EMAIL CONFIGURATION (RESEND SMTP)
+# ==============================================================================
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.resend.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'resend'
+EMAIL_HOST_PASSWORD = os.getenv('RESEND_API_KEY')
+
+# Reads DEFAULT_FROM_EMAIL from Render env; falls back to attendance subdomain if not set
+DEFAULT_FROM_EMAIL = os.getenv(
+    'DEFAULT_FROM_EMAIL', 
+    'District YPG Attendance <noreply@attendance.ahinsandistrictypg.com>'
+)
+
+# Optional: Email where site errors/logs are sent
+SERVER_EMAIL = DEFAULT_FROM_EMAIL

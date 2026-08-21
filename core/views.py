@@ -614,13 +614,16 @@ def request_password_reset(request):
     token = get_random_string(length=6, allowed_chars='1234567890')
     PasswordResetToken.objects.create(user=user, token=token)
 
-    send_mail(
-        'Your YPG Reset Code',
-        f'Your password reset code is: {token}',
-        settings.DEFAULT_FROM_EMAIL,
-        [user.email],
-        fail_silently=True
-    )
+    try:
+        send_mail(
+            'Your YPG Reset Code',
+            f'Your password reset code is: {token}',
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            fail_silently=False,
+        )
+    except Exception:
+        return Response({'error': 'Could not send reset email. Please try again later.'}, status=500)
 
     return Response({'message': 'Reset code sent to email'})
 
