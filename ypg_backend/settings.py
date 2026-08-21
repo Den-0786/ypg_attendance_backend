@@ -24,7 +24,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-your-secret-key-here-change-in-production')
 
 
-DEBUG = config('DEBUG', default=True, cast=bool)
+# Debug only when running locally (sqlite / no DB url); never in production.
+_db_url = config('DATABASE_URL', default='')
+DEBUG = config('DEBUG', default=('sqlite' in _db_url or 'localhost' in _db_url or _db_url == ''), cast=bool)
 
 ALLOWED_HOSTS = list(dict.fromkeys(
     config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=lambda v: [s.strip() for s in v.split(',')])
