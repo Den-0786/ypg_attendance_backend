@@ -607,7 +607,8 @@ def request_password_reset(request):
     try:
         user = Credential.objects.get(username=identifier)
     except Credential.DoesNotExist:
-        return Response({'error': 'User not found'}, status=404)
+        # Generic response so attackers can't probe which usernames exist.
+        return Response({'message': 'Reset code sent to email'})
 
     PasswordResetToken.objects.filter(user=user).delete()
 
@@ -637,7 +638,7 @@ def reset_password_confirm(request):
     try:
         user = Credential.objects.get(username=identifier)
     except Credential.DoesNotExist:
-        return Response({'error': 'User not found'}, status=404)
+        return Response({'error': 'Invalid reset code'}, status=400)
 
     reset_entry = PasswordResetToken.objects.filter(user=user, token=token).first()
     if not reset_entry:
