@@ -84,12 +84,10 @@ export default function DistrictExecutiveChart({ attendanceData, darkMode }) {
       }
     });
 
-    // Only show months up to current month
     const monthsToShow = months.slice(0, currentMonth + 1);
-    
+
     const data = positionsList.map((position) => {
       const monthlyData = positionMap.get(position);
-      // Only include months up to current month
       const monthlyDataToShow = monthlyData.slice(0, currentMonth + 1);
       const totalMeetings = monthlyDataToShow.reduce((sum, count) => sum + count, 0);
       const attendanceRate = (
@@ -164,11 +162,9 @@ export default function DistrictExecutiveChart({ attendanceData, darkMode }) {
     chartData.length
   ).toFixed(1);
 
-  // Only show months up to current month
   const currentMonth = new Date().getMonth();
   const monthsToShow = months.slice(0, currentMonth + 1);
-  
-  // Prepare data for Area Chart - only show months up to current month
+
   const chartDataForGraph = monthsToShow.map((month, index) => {
     const dataPoint = { name: month };
     chartData.forEach(positionData => {
@@ -178,7 +174,6 @@ export default function DistrictExecutiveChart({ attendanceData, darkMode }) {
     return dataPoint;
   });
 
-  // Configure series with orange/amber colors
   const seriesConfig = chartData.map((data, index) => {
     const shortName = data.position.split(' ').slice(0, 2).join(' ');
     const colors = ['#f59e0b', '#fbbf24', '#fcd34d', '#fde68a', '#fed7aa', '#f59e0b', '#fbbf24', '#fcd34d'];
@@ -278,7 +273,7 @@ export default function DistrictExecutiveChart({ attendanceData, darkMode }) {
                 <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Rate</div>
               </div>
             </div>
-            
+
             {/* Progress Bar */}
             <div className="w-full bg-gray-600 rounded-full h-2">
               <div 

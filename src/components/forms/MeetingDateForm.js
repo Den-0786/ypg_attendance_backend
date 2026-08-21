@@ -24,8 +24,7 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
   const [loading, setLoading] = useState(false);
   const [deactivating, setDeactivating] = useState(false);
   const [authError, setAuthError] = useState('');
-  
-  // PIN verification states
+
   const [showPINModal, setShowPINModal] = useState(false);
   const [pendingAction, setPendingAction] = useState(null); // 'activate' or 'deactivate'
 
@@ -35,7 +34,6 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Show PIN modal for activation
     setPendingAction('activate');
     setShowPINModal(true);
   };
@@ -69,14 +67,12 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
       }
       if (res.ok) {
         toast.success('Meeting set successfully', { duration: 5000 });
-        
-        // Update context and localStorage
+
         setMeetingDate(dateInput);
         setMeetingTitle(toTitleCase(titleInput));
         localStorage.setItem('meetingDate', dateInput);
         localStorage.setItem('meetingTitle', toTitleCase(titleInput));
-        
-        // Clear form
+
         setDateInput('');
         setTitleInput('');
         setStartTime('08:00');
@@ -84,16 +80,15 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
         setMeetingUsername('');
         setMeetingPassword('');
         setAuthError('');
-        
-       
+
         if (typeof onMeetingSet === 'function') {
           setTimeout(() => {
             onMeetingSet();
-            
+
           }, 500);
         }
       } else {
-        
+
         if (data.error && data.error.includes('There is an active meeting')) {
 
           toast.custom((t) => (
@@ -141,7 +136,6 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
   };
 
   const handleDeactivateMeeting = () => {
-    // Show PIN modal for deactivation
     setPendingAction('deactivate');
     setShowPINModal(true);
   };
@@ -154,7 +148,7 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
         setDeactivating(false);
         return;
       }
-      
+
       const res = await fetchWithAuth(`${API_URL}/api/deactivate-meeting`, {
         method: 'POST',
         headers: {
@@ -196,7 +190,6 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
     }
   };
 
-  // PIN success handler
   const handlePINSuccess = (pin) => {
     if (pendingAction === 'activate') {
       handleActivateWithPIN(pin);

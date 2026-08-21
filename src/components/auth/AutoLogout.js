@@ -90,7 +90,6 @@ export default function AutoLogout({ loggedIn, onLogout }) {
     setWarningShown(false);
     logoutPendingRef.current = false;
     if (loggedIn) {
-      // Set warning timer (1 minute before logout)
       warningTimerRef.current = setTimeout(() => {
         setWarningShown(true);
         logoutPendingRef.current = true;
@@ -105,7 +104,6 @@ export default function AutoLogout({ loggedIn, onLogout }) {
             },
           }
         );
-        // Set logout timer for 1 minute after warning
         logoutTimerRef.current = setTimeout(() => {
           if (logoutPendingRef.current) {
             toast.error(
@@ -116,21 +114,17 @@ export default function AutoLogout({ loggedIn, onLogout }) {
         }, 60 * 1000);
       }, WARNING_TIMEOUT);
     } else {
-      // User not logged in, not starting timer
     }
   };
 
-  // Handles any user activity (click, keypress, etc.)
   const handleUserActivity = () => {
     if (warningShown) {
-      // If warning was shown and user interacts, cancel logout and reset everything
       setWarningShown(false);
       logoutPendingRef.current = false;
       clearTimers();
       toast.dismiss(); // Dismiss all toasts on user activity
       // Don't call resetInactivityTimer() here to avoid immediate restart
     } else {
-      // If no warning, just reset timer as usual
       resetInactivityTimer();
     }
   };
@@ -147,9 +141,7 @@ export default function AutoLogout({ loggedIn, onLogout }) {
     ];
 
     const handleActivity = (event) => {
-      // Only check for toast clicks on mouse events, not on scroll/key events
       if (event.type === "click" || event.type === "mousedown") {
-        // Prevent handling if clicking on the toast itself
         if (
           event.target &&
           event.target.closest &&
@@ -160,14 +152,12 @@ export default function AutoLogout({ loggedIn, onLogout }) {
       }
 
       if (warningShown) {
-        // If warning was shown and user interacts, cancel logout and reset everything
         setWarningShown(false);
         logoutPendingRef.current = false;
         clearTimers();
         toast.dismiss(); // Dismiss all toasts on user activity
         // Don't call resetInactivityTimer() here to avoid immediate restart
       } else {
-        // If no warning, just reset timer as usual
         resetInactivityTimer();
       }
     };
@@ -188,6 +178,5 @@ export default function AutoLogout({ loggedIn, onLogout }) {
     };
   }, [loggedIn, warningShown]);
 
-  // This component doesn't render anything
   return null;
 }

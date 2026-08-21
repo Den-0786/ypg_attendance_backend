@@ -8,7 +8,6 @@ import { BASE_URL } from "../../lib/config";
 
 const API_URL = BASE_URL;
 
-// Custom toast component for no meeting notification
 const NoMeetingToast = ({ onClose }) => {
   const [progress, setProgress] = useState(0);
 
@@ -89,15 +88,12 @@ export function useAuth() {
   const setMeetingSet = store.setMeetingSet;
   const userRole = store.userRole;
   const meetingSet = store.meetingSet;
-  const { setMeetingDate, setMeetingTitle } = useMeetingDate
-    ? useMeetingDate()
-    : { setMeetingDate: () => {}, setMeetingTitle: () => {} };
+  const { setMeetingDate, setMeetingTitle } = useMeetingDate();
 
   const [loading, setLoading] = useState(true);
 
   const checkSession = async () => {
     try {
-      // Check if API_URL is set
       if (!API_URL) {
         console.error(
           "API_URL is not set. Please check your environment variables."
@@ -193,7 +189,6 @@ export function useAuth() {
           setLoggedIn(true);
         }
 
-        // Get role directly from token response (no need for second API call)
         let role = "user";
         if (data.user && data.user.role) {
           role = data.user.role;
@@ -203,7 +198,6 @@ export function useAuth() {
         }
 
         toast.success("Login successful");
-        // Redirect based on role
         if (role === "admin") {
           router.replace("/dashboard");
         } else {
@@ -211,15 +205,12 @@ export function useAuth() {
         }
         return role;
       } else {
-        // Handle different types of error responses
         if (res.status === 429) {
-          // Rate limited - show the specific error message
           toast.error(
             data.error ||
               "Too many login attempts. Please wait before trying again."
           );
         } else {
-          // Regular login error
           toast.error(data.error || data.detail || "Invalid credentials");
         }
         const error = new Error(
@@ -237,7 +228,6 @@ export function useAuth() {
   };
 
   useEffect(() => {
-    // Only check session if we're not on the login page
     if (
       typeof window !== "undefined" &&
       !window.location.pathname.includes("/login")
@@ -259,14 +249,12 @@ export function useAuth() {
   };
 }
 
-// Utility: fetch with JWT refresh
 export async function fetchWithAuth(url, options = {}, logoutCallback) {
   const TOKEN_KEY = "access_token";
   const REFRESH_KEY = "refresh_token";
   let access = localStorage.getItem(TOKEN_KEY);
   let refresh = localStorage.getItem(REFRESH_KEY);
 
-  // Helper to actually do the fetch
   async function doFetch(token) {
     const headers = { ...(options.headers || {}) };
     if (token) headers["Authorization"] = `Bearer ${token}`;
@@ -276,7 +264,6 @@ export async function fetchWithAuth(url, options = {}, logoutCallback) {
   let res = await doFetch(access);
   if (res.status !== 401) return res;
 
-  // Try refresh if 401 and refresh token exists
   if (refresh) {
     const refreshRes = await fetch(`${API_URL}/api/token/refresh`, {
       method: "POST",
@@ -289,18 +276,15 @@ export async function fetchWithAuth(url, options = {}, logoutCallback) {
       if (data.access) {
         localStorage.setItem(TOKEN_KEY, data.access);
         access = data.access;
-        // Retry original request with new access token
         res = await doFetch(access);
         if (res.status !== 401) return res;
       }
     } else {
-      // Refresh failed, log out
       if (typeof logoutCallback === "function") logoutCallback();
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(REFRESH_KEY);
     }
   } else {
-    // No refresh token, log out
     if (typeof logoutCallback === "function") logoutCallback();
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(REFRESH_KEY);

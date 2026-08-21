@@ -1,4 +1,3 @@
-// ApologyForm.js
 "use client";
 import { useState, useEffect } from "react";
 import { useMeetingDate } from "../context/MeetingDateContext";
@@ -67,16 +66,12 @@ function capitalizeWords(str) {
 const API_URL = BASE_URL;
 
 export default function ApologyForm({ meetingInfo }) {
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const {
     meetingDate: contextMeetingDate,
     setMeetingDate,
     setMeetingTitle,
-  } = useMeetingDate
-    ? useMeetingDate()
-    : { meetingDate: "", setMeetingDate: () => {}, setMeetingTitle: () => {} };
+  } = useMeetingDate();
 
-  // Determine the meeting date with better fallback logic
   const meetingDate = meetingInfo?.date || contextMeetingDate || "";
   const meetingTitle = meetingInfo?.title || "";
 
@@ -87,7 +82,6 @@ export default function ApologyForm({ meetingInfo }) {
 
       // Chrome-specific fix for meeting info display
       if (navigator.userAgent.includes("Chrome")) {
-        // Force re-render for Chrome
         setTimeout(() => {
           setMeetingDate(meetingInfo.meeting_date || "");
           setMeetingTitle(meetingInfo.meeting_title || "");
@@ -123,7 +117,6 @@ export default function ApologyForm({ meetingInfo }) {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    // If meeting is deactivated, clear form state
     if (!contextMeetingDate && !meetingInfo?.title) {
       setForm({
         name: "",
@@ -167,7 +160,6 @@ export default function ApologyForm({ meetingInfo }) {
     setErrors((prev) => ({ ...prev, [name]: error }));
   };
 
-  // Add apology to cart
   const handleAddToCart = (e) => {
     e.preventDefault();
     const apology = {
@@ -192,22 +184,18 @@ export default function ApologyForm({ meetingInfo }) {
     toast.success("Apology added to cart");
   };
 
-  // Remove apology from cart
   const handleRemoveFromCart = (index) => {
     setApologyCart((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Open cart modal
   const handleOpenCart = () => {
     setShowCartModal(true);
   };
 
-  // Close cart modal
   const handleCloseCart = () => {
     setShowCartModal(false);
   };
 
-  // Submit all apologies in cart
   const handleSubmitAll = () => {
     if (apologyCart.length === 0) {
       toast.error("No apologies in cart");
@@ -217,7 +205,6 @@ export default function ApologyForm({ meetingInfo }) {
     setShowAdminModal(true);
   };
 
-  // When user clicks submit (single), show admin modal for just that apology
   const handleSubmit = (e) => {
     e.preventDefault();
     setPendingSubmit({
@@ -233,7 +220,6 @@ export default function ApologyForm({ meetingInfo }) {
     setShowAdminModal(true);
   };
 
-  // Called after admin credentials are entered and confirmed (bulk or single)
   const handleAdminConfirm = async () => {
     setIsSubmitting(true);
     setError("");
@@ -272,7 +258,6 @@ export default function ApologyForm({ meetingInfo }) {
         });
         setApologyCart([]);
         setShowCartModal(false);
-        // Dispatch custom event to notify dashboard components
         window.dispatchEvent(new CustomEvent("apologyDataChanged"));
       } else {
         const errorMessage = data.error || "Failed to submit apology";
@@ -310,13 +295,11 @@ export default function ApologyForm({ meetingInfo }) {
       return;
     }
 
-    // Validate that we have apologies to submit
     if (apologies.length === 0) {
       setAuthError("No apologies to submit.");
       return;
     }
 
-    // Validate that we have a meeting date
     if (!meetingDate) {
       setAuthError(
         "No meeting date available. Please ensure a meeting is set."
@@ -354,7 +337,6 @@ export default function ApologyForm({ meetingInfo }) {
         setAdminUsername("");
         setAdminPassword("");
         setAuthError("");
-        // Dispatch custom event to notify dashboard components
         window.dispatchEvent(new CustomEvent("apologyDataChanged"));
       } else {
         const errorMessage = data.error || "Failed to submit apologies";

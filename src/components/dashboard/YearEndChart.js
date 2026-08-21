@@ -105,7 +105,6 @@ export default function YearEndChart({ attendanceData, darkMode }) {
     }
   };
 
-  // processData for export/summary: per-congregation stats
   const congregationStats = useMemo(() => {
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
@@ -162,7 +161,6 @@ export default function YearEndChart({ attendanceData, darkMode }) {
       const attending = payload.filter((p) => p.value > 0).map((p) => p.dataKey);
       const absent = allSystemCongregations.filter((c) => !attending.includes(c));
 
-      // Smart position: flip earlier on smaller screens
       const chartWidth = chartContainerRef.current?.offsetWidth || 600;
       const cx = coordinate?.x || 0;
       const vw = window.innerWidth;

@@ -27,7 +27,6 @@ export default function MonthlyAttendanceTrendChart({ attendanceData, previousYe
   const currentStats = getMonthlyStats(attendanceData, currentYear);
   const prevStats = previousYearData ? getMonthlyStats(previousYearData, prevYear) : null;
 
-  // Filter stats to only show up to current month
   const filteredCurrentStats = currentStats.slice(0, currentMonth + 1);
   const filteredPrevStats = prevStats ? prevStats.slice(0, currentMonth + 1) : null;
 
@@ -36,7 +35,6 @@ export default function MonthlyAttendanceTrendChart({ attendanceData, previousYe
   const prevTotalAttendance = filteredPrevStats ? filteredPrevStats.reduce((sum, s) => sum + s.total, 0) : 0;
   const avgMonthly = filteredCurrentStats.length > 0 ? (totalAttendance / filteredCurrentStats.length).toFixed(1) : 0;
 
-  // Prepare data for Area Chart - only up to current month
   const chartData = filteredCurrentStats.map((stat, index) => {
     const dataPoint = {
       name: stat.month,
@@ -50,7 +48,6 @@ export default function MonthlyAttendanceTrendChart({ attendanceData, previousYe
     return dataPoint;
   });
 
-  // Configure series
   const seriesConfig = [
     {
       dataKey: 'Current Year',
@@ -72,7 +69,7 @@ export default function MonthlyAttendanceTrendChart({ attendanceData, previousYe
   return (
     <div className={`w-full rounded-xl shadow-md p-4 md:p-6 border ${darkMode ? 'bg-gray-800 border-amber-500/30' : 'bg-white border-gray-200'}`}>
       <h3 className={`text-lg font-bold mb-4 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>Monthly Attendance Analytics ({currentYear}{prevStats ? ` vs ${prevYear}` : ''})</h3>
-      
+
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className={`p-4 rounded-lg border ${darkMode ? 'bg-gray-700 border-amber-500/30' : 'bg-gray-100 border-gray-300'}`}>

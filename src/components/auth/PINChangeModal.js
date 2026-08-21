@@ -20,7 +20,7 @@ export default function PINChangeModal({ isOpen, onClose }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (currentPin.length !== 4 || newPin.length !== 4 || confirmPin.length !== 4) {
       toast.error('All PINs must be 4 digits');
       return;
@@ -38,9 +38,13 @@ export default function PINChangeModal({ isOpen, onClose }) {
 
     setLoading(true);
     try {
+      const token = localStorage.getItem("access_token");
       const res = await fetch(`${API_URL}/api/pin/change/`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token ? `Bearer ${token}` : undefined,
+        },
         credentials: 'include',
         body: JSON.stringify({ 
           current_pin: currentPin, 
@@ -49,17 +53,14 @@ export default function PINChangeModal({ isOpen, onClose }) {
       });
 
       const data = await res.json();
-      
+
       if (res.ok) {
         toast.success('PIN changed successfully');
         onClose();
       } else {
-        // Handle different types of error responses
         if (res.status === 429) {
-          // Rate limited - show the specific error message
           toast.error(data.error || 'Too many PIN attempts. Please wait before trying again.');
         } else {
-          // Regular PIN error
           toast.error(data.error || 'Failed to change PIN');
         }
       }
@@ -71,7 +72,6 @@ export default function PINChangeModal({ isOpen, onClose }) {
   };
 
   const handleKeyPress = (e) => {
-    // Only allow numbers
     if (!/[0-9]/.test(e.key)) {
       e.preventDefault();
     }
@@ -95,7 +95,7 @@ export default function PINChangeModal({ isOpen, onClose }) {
         <p className="text-gray-500 dark:text-gray-300 mb-3 text-center text-xs">
           Enter current PIN and new 4-digit PIN
         </p>
-        
+
         <form onSubmit={handleSubmit} className="space-y-2">
           <div>
             <label className="block text-xs font-medium mb-1 text-gray-600 dark:text-gray-400">Current PIN</label>
@@ -142,7 +142,7 @@ export default function PINChangeModal({ isOpen, onClose }) {
               style={{ letterSpacing: '0.2em' }}
             />
           </div>
-          
+
           <div className="flex gap-2 mt-3">
             <button
               type="button"

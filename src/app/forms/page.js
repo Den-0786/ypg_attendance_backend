@@ -91,7 +91,6 @@ export default function MeetingPage() {
   const [meetingSet, setMeetingSet] = useState(false);
   const hasShownNoMeetingToast = useRef(false);
 
-  // Check localStorage for toast state on mount
   useEffect(() => {
     const hasShown = localStorage.getItem("hasShownNoMeetingToast");
     if (hasShown === "true") {

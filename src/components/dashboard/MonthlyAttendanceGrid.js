@@ -19,7 +19,7 @@ export default function MonthlyAttendanceGrid({ attendanceData, darkMode }) {
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
     const currentMonth = currentDate.getMonth();
-    
+
     const allSystemCongregations = [
       "Emmanuel Congregation Ahinsan", 
       "Peniel Congregation Esreso No 1",
@@ -31,13 +31,13 @@ export default function MonthlyAttendanceGrid({ attendanceData, darkMode }) {
       "Liberty Congregation High Tension", 
       "NOM"
     ];
-    
+
     const congregationMap = new Map();
-    
+
     allSystemCongregations.forEach(congregation => {
       congregationMap.set(congregation, new Map());
     });
-    
+
     if (attendanceData && attendanceData.length > 0) {
       attendanceData.forEach(entry => {
         if (entry.type !== 'local') return;
@@ -63,7 +63,7 @@ export default function MonthlyAttendanceGrid({ attendanceData, darkMode }) {
         const entries = congregationMap.get(congregation)?.get(key) || [];
         monthData[congregation] = entries.length;
       });
-      
+
       return {
         month: monthName,
         ...monthData
@@ -88,7 +88,6 @@ export default function MonthlyAttendanceGrid({ attendanceData, darkMode }) {
 
   const totalAttendance = processedData.reduce((sum, month) => sum + Object.values(month).reduce((a, b) => a + (typeof b === 'number' ? b : 0), 0), 0);
 
-  // Prepare data for Area Chart - show all congregations
   const chartData = processedData.map(month => {
     const dataPoint = { name: month.month };
     congregations.forEach(cong => {
@@ -98,7 +97,6 @@ export default function MonthlyAttendanceGrid({ attendanceData, darkMode }) {
     return dataPoint;
   });
 
-  // Configure series with orange/amber colors for all congregations
   const seriesConfig = congregations.map((cong, index) => {
     const shortName = cong.split(' ').slice(0, 2).join(' ');
     const colors = ['#f59e0b', '#fbbf24', '#fcd34d', '#fde68a', '#fed7aa', '#f59e0b', '#fbbf24', '#fcd34d', '#fde68a', '#fed7aa'];
@@ -115,7 +113,7 @@ export default function MonthlyAttendanceGrid({ attendanceData, darkMode }) {
       <h2 className={`text-lg md:text-xl font-bold mb-4 md:mb-6 ${darkMode ? 'text-amber-400' : 'text-gray-900'}`}>
         Monthly Attendance Analytics
       </h2>
-      
+
       {/* Summary Card */}
       <div className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} p-4 rounded-lg border ${darkMode ? 'border-amber-500/30' : 'border-gray-200'} mb-6`}>
         <div className={`text-4xl font-bold mb-1 ${darkMode ? 'text-white' : 'text-gray-900'}`}>{totalAttendance}</div>
@@ -138,7 +136,7 @@ export default function MonthlyAttendanceGrid({ attendanceData, darkMode }) {
           const congregationTotal = processedData.reduce((sum, month) => sum + (month[congregation] || 0), 0);
           const maxPossible = processedData.length * 2;
           const percentage = maxPossible > 0 ? ((congregationTotal / maxPossible) * 100).toFixed(0) : 0;
-          
+
           return (
             <div key={congregation} className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} p-4 rounded-lg border ${darkMode ? 'border-amber-500/30 hover:border-amber-500' : 'border-gray-200 hover:border-amber-500'} transition-colors`}>
               <h3 className={`text-sm font-semibold mb-2 truncate ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>

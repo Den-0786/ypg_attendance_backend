@@ -40,7 +40,6 @@ function useIsMobile() {
   return isMobile;
 }
 
-// Add capitalizeWords function
 function capitalizeWords(str) {
   return str
     .split(" ")
@@ -48,7 +47,6 @@ function capitalizeWords(str) {
     .join(" ");
 }
 
-// Color palette for cards
 const cardColors = [
   "bg-blue-50 dark:bg-blue-900",
   "bg-green-50 dark:bg-green-900",
@@ -73,7 +71,6 @@ export default function DashboardHome({
   refetchAttendanceData,
   refetchApologyData,
 }) {
-  // Move all hooks to the top
   const [search, setSearch] = useState("");
   const [showType, setShowType] = useState("all"); // 'all' | 'attendance' | 'apology'
   const [editModal, setEditModal] = useState({ open: false, entry: null });
@@ -83,14 +80,12 @@ export default function DashboardHome({
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear()); // Default to current year
   const [showAttendanceForm, setShowAttendanceForm] = useState(false);
   const [showApologyForm, setShowApologyForm] = useState(false);
-  // Add state for admin credentials modal
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [adminUsername, setAdminUsername] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
   const [pendingUndoApology, setPendingUndoApology] = useState(null);
   const [pendingEditApology, setPendingEditApology] = useState(null);
 
-  // Get unique years from attendance data
   const getUniqueYears = (data) => {
     if (!Array.isArray(data)) return [];
     const years = new Set();
@@ -105,7 +100,6 @@ export default function DashboardHome({
 
   const availableYears = getUniqueYears(attendanceData);
 
-  // If there are no years, selectedYear should be undefined
   useEffect(() => {
     if (availableYears.length === 0) {
       setSelectedYear(undefined);
@@ -115,12 +109,9 @@ export default function DashboardHome({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [attendanceData]);
 
-  // Combine attendance and apology data for processing
   const combinedData = [...attendanceData, ...apologyData];
 
-  // Add a helper function to identify apology entries
   const isApologyEntry = (entry) => {
-    // Check if entry has apology-specific fields
     return (
       entry &&
       (entry.reason ||
@@ -129,23 +120,18 @@ export default function DashboardHome({
     );
   };
 
-  // Filter combined data by selected year
   const filteredData = combinedData.filter((entry) => {
     if (!entry.meeting_date) return false;
 
-    // Ensure selectedYear has a valid value, default to current year
     const yearToFilter = selectedYear || new Date().getFullYear();
 
     const entryYear = new Date(entry.meeting_date).getFullYear();
     return entryYear === yearToFilter;
   });
 
-  // Debug logging
   useEffect(() => {
-    // Debug logging removed for production
   }, [attendanceData, apologyData, combinedData, selectedYear, filteredData]);
 
-  // Add global event listener for data synchronization
   useEffect(() => {
     const handleDataChange = () => {
       if (refetchAttendanceData) {
@@ -156,7 +142,6 @@ export default function DashboardHome({
       }
     };
 
-    // Listen for custom events when data changes
     window.addEventListener("attendanceDataChanged", handleDataChange);
     window.addEventListener("apologyDataChanged", handleDataChange);
 
@@ -166,7 +151,6 @@ export default function DashboardHome({
     };
   }, [refetchAttendanceData, refetchApologyData]);
 
-  // Update selectedYear when currentYear prop changes
   useEffect(() => {
     if (currentYear && currentYear !== selectedYear) {
       setSelectedYear(currentYear);
@@ -174,7 +158,17 @@ export default function DashboardHome({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentYear]);
 
-  // Additional safety check
+  const isMobile = useIsMobile();
+
+  const localProgress = useMemo(
+    () => getLocalProgress(attendanceData, selectedYear),
+    [attendanceData, selectedYear]
+  );
+  const districtProgress = useMemo(
+    () => getDistrictProgress(attendanceData, selectedYear),
+    [attendanceData, selectedYear]
+  );
+
   if (!Array.isArray(attendanceData)) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-600">
@@ -183,15 +177,11 @@ export default function DashboardHome({
     );
   }
 
-  // Compute summary from filteredData (year-filtered)
   const summary = {};
-  // Ensure filteredData is an array before using forEach
   if (Array.isArray(filteredData)) {
     filteredData.forEach((entry) => {
-      // Filter by showType
       if (showType === "attendance" && isApologyEntry(entry)) return;
       if (showType === "apology" && !isApologyEntry(entry)) return;
-      // Only add to summary if local
       if (entry.type === "local") {
         if (!summary[entry.congregation]) {
           summary[entry.congregation] = [];
@@ -201,12 +191,10 @@ export default function DashboardHome({
     });
   }
 
-  // Compute yearEndData from filteredData (meetings in the selected year, only local)
   const yearEndData = filteredData.filter((entry) => {
     return entry.type === "local";
   });
 
-  // Calculate unique meeting dates for the selected year (local only)
   const uniqueMeetingDates = new Set();
   filteredData.forEach((entry) => {
     if (entry.type === "local") {
@@ -215,7 +203,6 @@ export default function DashboardHome({
   });
   const totalMeetingsCount = uniqueMeetingDates.size;
 
-  // Calculate all congregations present (both local and district) for selected year
   const allCongregations = new Set();
   filteredData.forEach((entry) => {
     if (entry.congregation) {
@@ -224,13 +211,10 @@ export default function DashboardHome({
   });
   const totalCongregationsCount = allCongregations.size;
 
-  // Show all entries in the table, grouped by congregation
   const filteredSummary = Object.keys(summary)
     .filter((name) => {
       const searchLower = search.toLowerCase();
-      // Check congregation name
       if (name.toLowerCase().includes(searchLower)) return true;
-      // Check if any attendee name or position matches
       return summary[name].some(
         (entry) =>
           (entry.name || "").toLowerCase().includes(searchLower) ||
@@ -242,14 +226,11 @@ export default function DashboardHome({
       return acc;
     }, {});
 
-  // Group summary by congregation, then by month, then by day
   const groupedSummary = {};
   if (Array.isArray(filteredData)) {
     filteredData.forEach((entry) => {
-      // Filter by showType
       if (showType === "attendance" && isApologyEntry(entry)) return;
       if (showType === "apology" && !isApologyEntry(entry)) return;
-      // Only add to summary if local
       if (entry.type === "local") {
         const cong = entry.congregation;
         const dateObj = new Date(entry.meeting_date);
@@ -268,9 +249,7 @@ export default function DashboardHome({
     });
   }
 
-  // Handler for deleting an entry (custom confirmation)
   const handleDelete = (entryId) => {
-    // Find the entry object from the combined data
     const entry = [...attendanceData, ...apologyData].find(
       (e) => e.id === entryId
     );
@@ -349,9 +328,7 @@ export default function DashboardHome({
     );
   };
 
-  // Handler for editing an entry (show modal)
   const handleEdit = (entryId) => {
-    // Find the entry object from the combined data
     const entry = [...attendanceData, ...apologyData].find(
       (e) => e.id === entryId
     );
@@ -372,7 +349,6 @@ export default function DashboardHome({
     }
   };
 
-  // PIN success handler
   const handlePINSuccess = (pin) => {
     if (pendingAction === "edit" && pendingEntry) {
       handleEditWithPIN(pendingEntry, pin);
@@ -386,9 +362,7 @@ export default function DashboardHome({
     setShowPINModal(false); // Close the PIN modal
   };
 
-  // Handler for saving edit
   const handleSaveEdit = async (updatedEntry) => {
-    // Always submit edit directly with PIN, no admin modal
     const isApology = isApologyEntry(updatedEntry);
     const endpoint = isApology
       ? `${API_URL}/api/edit-apology/${updatedEntry.id}`
@@ -421,7 +395,6 @@ export default function DashboardHome({
     }
   };
 
-  // Add clear all data function
   const handleClearAllData = () => {
     setPendingAction("clear_all");
     setShowPINModal(true);
@@ -454,8 +427,6 @@ export default function DashboardHome({
     }
   };
 
-  const isMobile = useIsMobile();
-
   const congregationColors = {
     "Emmanuel Congregation Ahinsan":
       "bg-blue-100 border-blue-300 dark:bg-blue-900 dark:border-blue-700",
@@ -476,15 +447,6 @@ export default function DashboardHome({
     NOM: "bg-gray-100 border-gray-300 dark:bg-gray-900 dark:border-gray-700",
   };
 
-  // Progress calculations for cards
-  const localProgress = useMemo(
-    () => getLocalProgress(attendanceData, selectedYear),
-    [attendanceData, selectedYear]
-  );
-  const districtProgress = useMemo(
-    () => getDistrictProgress(attendanceData, selectedYear),
-    [attendanceData, selectedYear]
-  );
   return (
     <div>
       <ProgressCards localProgress={localProgress} districtProgress={districtProgress} selectedYear={selectedYear} darkMode={darkMode} />

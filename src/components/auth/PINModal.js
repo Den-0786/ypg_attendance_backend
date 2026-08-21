@@ -27,9 +27,13 @@ export default function PINModal({
     setError("");
 
     try {
+      const token = localStorage.getItem("access_token");
       const res = await fetch(`${API_URL}/api/pin/verify/`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : undefined,
+        },
         body: JSON.stringify({ pin }),
       });
 
@@ -39,12 +43,9 @@ export default function PINModal({
         onSuccess(pin);
         // Do not call onClose() here; let parent handle modal state after redirect
       } else {
-        // Handle different types of error responses
         if (res.status === 429) {
-          // Rate limited - show the specific error message
           setError(data.error || "Too many PIN attempts. Please wait before trying again.");
         } else {
-          // Regular PIN error
           setError(data.error || "Invalid PIN");
         }
       }
@@ -57,7 +58,6 @@ export default function PINModal({
   };
 
   const handleKeyPress = (e) => {
-    // Only allow numbers
     if (!/[0-9]/.test(e.key)) {
       e.preventDefault();
     }

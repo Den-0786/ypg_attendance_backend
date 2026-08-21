@@ -6,10 +6,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         self.stdout.write("Checking migration status...")
-        
+
         try:
             with connection.cursor() as cursor:
-                # Check if core_loginattempt table exists
                 cursor.execute("""
                     SELECT EXISTS (
                         SELECT FROM information_schema.tables 
@@ -18,10 +17,9 @@ class Command(BaseCommand):
                     );
                 """)
                 loginattempt_exists = cursor.fetchone()[0]
-                
+
                 self.stdout.write(f"core_loginattempt table exists: {loginattempt_exists}")
-                
-                # Check if core_securitypin table exists
+
                 cursor.execute("""
                     SELECT EXISTS (
                         SELECT FROM information_schema.tables 
@@ -30,10 +28,9 @@ class Command(BaseCommand):
                     );
                 """)
                 securitypin_exists = cursor.fetchone()[0]
-                
+
                 self.stdout.write(f"core_securitypin table exists: {securitypin_exists}")
-                
-                # List all core_ tables
+
                 cursor.execute("""
                     SELECT table_name 
                     FROM information_schema.tables 
@@ -42,9 +39,9 @@ class Command(BaseCommand):
                     ORDER BY table_name;
                 """)
                 core_tables = [row[0] for row in cursor.fetchall()]
-                
+
                 self.stdout.write(f"All core_ tables: {core_tables}")
-                
+
         except Exception as e:
             self.stdout.write(
                 self.style.ERROR(f'Database error: {str(e)}')

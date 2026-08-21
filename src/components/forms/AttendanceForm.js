@@ -66,14 +66,12 @@ export default function AttendanceForm({ meetingInfo }) {
     setMeetingTitle,
   } = context;
 
-  // Use meetingInfo prop if available, otherwise fall back to context
   const meetingDate = meetingInfo?.date || contextMeetingDate || "";
   const meetingTitle = meetingInfo?.title || contextMeetingTitle || "";
 
   const [currentMeeting, setCurrentMeeting] = useState(null);
   const [loadingMeeting, setLoadingMeeting] = useState(false);
 
-  // Fetch current meeting details
   useEffect(() => {
     const fetchCurrentMeeting = async () => {
       setLoadingMeeting(true);
@@ -101,7 +99,6 @@ export default function AttendanceForm({ meetingInfo }) {
     fetchCurrentMeeting();
   }, []);
 
-  // Chrome-specific fix for meeting info updates
   useEffect(() => {
     if (meetingInfo) {
       setMeetingDate(meetingInfo.meeting_date || "");
@@ -109,7 +106,6 @@ export default function AttendanceForm({ meetingInfo }) {
 
       // Chrome-specific fix for meeting info display
       if (navigator.userAgent.includes("Chrome")) {
-        // Force re-render for Chrome
         setTimeout(() => {
           setMeetingDate(meetingInfo.meeting_date || "");
           setMeetingTitle(meetingInfo.meeting_title || "");
@@ -135,7 +131,6 @@ export default function AttendanceForm({ meetingInfo }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingEntry, setPendingEntry] = useState(null);
 
-  // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (menuOpenIndex !== null) {
@@ -192,7 +187,6 @@ export default function AttendanceForm({ meetingInfo }) {
     });
   };
 
-  // Helper to check if position is already used for this meeting/type (local or district)
   const checkForDuplicatePosition = (entry) => {
     if (entry.type === "local") {
       // For local: block if position is used for the same congregation, meeting, and type
@@ -240,19 +234,16 @@ export default function AttendanceForm({ meetingInfo }) {
       position: form.position.trim(),
     };
 
-    // Only block if phone is used for this meeting/type
     if (checkForDuplicatePhone({ ...cleaned, type })) {
       toast.error("This phone number has already been used for this meeting.");
       return;
     }
 
-    // Only block if position is used for this meeting/type
     if (checkForDuplicatePosition({ ...cleaned, type })) {
       toast.error("This position has already been used for this meeting.");
       return;
     }
 
-    // Determine participant limit based on meeting config
     const getParticipantLimit = () => {
       if (currentMeeting?.custom_participant_limit) {
         return parseInt(currentMeeting.custom_participant_limit);
@@ -372,10 +363,8 @@ export default function AttendanceForm({ meetingInfo }) {
         toast.success("Attendance submitted successfully!");
         setAttendees([]);
         setShowModal(false);
-        // Dispatch custom event to notify dashboard components
         window.dispatchEvent(new CustomEvent("attendanceDataChanged"));
       } else {
-        // Show the real error message from backend
         toast.error(data.error || "Failed to submit attendance");
         console.error("Attendance submission failed:", data);
       }

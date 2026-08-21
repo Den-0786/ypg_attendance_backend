@@ -12,7 +12,6 @@ import {
 } from 'recharts';
 
 const CustomAreaChart = ({ data, seriesConfig, title, darkMode = true }) => {
-  // Custom tooltip component
   const CustomTooltip = ({ active, payload, label }) => {
     if (!active || !payload || !payload.length) return null;
 

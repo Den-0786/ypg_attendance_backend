@@ -17,9 +17,7 @@ export function toTitleCase(str) {
     .join(' ');
 }
 
-
 export function validatePassword(password) {
-  // Check exact length of 8 characters
   if (password.length !== 8) {
     return {
       isValid: false,
@@ -27,7 +25,6 @@ export function validatePassword(password) {
     };
   }
 
-  // Check for at least 1 uppercase letter
   if (!/[A-Z]/.test(password)) {
     return {
       isValid: false,
@@ -35,7 +32,6 @@ export function validatePassword(password) {
     };
   }
 
-  // Check for at least 1 lowercase letter
   if (!/[a-z]/.test(password)) {
     return {
       isValid: false,
@@ -43,7 +39,6 @@ export function validatePassword(password) {
     };
   }
 
-  // Check for at least 1 number
   if (!/\d/.test(password)) {
     return {
       isValid: false,
@@ -51,7 +46,6 @@ export function validatePassword(password) {
     };
   }
 
-  // Check for at least 1 special character
   if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
     return {
       isValid: false,
@@ -87,7 +81,7 @@ export function getPasswordStrength(password) {
 
   const validChecks = Object.values(checks).filter(Boolean).length;
   const score = validChecks;
-  
+
   let message = '';
   if (score === 0) {
     message = 'Very weak';
@@ -102,7 +96,7 @@ export function getPasswordStrength(password) {
   } else if (score === 5) {
     message = 'Very strong';
   }
-  
+
   return {
     checks,
     validChecks,

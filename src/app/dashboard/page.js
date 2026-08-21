@@ -6,7 +6,6 @@ import { useAuth } from '@components/hooks/useAuth';
 import { toast } from 'react-hot-toast';
 import { BASE_URL } from '../../lib/config';
 
-// Custom toast component for no meeting notification (same as in useAuth)
 const NoMeetingToast = ({ onClose }) => {
   const [progress, setProgress] = useState(0);
 
@@ -75,25 +74,22 @@ export default function AdminPage() {
   const [loadingMeeting, setLoadingMeeting] = useState(false);
   const API_URL = BASE_URL;
 
-  // Check localStorage for toast state on mount
   useEffect(() => {
     const hasShown = localStorage.getItem('hasShownNoMeetingToast');
     if (hasShown === 'true') {
       hasShownNoMeetingToast.current = true;
     }
-    
+
     // PIN verification is handled only through the PIN modal, not URL params
     // This prevents unauthorized access via ?pin_verified=true
   }, []);
 
- 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const executiveRoles = [
     'admin', 'President', "President's Rep", 'Secretary', 'Assistant Secretary',
     'Financial Secretary', 'Treasurer', 'Bible Studies Coordinator', 'Organizer'
   ];
 
-  
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const checkActiveMeeting = async () => {
     try {
@@ -105,8 +101,7 @@ export default function AdminPage() {
         },
       });
       const data = await res.json();
-      
-      
+
       if ((!data || data.error) && !hasShownNoMeetingToast.current) {
         toast.custom((t) => (
           <NoMeetingToast onClose={() => toast.dismiss(t.id)} />
@@ -115,7 +110,6 @@ export default function AdminPage() {
         localStorage.setItem('hasShownNoMeetingToast', 'true');
       }
     } catch (error) {
-      // Show notification on error too if we haven't shown it yet
       if (!hasShownNoMeetingToast.current) {
         toast.custom((t) => (
           <NoMeetingToast onClose={() => toast.dismiss(t.id)} />
@@ -126,11 +120,9 @@ export default function AdminPage() {
     }
   };
 
-
   useEffect(() => {
     if (!hasCheckedSession.current) {
       hasCheckedSession.current = true;
-      // Always check session to ensure we have valid credentials
       checkSession().finally(() => {
         setCheckingSession(false);
       });
@@ -138,25 +130,20 @@ export default function AdminPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 2. Redirect based on role
   useEffect(() => {
     if (!checkingSession) {
       if (!loggedIn) {
         router.replace('/');
       } else if (userRole && !executiveRoles.includes(userRole) && !pinVerified) {
-        // Only redirect to forms if not admin AND not PIN verified
         router.replace('/forms');
       } else {
-        // Allow access if admin OR PIN verified
         checkActiveMeeting();
       }
     }
   }, [loggedIn, userRole, checkingSession, router, checkActiveMeeting, executiveRoles, pinVerified]);
 
-  // 3. Admin meeting check - always called but only executes when conditions are met
   useEffect(() => {
     if (loggedIn && userRole === 'admin') {
-      // Admin: fetch current meeting to decide what to show
       setLoadingMeeting(true);
       const token = localStorage.getItem('access_token');
       fetch(`${API_URL}/api/current-meeting`, {
@@ -184,14 +171,12 @@ export default function AdminPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loggedIn, userRole]);
 
-  // 4. Redirect if not logged in - always called
   useEffect(() => {
     if (!loggedIn) {
       router.replace('/');
     }
   }, [loggedIn, router]);
 
-  // 3. Show loading while verifying session or redirecting
   let loadingMessage = "Loading...";
   if (checkingSession) {
     loadingMessage = "Checking session...";

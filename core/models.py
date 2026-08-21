@@ -34,7 +34,6 @@ class Credential(models.Model):
     def __str__(self):
         return self.username
 
-    # --- PATCH FOR SIMPLEJWT COMPATIBILITY ---
     @property
     def is_active(self):
         return True
@@ -45,7 +44,6 @@ class Credential(models.Model):
     @property
     def pk(self):
         return self.id
-    # --- END PATCH ---
 
 class AttendanceEntry(models.Model):
     name = models.CharField(max_length=100)
@@ -57,7 +55,6 @@ class AttendanceEntry(models.Model):
     meeting_date = models.DateField()
     timestamp = models.TimeField(default=now)
     submitted_by = models.ForeignKey(Credential, null=True, blank=True, on_delete=models.SET_NULL)
-    # Advanced features
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
     notes = models.TextField(blank=True, default='')
@@ -76,6 +73,15 @@ class AttendanceEntry(models.Model):
     def __str__(self):
         return f"{self.name} - {self.congregation} ({self.type})"
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['phone', 'meeting_date', 'type'],
+                condition=models.Q(is_deleted=False),
+                name='unique_active_phone_meeting_type',
+            )
+        ]
+
 class ApologyEntry(models.Model):
     name = models.CharField(max_length=100)
     congregation = models.CharField(max_length=100)
@@ -85,7 +91,6 @@ class ApologyEntry(models.Model):
     meeting_date = models.DateField()
     timestamp = models.TimeField(default=now)
     submitted_by = models.ForeignKey(Credential, null=True, blank=True, on_delete=models.SET_NULL)
-    # Advanced features
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
     notes = models.TextField(blank=True, default='')
@@ -128,11 +133,9 @@ class Meeting(models.Model):
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)  # Track when meeting was created
 
-    # Member login credentials for this meeting
     login_username = models.CharField(max_length=150, blank=True, null=True)
     login_password = models.CharField(max_length=128, blank=True, null=True)  # hashed
 
-    # Meeting schedule window
     start_time = models.TimeField(default=datetime.time(8, 0))
     duration_hours = models.IntegerField(default=24)
 
@@ -168,7 +171,6 @@ class Meeting(models.Model):
     def __str__(self):
         return f"{self.title} ({self.date})"
 
-# --- Audit Log Model ---
 class AuditLog(models.Model):
     ACTION_CHOICES = [
         ("create", "Create"),
@@ -188,7 +190,6 @@ class AuditLog(models.Model):
     def __str__(self):
         return f"{self.user} {self.action} {self.model} {self.object_id} at {self.timestamp}"
 
-# --- PIN Model for Edit/Delete Operations ---
 class SecurityPIN(models.Model):
     pin = models.CharField(max_length=4, help_text="4-digit PIN for edit/delete operations")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -210,7 +211,7 @@ class SecurityPIN(models.Model):
             active_pin = cls.objects.filter(is_active=True).first()
             if not active_pin:
                 return False
-            
+
             result = active_pin.pin == pin
             return result
         except Exception as e:
@@ -219,13 +220,12 @@ class SecurityPIN(models.Model):
             logger.error(f"Error in SecurityPIN.verify_pin: {str(e)}")
             return False
 
-# --- Login Attempt Tracking Model ---
 class LoginAttempt(models.Model):
     ATTEMPT_TYPE_CHOICES = [
         ('username_password', 'Username/Password'),
         ('pin', 'PIN'),
     ]
-    
+
     identifier = models.CharField(max_length=150, help_text="Username or IP address for tracking")
     attempt_type = models.CharField(max_length=20, choices=ATTEMPT_TYPE_CHOICES)
     failed_attempts = models.IntegerField(default=0)
@@ -233,13 +233,13 @@ class LoginAttempt(models.Model):
     last_failed_attempt = models.DateTimeField(auto_now=True)
     is_locked = models.BooleanField(default=False)
     lock_expires_at = models.DateTimeField(null=True, blank=True)
-    
+
     class Meta:
         unique_together = ['identifier', 'attempt_type']
-    
+
     def __str__(self):
         return f"{self.identifier} - {self.attempt_type} ({self.failed_attempts} attempts)"
-    
+
     @classmethod
     def get_or_create_attempt(cls, identifier, attempt_type):
         """Get or create a login attempt record"""
@@ -249,13 +249,12 @@ class LoginAttempt(models.Model):
             defaults={'failed_attempts': 0}
         )
         return attempt
-    
+
     def record_failed_attempt(self):
         """Record a failed login attempt with progressive blocking"""
         self.failed_attempts += 1
         self.last_failed_attempt = timezone.now()
-        
-        # Progressive blocking system
+
         if self.failed_attempts >= 6:
             # After 6 failed attempts, block for 24 hours
             self.is_locked = True
@@ -264,42 +263,40 @@ class LoginAttempt(models.Model):
             # After 3 failed attempts, block for 30 minutes
             self.is_locked = True
             self.lock_expires_at = timezone.now() + timezone.timedelta(minutes=30)
-        
+
         self.save()
-    
+
     def reset_attempts(self):
         """Reset failed attempts after successful login"""
         self.failed_attempts = 0
         self.is_locked = False
         self.lock_expires_at = None
         self.save()
-    
+
     def is_locked_out(self):
         """Check if the identifier is currently locked out"""
         if not self.is_locked:
             return False
-        
-        # Check if lock has expired
+
         if self.lock_expires_at and timezone.now() > self.lock_expires_at:
             self.is_locked = False
             self.lock_expires_at = None
             self.save()
             return False
-        
+
         return True
-    
+
     def get_remaining_lock_time(self):
         """Get remaining lock time in minutes"""
         if not self.is_locked or not self.lock_expires_at:
             return 0
-        
+
         remaining = self.lock_expires_at - timezone.now()
         if remaining.total_seconds() <= 0:
             return 0
-        
+
         return int(remaining.total_seconds() / 60)
 
-# --- Credential History Model for Reuse Prevention ---
 class CredentialHistory(models.Model):
     """Track used credentials to prevent reuse"""
     credential_type = models.CharField(max_length=20, choices=[
@@ -311,16 +308,16 @@ class CredentialHistory(models.Model):
     user_id = models.IntegerField()  # ID of the user who used this credential
     used_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)  # Current credential is active
-    
+
     class Meta:
         unique_together = ['credential_type', 'credential_value', 'user_id']
         indexes = [
             models.Index(fields=['credential_type', 'user_id']),
         ]
-    
+
     def __str__(self):
         return f"{self.credential_type} for user {self.user_id} at {self.used_at}"
-    
+
     @classmethod
     def check_reuse(cls, credential_type, credential_value, user_id):
         """Check if credential has been used before by this user"""
@@ -340,28 +337,37 @@ class CredentialHistory(models.Model):
                 credential_value=credential_value,
                 user_id=user_id
             ).exists()
-    
+
     @classmethod
     def record_credential(cls, credential_type, credential_value, user_id):
         """Record a new credential usage"""
         if credential_type == 'password':
-            # Hash password before storing
             from django.contrib.auth.hashers import make_password
             hashed_value = make_password(credential_value)
         else:
             hashed_value = credential_value
-        
-        # Deactivate previous active credential of same type for this user
+
         cls.objects.filter(
             credential_type=credential_type,
             user_id=user_id,
             is_active=True
         ).update(is_active=False)
-        
-        # Create new record
+
         cls.objects.create(
             credential_type=credential_type,
             credential_value=hashed_value,
             user_id=user_id,
             is_active=True
         )
+
+
+class DataBackup(models.Model):
+    """Snapshot of all records taken before a destructive clear-all operation."""
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(Credential, null=True, blank=True, on_delete=models.SET_NULL)
+    attendance_count = models.IntegerField(default=0)
+    apology_count = models.IntegerField(default=0)
+    payload = models.JSONField()
+
+    def __str__(self):
+        return f"Backup {self.id} at {self.created_at} ({self.attendance_count}+{self.apology_count} records)"

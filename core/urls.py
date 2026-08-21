@@ -18,7 +18,6 @@ from rest_framework_simplejwt.views import (
 from core import views as core_views
 
 urlpatterns = [
-    # Attendance & Apology
     path('submit-attendance', submit_attendance, name='submit_attendance'),
     path('api/submit-attendance', submit_attendance, name='api_submit_attendance'),
     path('submit-apologies', submit_apologies, name='submit_apologies'),
@@ -42,7 +41,6 @@ urlpatterns = [
     path('attendance-by-meeting-title', attendance_by_meeting_title, name='attendance_by_meeting_title'),
     path('clear-all-data', clear_all_data, name='clear_all_data'),
 
-    # Authentication & Password
     path('change-password', change_password, name='change_password'),
     path('change-credentials', change_credentials, name='change_credentials'),
     path('get-all-users', get_all_users, name='get_all_users'),
@@ -55,11 +53,9 @@ urlpatterns = [
     path('current-user-info', current_user_info, name='current_user_info'),
     path('login-django', login_view_django, name='login_django'),
 
-    # JWT tokens (now at /api/token and /api/token/refresh)
     path('token', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh', TokenRefreshView.as_view(), name='token_refresh'),
 
-    # Meeting management
     path('set-meeting', set_meeting, name='set_meeting'),
     path('api/set-meeting', set_meeting, name='api_set_meeting'),
     path('current-meeting', current_meeting, name='current_meeting'),
@@ -69,13 +65,10 @@ urlpatterns = [
     path('edit-meeting', edit_meeting, name='edit_meeting'),
     path('api/edit-meeting', edit_meeting, name='api_edit_meeting'),
 
-    #Records management
     path('records/<str:record_type>', core_views.records_list, name='records-list'),
     path('records/<str:record_type>/<int:pk>', core_views.record_edit_delete, name='record-edit-delete'),
     path('records/<str:record_type>/export', core_views.records_export, name='records-export'),
-    
-    
-    #Manipulations
+
     path('records/<str:record_type>/<int:pk>/soft-delete/', soft_delete_record),
     path('records/<str:record_type>/<int:pk>/restore/', restore_record),
     path('records/<str:record_type>/bulk-soft-delete/', bulk_soft_delete),
@@ -85,8 +78,7 @@ urlpatterns = [
     path('records/<str:record_type>/advanced/', advanced_records_list),
     path('records/<str:record_type>/advanced-combined/', advanced_combined_records_list),
     path('audit-log/', audit_log_list),
-    
-    # PIN Management
+
     path('pin/verify/', verify_pin, name='verify_pin'),
     path('pin/verify', verify_pin, name='verify_pin_no_slash'),
     path('pin/change/', change_pin, name='change_pin'),
@@ -97,4 +89,3 @@ urlpatterns = [
     path('pin/setup', setup_initial_pin, name='setup_initial_pin_no_slash'),
     path('csrf/', get_csrf_token, name='get_csrf_token'),
 ]
-

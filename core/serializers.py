@@ -9,7 +9,7 @@ class AttendanceEntrySerializer(serializers.ModelSerializer):
     class Meta:
         model = AttendanceEntry
         fields = '__all__'
-        
+
     def validate_name(self, value):
             if not re.match(r"^[A-Za-z\s\-']+$", value):
                 raise serializers.ValidationError("Name must contain only letters, spaces, hyphens or apostrophes.")
@@ -31,7 +31,7 @@ class ApologyEntrySerializer(serializers.ModelSerializer):
     class Meta:
         model = ApologyEntry
         fields = '__all__'
-        
+
     def validate_name(self, value):
         if not re.match(r"^[A-Za-z\s\-']+$", value):
             raise serializers.ValidationError("Name must contain only letters, spaces, hyphens or apostrophes.")
@@ -52,7 +52,6 @@ class AuditLogSerializer(serializers.ModelSerializer):
         model = AuditLog
         fields = '__all__'
 
-# Bulk action serializers
 class BulkIdSerializer(serializers.Serializer):
     ids = serializers.ListField(child=serializers.IntegerField())
 
@@ -60,7 +59,6 @@ class NotesTagsUpdateSerializer(serializers.Serializer):
     notes = serializers.CharField(allow_blank=True, required=False)
     tags = serializers.CharField(allow_blank=True, required=False)
 
-# PIN management serializers
 class SecurityPINSerializer(serializers.ModelSerializer):
     class Meta:
         model = SecurityPIN

@@ -51,7 +51,6 @@ export default function MeetingConfigForm({ onMeetingConfigured, darkMode = fals
         login_password: meetingPassword,
       };
 
-      // Only include custom_limit if it's set and greater than 0
       if (customLimit && parseInt(customLimit) > 0) {
         body.custom_participant_limit = parseInt(customLimit);
       }
@@ -75,8 +74,7 @@ export default function MeetingConfigForm({ onMeetingConfigured, darkMode = fals
       }
       if (res.ok) {
         toast.success('Meeting configured successfully', { duration: 5000 });
-        
-        // Clear form
+
         setTitle('');
         setDate('');
         setMeetingType('general');
@@ -85,7 +83,7 @@ export default function MeetingConfigForm({ onMeetingConfigured, darkMode = fals
         setDurationHours(2);
         setMeetingUsername('');
         setMeetingPassword('');
-        
+
         if (typeof onMeetingConfigured === 'function') {
           setTimeout(() => onMeetingConfigured(), 500);
         }

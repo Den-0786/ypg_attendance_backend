@@ -1,10 +1,7 @@
-// Helper functions for dashboard components
-// Helper function to identify apology entries
 export function isApologyEntry(entry) {
   return entry && entry.reason && entry.reason.length > 0;
 }
 
-// Helper functions for progress calculations
 export function getLocalProgress(attendanceData, year) {
   if (!Array.isArray(attendanceData)) return 0;
   const targetYear = year || new Date().getFullYear();
@@ -53,7 +50,6 @@ export function getGrandTotalProgress(attendanceData, year) {
   return Math.round(grandTotal);
 }
 
-// Function to get unique people with less than 5 meetings (local only)
 export function getUniquePeopleLessThan5(attendanceData, year) {
   if (!Array.isArray(attendanceData)) return [];
 
@@ -70,7 +66,6 @@ export function getUniquePeopleLessThan5(attendanceData, year) {
   return Object.keys(personCounts).filter((person) => personCounts[person] < 5);
 }
 
-// Function to get top 3 attendees with 5 or more meetings (local only)
 export function getTop3Attendees(attendanceData, year) {
   if (!Array.isArray(attendanceData)) return [];
 
@@ -92,7 +87,6 @@ export function getTop3Attendees(attendanceData, year) {
   return topAttendees;
 }
 
-// Function to get top 3 congregations (local only)
 export function getTop3Congregations(attendanceData, year) {
   if (!Array.isArray(attendanceData)) return [];
 

@@ -19,37 +19,33 @@ export default function AttendanceChart({ attendanceData, darkMode }) {
   }, [attendanceData]);
 
   const processAttendanceData = () => {
-    // Get current date to determine which months to show
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
     const currentMonth = currentDate.getMonth(); // 0-11
-    
-    // Group data by congregation and month
+
     const congregationMap = new Map();
-    
+
     attendanceData.forEach(entry => {
       const date = new Date(entry.meeting_date);
       const month = date.getMonth(); // 0-11
       const year = date.getFullYear();
       const key = `${year}-${month}`;
-      
+
       if (!congregationMap.has(entry.congregation)) {
         congregationMap.set(entry.congregation, new Map());
       }
-      
+
       const congregationData = congregationMap.get(entry.congregation);
       if (!congregationData.has(key)) {
         congregationData.set(key, []);
       }
-      
+
       congregationData.get(key).push(entry);
     });
 
-    // Convert to array format for rendering
     const congregationsList = Array.from(congregationMap.keys());
     setCongregations(congregationsList);
 
-    // Show all months up to current month (including current month)
     const monthsToShow = months.slice(0, currentMonth + 1);
     const processed = monthsToShow.map((monthName, monthIndex) => {
       const monthData = {};
@@ -58,7 +54,7 @@ export default function AttendanceChart({ attendanceData, darkMode }) {
         const entries = congregationMap.get(congregation)?.get(key) || [];
         monthData[congregation] = entries;
       });
-      
+
       return {
         month: monthName,
         data: monthData
@@ -77,7 +73,7 @@ export default function AttendanceChart({ attendanceData, darkMode }) {
 
   const renderAttendanceBoxes = (entries) => {
     const { present, absent } = getAttendanceStatus(entries);
-    
+
     return (
       <div className="flex gap-0.5 md:gap-1">
         {[...Array(2)].map((_, index) => (
@@ -112,7 +108,7 @@ export default function AttendanceChart({ attendanceData, darkMode }) {
       <h2 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white mb-4 md:mb-6">
         Monthly Attendance Overview
       </h2>
-      
+
       <div className="overflow-x-auto custom-scrollbar">
         <div className="min-w-max">
           {/* Header with congregation names */}

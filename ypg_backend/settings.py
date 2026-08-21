@@ -21,7 +21,6 @@ import dj_database_url
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-your-secret-key-here-change-in-production')
 
 
@@ -44,12 +43,10 @@ CSRF_TRUSTED_ORIGINS = config(
 SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False
 SECURE_SSL_REDIRECT = False
-# --- END LOCAL DEVELOPMENT SETTINGS ---
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
-
 
 
 INSTALLED_APPS = [
@@ -99,7 +96,6 @@ WSGI_APPLICATION = 'ypg_backend.wsgi.application'
 
 DATABASES = {}
 
-# database_url = os.environ.get('DATABASE_URL')
 database_url = config('DATABASE_URL', default=None)
 if database_url:
     try:
@@ -262,9 +258,9 @@ if DEBUG:
         'content-type',
         'content-length',
     ]
-    
+
     CORS_ALLOW_CREDENTIALS = True
-    
+
     CORS_ORIGIN_ALLOW_ALL = True
 
 
@@ -291,7 +287,7 @@ if not DEBUG:
     SECURE_SSL_REDIRECT = True
     X_FRAME_OPTIONS = 'DENY'
 else:
-    
+
     SECURE_SSL_REDIRECT = False
     SECURE_BROWSER_XSS_FILTER = False
     SECURE_CONTENT_TYPE_NOSNIFF = False

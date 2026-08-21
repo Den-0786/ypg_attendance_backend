@@ -22,7 +22,6 @@ export default function EditMeetingForm({ onClose, onMeetingEdited, currentMeeti
   const [showPINModal, setShowPINModal] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
 
-  // Pre-populate form with current meeting data
   useEffect(() => {
     if (currentMeeting) {
       setTitle(currentMeeting.title || '');
@@ -58,7 +57,6 @@ export default function EditMeetingForm({ onClose, onMeetingEdited, currentMeeti
         pin,
       };
 
-      // Only include fields that have changed
       if (title !== currentMeeting.title) {
         body.title = title;
       }

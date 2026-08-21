@@ -1,4 +1,3 @@
-// CHANGES: Added checkbox column for bulk selection and updated undo/restore logic to use backend restore endpoint for apologies and attendance. Improved error reporting for restore failures.
 import React, { useState, useEffect } from "react";
 import {
   FaCheckCircle,
@@ -44,7 +43,6 @@ function getUniqueYears(records) {
   return Array.from(years).filter(Boolean).sort();
 }
 
-// Add capitalizeWords function
 function capitalizeWords(str) {
   return str
     .split(" ")
@@ -97,18 +95,11 @@ export default function RecordsLibrary({
   const [showNotesModal, setShowNotesModal] = useState(false);
   const [notesRecord, setNotesRecord] = useState(null);
 
-  // PIN verification state
   const [showPINModal, setShowPINModal] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
   const [pendingRecord, setPendingRecord] = useState(null);
 
-  // Check for pending undo on component mount
   useEffect(() => {
-    // Remove all undo/restore logic and UI
-    // 1. Remove handleUndo function
-    // 2. Remove lastDeleted state and any references
-    // 3. Remove localStorage.setItem('pendingUndo', ...) and related code
-    // 4. Remove Undo button from toasts
   }, []);
 
   useEffect(() => {
@@ -124,7 +115,6 @@ export default function RecordsLibrary({
     filterRecordKind,
   ]);
 
-  // Reset page to 1 when filters change
   useEffect(() => {
     setPage(1);
   }, [search, filterType, filterYear, filterRecordKind, startDate, endDate, tab]);
@@ -132,7 +122,6 @@ export default function RecordsLibrary({
   const fetchRecords = async () => {
     setLoading(true);
     try {
-      // Fetch both attendance and apology data
       const token = localStorage.getItem("access_token");
       const [attendanceRes, apologyRes] = await Promise.all([
         fetch(`${API_URL}/api/attendance-summary`, {
@@ -150,7 +139,6 @@ export default function RecordsLibrary({
       const attendanceData = await attendanceRes.json();
       const apologyData = await apologyRes.json();
 
-      // Process attendance data
       let filteredAttendanceData = attendanceData;
       if (tab === "local") {
         filteredAttendanceData = attendanceData.filter(
@@ -162,7 +150,6 @@ export default function RecordsLibrary({
         );
       }
 
-      // Process apology data
       let filteredApologyData = apologyData;
       if (tab === "local") {
         filteredApologyData = apologyData.filter(
@@ -174,7 +161,6 @@ export default function RecordsLibrary({
         );
       }
 
-      // Add record_kind field and combine data
       const processedAttendanceData = filteredAttendanceData.map((record) => ({
         ...record,
         record_kind: "attendance",
@@ -189,7 +175,6 @@ export default function RecordsLibrary({
         tags: record.tags || [],
       }));
 
-      // Combine attendance and apology data
       const combinedData = [
         ...processedAttendanceData,
         ...processedApologyData,
@@ -243,7 +228,6 @@ export default function RecordsLibrary({
     }
   };
 
-  // PIN success handler
   const handlePINSuccess = (pin) => {
     if (pendingAction === "edit" && pendingRecord) {
       handleEditWithPIN(pendingRecord);
@@ -255,7 +239,6 @@ export default function RecordsLibrary({
     setShowPINModal(false); // Close the PIN modal
   };
 
-  // Edit
   const handleEdit = (record) => {
     setPendingAction("edit");
     setPendingRecord(record);
@@ -274,13 +257,11 @@ export default function RecordsLibrary({
 
   const saveEdit = async () => {
     try {
-      // Use different endpoints based on record type
       const endpoint =
         editRecord.record_kind === "apology"
           ? `${API_URL}/api/edit-apology/${editRecord.id}`
           : `${API_URL}/api/edit-attendance/${editRecord.id}`;
 
-      // Only send the specific fields that are allowed to be edited
       const allowedFields = ["name", "phone", "congregation", "position"];
       const editData = {};
       allowedFields.forEach((field) => {
@@ -312,7 +293,6 @@ export default function RecordsLibrary({
     }
   };
 
-  // PDF Download
   const handleDownloadPDF = (record) => {
     const doc = new jsPDF();
     let y = 10;
@@ -327,13 +307,32 @@ export default function RecordsLibrary({
     doc.save(`record_${record.id}.pdf`);
   };
 
-  // Export CSV
-  const handleExport = () => {
-    window.open(`${API_URL}/api/records/${tab}/export`, "_blank");
-    toast.success("Export started");
+  const handleExport = async () => {
+    try {
+      const token = localStorage.getItem("access_token");
+      const res = await fetch(`${API_URL}/api/records/${tab}/export`, {
+        headers: { Authorization: token ? `Bearer ${token}` : undefined },
+      });
+      if (!res.ok) {
+        toast.error("Failed to export records");
+        return;
+      }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${tab}_records_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("Export downloaded");
+    } catch (err) {
+      console.error("Export failed:", err);
+      toast.error("Failed to export records");
+    }
   };
 
-  // Tagging/Notes
   const handleTagEdit = (id, value) => {
     setTagEditId(id);
     setTagInput(value);
@@ -360,12 +359,10 @@ export default function RecordsLibrary({
     toast.success("Notes updated");
   };
 
-  // Filtering - handle all frontend filters including search
   const years = getUniqueYears(records);
   let filteredRecords = records.filter((r) => {
     let match = true;
 
-    // Search filter - search across name, congregation, and position
     if (search) {
       const searchLower = search.toLowerCase();
       const nameMatch = (r.name || "").toLowerCase().includes(searchLower);
@@ -378,16 +375,13 @@ export default function RecordsLibrary({
       match = match && (nameMatch || congregationMatch || positionMatch);
     }
 
-    // Year filter
     if (filterYear) {
       const entryYear = new Date(r.meeting_date).getFullYear();
       match = match && entryYear === parseInt(filterYear);
     }
-    // Record kind filter
     if (filterRecordKind) {
       match = match && r.record_kind === filterRecordKind;
     }
-    // Congregation filter
     if (filterCong)
       match =
         match &&
@@ -397,7 +391,6 @@ export default function RecordsLibrary({
     return match;
   });
 
-  // Sorting
   if (sortField) {
     filteredRecords = filteredRecords.sort((a, b) => {
       if (a[sortField] < b[sortField]) return sortAsc ? -1 : 1;
@@ -406,7 +399,6 @@ export default function RecordsLibrary({
     });
   }
 
-  // Pagination
   const totalRecords = filteredRecords.length;
   const totalPages = Math.ceil(totalRecords / perPage);
   const paginatedRecords = filteredRecords.slice(
@@ -414,7 +406,6 @@ export default function RecordsLibrary({
     page * perPage
   );
 
-  // Multi-select logic
   const isAllSelected =
     paginatedRecords.length > 0 &&
     paginatedRecords.every((r) => selectedRecords.includes(r.id));
@@ -431,7 +422,6 @@ export default function RecordsLibrary({
     );
   };
 
-  // Bulk delete
   const handleBulkDelete = () => {
     setShowBulkConfirm(true);
   };
@@ -464,7 +454,6 @@ export default function RecordsLibrary({
     }
   };
 
-  // Column customization
   const allColumns = [
     { key: "name", label: "Name" },
     { key: "congregation", label: "Congregation" },
@@ -476,21 +465,18 @@ export default function RecordsLibrary({
     { key: "notes", label: "Notes" },
   ];
 
-  // Analytics (mini chart)
   const chartData = years.map((y) => ({
     year: y,
     count: records.filter((r) => r.meeting_date && r.meeting_date.startsWith(y))
       .length,
   }));
 
-  // Determine if there are any apologies in the paginatedRecords
   const hasApologies = paginatedRecords.some(
     (r) => r.record_kind === "apology"
   );
 
   const isMobile = useIsMobile();
 
-  // Group records by congregation, then by month, then by day
   const groupedRecords = {};
   paginatedRecords.forEach((record) => {
     const cong = record.congregation || "Unknown";

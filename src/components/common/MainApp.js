@@ -14,7 +14,6 @@ export default function MainApp({ activeTab, setActiveTab, handleLogout, meeting
     };
 
     const handlePINSuccess = () => {
-        // PIN verification successful, navigate to dashboard
         router.replace('/dashboard');
     };
 

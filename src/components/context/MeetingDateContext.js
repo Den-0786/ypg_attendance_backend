@@ -7,7 +7,6 @@ export const MeetingDateProvider = ({ children }) => {
   const [meetingDate, setMeetingDate] = useState('');
   const [meetingTitle, setMeetingTitle] = useState('');
 
-  // Load from localStorage if set previously
   useEffect(() => {
     const savedDate = localStorage.getItem('meetingDate');
     const savedTitle = localStorage.getItem('meetingTitle');

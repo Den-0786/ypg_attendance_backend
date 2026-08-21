@@ -9,7 +9,6 @@ import FilterButtons from "../ui/FilterButtons";
 import AttendanceTable from "../ui/AttendanceTable";
 import { BASE_URL } from "../../lib/config";
 
-// Add capitalizeWords function
 function capitalizeWords(str) {
   return str
     .split(" ")
@@ -44,31 +43,25 @@ export default function DashboardDistrict({
   const [editModal, setEditModal] = useState({ open: false, entry: null });
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
-  // PIN verification state
   const [showPINModal, setShowPINModal] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
   const [pendingEntry, setPendingEntry] = useState(null);
 
-  // Add state for admin credentials modal
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [adminUsername, setAdminUsername] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
   const [pendingEditApology, setPendingEditApology] = useState(null);
 
-  // Get unique years from attendance data
   const getUniqueYears = (data) => {
     if (!Array.isArray(data)) return [];
     const years = new Set();
     const currentYear = new Date().getFullYear();
 
-    // Always include current year
     years.add(currentYear);
 
-    // Add years from attendance data, but only current year and future years
     data.forEach((entry) => {
       if (entry.meeting_date) {
         const year = new Date(entry.meeting_date).getFullYear();
-        // Only include current year and future years, exclude 2024 and earlier
         if (year >= currentYear) {
           years.add(year);
         }
@@ -81,7 +74,6 @@ export default function DashboardDistrict({
     ? getUniqueYears(attendanceData)
     : [];
 
-  // If there are no years, selectedYear should be undefined
   useEffect(() => {
     if (availableYears.length === 0) {
       setSelectedYear(undefined);
@@ -90,7 +82,6 @@ export default function DashboardDistrict({
     }
   }, [attendanceData]);
 
-  // Filter attendance data by selected year
   const filteredAttendanceData = attendanceData.filter((entry) => {
     if (!entry.meeting_date) return false;
     if (!selectedYear) return true; // Show all data if no year selected
@@ -98,9 +89,7 @@ export default function DashboardDistrict({
     return entryYear === selectedYear;
   });
 
-  // Add a helper to determine if a record is an apology
   const isApologyEntry = (entry) => {
-    // Check if entry has apology-specific fields
     return (
       entry &&
       (entry.reason ||
@@ -109,10 +98,8 @@ export default function DashboardDistrict({
     );
   };
 
-  // Combine attendance and apology data for processing
   const combinedData = [...attendanceData, ...apologyData];
 
-  // Filter combined data by selected year
   const filteredData = combinedData.filter((entry) => {
     if (!entry.meeting_date) return false;
     if (!selectedYear) return true; // Show all data if no year selected
@@ -120,13 +107,6 @@ export default function DashboardDistrict({
     return entryYear === selectedYear;
   });
 
-  // Remove all undo/restore logic and UI
-  // 1. Remove handleUndo function
-  // 2. Remove lastDeleted state and any references
-  // 3. Remove localStorage.setItem('pendingUndo', ...) and related code
-  // 4. Remove Undo button from toasts
-
-  // Filter only district executive entries, and filter by showType
   const summary = {};
   filteredData.forEach((entry) => {
     if (showType === "attendance" && isApologyEntry(entry)) return;
@@ -139,7 +119,6 @@ export default function DashboardDistrict({
     }
   });
 
-  // Apply search filter to summary
   const filteredSummary = {};
   Object.keys(summary).forEach((congregation) => {
     const searchLower = search.toLowerCase();
@@ -156,14 +135,11 @@ export default function DashboardDistrict({
     }
   });
 
-  // Determine if there are any apologies in the summary
   const hasApologies = Object.values(summary).some((entries) =>
     entries.some((e) => isApologyEntry(e))
   );
 
-  // Handler for deleting an entry (custom confirmation)
   const handleDelete = (entryId) => {
-    // Find the entry object from the combined data
     const entry = [...attendanceData, ...apologyData].find(
       (e) => e.id === entryId
     );
@@ -178,7 +154,6 @@ export default function DashboardDistrict({
 
   const handleDeleteWithPIN = async (entry, pin) => {
     const isApology = isApologyEntry(entry);
-    // Use hard delete endpoint
     const endpoint = isApology
       ? `${API_URL}/api/delete-apology/${entry.id}?pin=${encodeURIComponent(pin)}`
       : `${API_URL}/api/delete-attendance/${entry.id}?pin=${encodeURIComponent(pin)}`;
@@ -240,9 +215,7 @@ export default function DashboardDistrict({
     );
   };
 
-  // Handler for editing an entry (show modal)
   const handleEdit = (entryId) => {
-    // Find the entry object from the combined data
     const entry = [...attendanceData, ...apologyData].find(
       (e) => e.id === entryId
     );
@@ -263,7 +236,6 @@ export default function DashboardDistrict({
     }
   };
 
-  // PIN success handler
   const handlePINSuccess = async (pin) => {
     if (pendingAction === "edit" && pendingEntry) {
       await handleEditWithPIN(pendingEntry, pin);
@@ -275,9 +247,7 @@ export default function DashboardDistrict({
     setShowPINModal(false); // Close the PIN modal
   };
 
-  // Handler for saving edit
   const handleSaveEdit = async (updatedEntry) => {
-    // Always submit edit directly with PIN, no admin modal
     const isApology = isApologyEntry(updatedEntry);
     const endpoint = isApology
       ? `${API_URL}/api/edit-apology/${updatedEntry.id}`
@@ -310,7 +280,6 @@ export default function DashboardDistrict({
     }
   };
 
-  // Add global event listener for data synchronization
   useEffect(() => {
     const handleDataChange = () => {
       if (refetchAttendanceData) {
@@ -321,7 +290,6 @@ export default function DashboardDistrict({
       }
     };
 
-    // Listen for custom events when data changes
     window.addEventListener("attendanceDataChanged", handleDataChange);
     window.addEventListener("apologyDataChanged", handleDataChange);
 
@@ -333,7 +301,6 @@ export default function DashboardDistrict({
 
   const isMobile = useIsMobile();
 
-  // Group summary by congregation, then by month, then by day
   const groupedSummary = {};
   if (Array.isArray(filteredData)) {
     filteredData.forEach((entry) => {

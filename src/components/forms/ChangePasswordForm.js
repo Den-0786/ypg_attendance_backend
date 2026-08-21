@@ -97,7 +97,6 @@ export default function ChangePasswordForm({
       const data = await response.json();
 
       if (response.ok) {
-        // Sort users: admin first, then others
         const sortedUsers = data.users.sort((a, b) => {
           if (a.role === "admin" && b.role !== "admin") return -1;
           if (a.role !== "admin" && b.role === "admin") return 1;
@@ -132,9 +131,13 @@ export default function ChangePasswordForm({
 
   const setupInitialPIN = async (pin) => {
     try {
+      const token = localStorage.getItem("access_token");
       const response = await fetch(`${API_URL}/api/pin/setup/`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : undefined,
+        },
         body: JSON.stringify({ pin }),
       });
       const data = await response.json();
@@ -226,15 +229,12 @@ export default function ChangePasswordForm({
           setIsAdminMode(false);
           onClose();
         } else {
-          // Handle different types of error responses
           if (response.status === 429) {
-            // Rate limited - show the specific error message
             toast.error(
               data.error ||
                 "Too many PIN attempts. Please wait before trying again."
             );
           } else {
-            // Regular error
             toast.error(data.error || "Failed to change credentials");
           }
         }
@@ -257,10 +257,12 @@ export default function ChangePasswordForm({
 
       setLoading(true);
       try {
+        const token = localStorage.getItem("access_token");
         const response = await fetch(`${API_URL}/api/pin/change/`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Authorization: token ? `Bearer ${token}` : undefined,
           },
           credentials: "include",
           body: JSON.stringify({
@@ -281,15 +283,12 @@ export default function ChangePasswordForm({
           }));
           onClose();
         } else {
-          // Handle different types of error responses
           if (response.status === 429) {
-            // Rate limited - show the specific error message
             toast.error(
               data.error ||
                 "Too many PIN attempts. Please wait before trying again."
             );
           } else {
-            // Regular PIN error
             toast.error(data.error || "Failed to change PIN");
           }
         }
@@ -337,7 +336,6 @@ export default function ChangePasswordForm({
     setIsNewPasswordValid(passwordStrength.isValid);
   }, [formData.newPassword, passwordStrength.isValid]);
 
-  // Show specific password error after user stops typing, hide after 10 seconds
   const passwordErrorTimerRef = useRef(null);
   const passwordHideTimerRef = useRef(null);
   useEffect(() => {
@@ -366,7 +364,6 @@ export default function ChangePasswordForm({
     };
   }, [formData.newPassword, passwordStrength.isValid]);
 
-  // Only show for admins
   if (currentUser && currentUser.role !== "admin") {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
@@ -854,7 +851,6 @@ export default function ChangePasswordForm({
   );
 }
 
-// PIN Input Component
 function PINInput({ onSuccess, onCancel, pinStatus, onSetupPIN, darkMode = false }) {
   const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
@@ -869,16 +865,18 @@ function PINInput({ onSuccess, onCancel, pinStatus, onSetupPIN, darkMode = false
     setLoading(true);
     try {
       if (pinStatus === "not_setup") {
-        // Setup initial PIN
         const success = await onSetupPIN(pin);
         if (success) {
           onSuccess(pin);
         }
       } else {
-        // Verify existing PIN
+        const token = localStorage.getItem("access_token");
         const res = await fetch(`${API_URL}/api/pin/verify/`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: token ? `Bearer ${token}` : undefined,
+          },
           credentials: "include",
           body: JSON.stringify({ pin }),
         });
@@ -888,15 +886,12 @@ function PINInput({ onSuccess, onCancel, pinStatus, onSetupPIN, darkMode = false
         if (res.ok && data.is_valid) {
           onSuccess(pin);
         } else {
-          // Handle different types of error responses
           if (res.status === 429) {
-            // Rate limited - show the specific error message
             toast.error(
               data.error ||
                 "Too many PIN attempts. Please wait before trying again."
             );
           } else {
-            // Regular PIN error
             toast.error(data.error || "Invalid PIN");
           }
         }

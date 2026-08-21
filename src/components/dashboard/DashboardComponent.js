@@ -57,7 +57,6 @@ export default function Dashboard({ onLogout }) {
   const router = useRouter();
   const sidebarRef = useRef(null);
 
-  // Add click outside handler for sidebar
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -77,21 +76,17 @@ export default function Dashboard({ onLogout }) {
     };
   }, [showSidebar, isMobile]);
 
-  // Get available years from attendance data
   const getAvailableYears = () => {
     const years = new Set();
     const currentYear = new Date().getFullYear();
 
-    // Always include current year
     years.add(currentYear);
 
-    // Add years from attendance data, but only current year and future years
     if (attendanceData && attendanceData.length > 0) {
       attendanceData.forEach((entry) => {
         if (entry.meeting_date) {
           const date = new Date(entry.meeting_date);
           const entryYear = date.getFullYear();
-          // Only include current year and future years, exclude 2024 and earlier
           if (entryYear >= currentYear) {
             years.add(entryYear);
           }
@@ -109,7 +104,6 @@ export default function Dashboard({ onLogout }) {
     ? availableYears
     : [];
 
-  // Update selected year if current selection is not available
   useEffect(() => {
     if (!availableYearsArray.includes(selectedYear)) {
       setSelectedYear(availableYearsArray[0] || new Date().getFullYear());
@@ -163,7 +157,6 @@ export default function Dashboard({ onLogout }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Fetch current user info
   const fetchCurrentUser = async () => {
     try {
       const token = localStorage.getItem("access_token");
