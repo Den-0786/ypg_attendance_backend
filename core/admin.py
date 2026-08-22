@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import AttendanceEntry, ApologyEntry, Credential, Meeting, SecurityPIN
+from .models import AttendanceEntry, ApologyEntry, Credential, LocalContact, Meeting, SecurityPIN
 from django import forms
 from django.contrib.auth.hashers import make_password
 
@@ -41,3 +41,8 @@ class MeetingAdmin(admin.ModelAdmin):
     list_filter = ('is_active', 'date')
 
 admin.site.register(SecurityPIN)
+
+@admin.register(LocalContact)
+class LocalContactAdmin(admin.ModelAdmin):
+    list_display = ('name', 'phone')
+    search_fields = ('name', 'phone')

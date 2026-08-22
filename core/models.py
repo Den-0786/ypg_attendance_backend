@@ -120,6 +120,15 @@ class PasswordResetToken(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.token}"
 
+class LocalContact(models.Model):
+    """Leader phone number for a local congregation, used for absence SMS."""
+    name = models.CharField(max_length=100, unique=True)
+    phone = models.CharField(max_length=20)
+
+    def __str__(self):
+        return f"{self.name} ({self.phone})"
+
+
 class Meeting(models.Model):
     MEETING_TYPE_CHOICES = [
         ('general', 'General Meeting'),
@@ -138,6 +147,7 @@ class Meeting(models.Model):
 
     start_time = models.TimeField(default=datetime.time(8, 0))
     duration_hours = models.IntegerField(default=24)
+    absence_reminder_sent_at = models.DateTimeField(null=True, blank=True)
 
     def set_password(self, raw_password):
         self.login_password = make_password(raw_password)

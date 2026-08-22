@@ -1765,3 +1765,22 @@ class CustomTokenObtainPairView(APIView):
             import traceback
             logger.error(traceback.format_exc())
             return Response({'detail': str(e)}, status=500)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def cron_meeting_reminders(request):
+    """Daily/hourly trigger for external cron services.
+
+    Set CRON_SECRET in the environment and call:
+    /api/cron/meeting-reminders/?token=<secret>
+    """
+    import os
+    secret = os.getenv('CRON_SECRET', '')
+    token = request.query_params.get('token', '')
+    if not secret or token != secret:
+        return Response({'error': 'Unauthorized'}, status=403)
+
+    from django.core.management import call_command
+    out = io.StringIO()
+    call_command('send_meeting_absence_reminders', stdout=out)
+    return Response({'success': True, 'output': out.getvalue()})

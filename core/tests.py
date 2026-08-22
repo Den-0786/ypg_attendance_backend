@@ -9,6 +9,10 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .models import AttendanceEntry, Credential, DataBackup, Meeting, SecurityPIN
 
 
+from unittest.mock import patch
+from datetime import timedelta
+
+
 def make_credential(username, role):
     cred = Credential.objects.create(username=username, role=role)
     cred.set_password("Passw0rd!")
@@ -235,3 +239,54 @@ class PINChangeTests(BaseAttendanceTestCase):
         )
         self.assertEqual(res.status_code, 400)
         self.assertTrue(SecurityPIN.verify_pin("1234"))
+
+
+class MeetingAbsenceReminderTests(TestCase):
+    """Local leaders get one SMS after a meeting closes with low attendance."""
+
+    def setUp(self):
+        from .models import LocalContact
+        self.client = APIClient()
+        # Meeting that closed 90 minutes ago
+        started = timezone.now() - timedelta(minutes=90 + 60)
+        self.meeting = Meeting.objects.create(
+            title='Sunday General',
+            date=started.date(),
+            meeting_type='general',
+            start_time=started.time(),
+            duration_hours=1,
+        )
+        self.contact = LocalContact.objects.create(name='Test Local', phone='0241234567')
+
+    @patch('core.management.commands.send_meeting_absence_reminders.send_sms', return_value=True)
+    def test_reminds_local_below_limit(self, mock_send):
+        from django.core.management import call_command
+        call_command('send_meeting_absence_reminders')
+        self.assertEqual(mock_send.call_count, 1)
+
+    @patch('core.management.commands.send_meeting_absence_reminders.send_sms', return_value=True)
+    def test_no_reminder_when_limit_met(self, mock_send):
+        from django.core.management import call_command
+        for i in range(5):
+            AttendanceEntry.objects.create(
+                name=f'Member {i}', phone=f'024000000{i}',
+                congregation='Test Local', position='Member',
+                type='local', meeting_date=self.meeting.date,
+            )
+        call_command('send_meeting_absence_reminders')
+        mock_send.assert_not_called()
+
+    @patch('core.management.commands.send_meeting_absence_reminders.send_sms', return_value=True)
+    def test_apologising_locals_skipped(self, mock_send):
+        from .models import ApologyEntry
+        from django.core.management import call_command
+        ApologyEntry.objects.create(
+            name='Leader', congregation='Test Local', position='Leader',
+            reason='Travelled', type='local', meeting_date=self.meeting.date,
+        )
+        call_command('send_meeting_absence_reminders')
+        mock_send.assert_not_called()
+
+    def test_cron_requires_secret(self):
+        res = self.client.get('/api/cron/meeting-reminders')
+        self.assertEqual(res.status_code, 403)

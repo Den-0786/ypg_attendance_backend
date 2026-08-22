@@ -88,4 +88,6 @@ urlpatterns = [
     path('pin/setup/', setup_initial_pin, name='setup_initial_pin'),
     path('pin/setup', setup_initial_pin, name='setup_initial_pin_no_slash'),
     path('csrf/', get_csrf_token, name='get_csrf_token'),
+    path('cron/meeting-reminders', core_views.cron_meeting_reminders, name='api_cron_meeting_reminders'),
+    path('api/cron/meeting-reminders', core_views.cron_meeting_reminders, name='api_cron_meeting_reminders_full'),
 ]
