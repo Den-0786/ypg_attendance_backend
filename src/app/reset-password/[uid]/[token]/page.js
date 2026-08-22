@@ -1,44 +1,53 @@
 'use client';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
-import { BASE_URL } from '../../lib/config';
+import { BASE_URL } from '../../../lib/config';
 
 export const dynamic = 'force-dynamic';
 
-export default function ForgotPassword() {
-    const [identifier, setIdentifier] = useState('');
+export default function ResetPassword({ params }) {
+    const { uid, token } = params;
+    const router = useRouter();
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!identifier) {
-            toast.error('Username is required');
+        if (!newPassword || newPassword.length < 8) {
+            toast.error('Password must be at least 8 characters');
+            return;
+        }
+        if (newPassword !== confirmPassword) {
+            toast.error('Passwords do not match');
             return;
         }
 
         setIsLoading(true);
         try {
-            const res = await fetch(`${BASE_URL}/api/request-password-reset`, {
+            const res = await fetch(`${BASE_URL}/api/reset-password-confirm`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 credentials: 'include',
-                body: JSON.stringify({ username: identifier }),
+                body: JSON.stringify({ uid, token, new_password: newPassword }),
             });
 
             const data = await res.json();
 
             if (res.ok) {
-                toast.success(data.message || 'Reset link sent to the district email!');
-                setIdentifier('');
+                toast.success(data.message || 'Password reset successfully!');
+                router.push('/login');
             } else {
-                toast.error(data.error || 'Failed to send reset email');
+                toast.error(data.error || 'Failed to reset password');
             }
         } catch (error) {
-            console.error('Error requesting password reset:', error);
+            console.error('Error resetting password:', error);
             toast.error('Network error occurred');
         } finally {
             setIsLoading(false);
@@ -53,27 +62,50 @@ export default function ForgotPassword() {
                 <div className="backdrop-blur-lg rounded-3xl p-8 shadow-2xl" style={{background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(201,168,76,0.3)'}}>
                     <div className="text-center mb-8">
                         <h1 className="text-3xl font-bold text-white mb-3 drop-shadow-lg">
-                            Forgot Password
+                            Set New Password
                         </h1>
                         <p className="text-sm font-medium" style={{color: '#c8d6e8'}}>
-                            Enter your username to receive a reset link on the district email
+                            Choose a strong new password for your account
                         </p>
                     </div>
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
-                            <label htmlFor="identifier" className="block text-sm font-semibold text-white mb-3 drop-shadow-sm">
-                                Username
+                            <label htmlFor="newPassword" className="block text-sm font-semibold text-white mb-3 drop-shadow-sm">
+                                New Password
                             </label>
                             <input
-                                id="identifier"
-                                type="text"
-                                placeholder="Enter your username"
-                                value={identifier}
-                                onChange={(e) => setIdentifier(e.target.value)}
+                                id="newPassword"
+                                type={showPassword ? 'text' : 'password'}
+                                placeholder="At least 8 characters"
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
                                 className="w-full px-4 py-3 backdrop-blur-sm text-white rounded-xl focus:ring-2 transition-all duration-300 text-sm font-medium"
                                 style={{background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(201,168,76,0.25)', outline: 'none'}}
                                 required
                             />
+                        </div>
+                        <div>
+                            <label htmlFor="confirmPassword" className="block text-sm font-semibold text-white mb-3 drop-shadow-sm">
+                                Confirm Password
+                            </label>
+                            <input
+                                id="confirmPassword"
+                                type={showPassword ? 'text' : 'password'}
+                                placeholder="Re-enter your password"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                className="w-full px-4 py-3 backdrop-blur-sm text-white rounded-xl focus:ring-2 transition-all duration-300 text-sm font-medium"
+                                style={{background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(201,168,76,0.25)', outline: 'none'}}
+                                required
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="mt-2 text-xs font-medium underline"
+                                style={{color: '#c9a84c'}}
+                            >
+                                {showPassword ? 'Hide passwords' : 'Show passwords'}
+                            </button>
                         </div>
                         <button
                             type="submit"
@@ -88,10 +120,10 @@ export default function ForgotPassword() {
                             {isLoading ? (
                                 <div className="flex items-center justify-center">
                                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                                    Sending...
+                                    Resetting...
                                 </div>
                             ) : (
-                                "Send Reset Link"
+                                "Reset Password"
                             )}
                         </button>
                         <div className="text-center">

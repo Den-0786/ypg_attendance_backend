@@ -38,6 +38,30 @@ from django.utils.deprecation import MiddlewareMixin
 from .validators import validate_password_custom
 from .otp import issue_otp, verify_otp, masked_recipient
 from django.views.decorators.csrf import ensure_csrf_cookie
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+
+
+class CredentialPasswordResetTokenGenerator(PasswordResetTokenGenerator):
+    """Token generator safe for the Credential model (no last_login/email fields)."""
+
+    def _make_hash_value(self, user, timestamp):
+        return f"{user.pk}{user.password}{timestamp}"
+
+
+credential_reset_token_generator = CredentialPasswordResetTokenGenerator()
+
+
+def _masked_email(address):
+    from email.utils import parseaddr
+    address = parseaddr(address)[1] or address
+    try:
+        local, domain = address.split('@', 1)
+        visible = local[:2] if len(local) > 2 else local[0]
+        return f"{visible}{'*' * max(len(local) - len(visible), 2)}@{domain}"
+    except ValueError:
+        return address
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -655,30 +679,47 @@ def request_password_reset(request):
         user = Credential.objects.get(username=identifier)
     except Credential.DoesNotExist:
         # Generic response so attackers can't probe which usernames exist.
-        return Response({'message': 'Reset code sent'})
+        return Response({'message': 'Reset link sent to the district email'})
 
-    ok, error_message = issue_otp(identifier, user=user, purpose='password_reset')
-    if not ok:
-        return Response({'error': error_message}, status=429 if 'wait' in (error_message or '') else 500)
+    recipient = getattr(settings, 'PASSWORD_RESET_EMAIL', '') or settings.DEFAULT_FROM_EMAIL
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+    token = credential_reset_token_generator.make_token(user)
+    frontend_url = getattr(settings, 'FRONTEND_URL', 'https://attendance.ahinsandistrictypg.com').rstrip('/')
+    reset_link = f"{frontend_url}/reset-password/{uid}/{token}"
 
-    return Response({'message': f'Reset code sent via SMS to {masked_recipient()}'})
+    try:
+        send_mail(
+            'Reset your YPG Attendance password',
+            'We received a request to reset your YPG Attendance App password.\n\n'
+            f'Click the link below to set a new password (valid for a short time):\n{reset_link}\n\n'
+            'If you did not request this, you can safely ignore this email.',
+            settings.DEFAULT_FROM_EMAIL,
+            [recipient],
+            fail_silently=False,
+        )
+    except Exception:
+        return Response({'error': 'Could not send reset email. Please try again later.'}, status=500)
 
+    return Response({'message': f'Reset link sent to {_masked_email(recipient)}'})
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def reset_password_confirm(request):
-    identifier = request.data.get('username')
-    token = request.data.get('code')
+    uid_b64 = request.data.get('uid')
+    token = request.data.get('token')
     new_password = request.data.get('new_password')
 
-    is_valid, error_message = verify_otp(identifier, token, purpose='password_reset')
-    if not is_valid:
-        return Response({'error': error_message}, status=400)
+    if not uid_b64 or not token:
+        return Response({'error': 'Invalid reset link'}, status=400)
 
     try:
-        user = Credential.objects.get(username=identifier)
-    except Credential.DoesNotExist:
-        return Response({'error': 'Invalid reset code'}, status=400)
+        user_id = force_str(urlsafe_base64_decode(uid_b64))
+        user = Credential.objects.get(id=user_id)
+    except (Credential.DoesNotExist, ValueError, TypeError, OverflowError):
+        return Response({'error': 'Invalid reset link'}, status=400)
+
+    if not credential_reset_token_generator.check_token(user, token):
+        return Response({'error': 'This reset link is invalid or has expired. Please request a new one.'}, status=400)
 
     is_valid, error_message = validate_password_custom(new_password)
     if not is_valid:

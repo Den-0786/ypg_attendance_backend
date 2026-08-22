@@ -371,3 +371,9 @@ SMS_SENDER_ID = os.getenv('SMS_SENDER_ID', 'DistYPG')
 
 # Phone number that receives OTP SMS for password changes/updates
 OTP_RECIPIENT = os.getenv('OTP_RECIPIENT', '0245660786')
+
+# Frontend base URL used for password reset links
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://attendance.ahinsandistrictypg.com')
+
+# Inbox that receives password reset links (Credential accounts have no email field)
+PASSWORD_RESET_EMAIL = os.getenv('PASSWORD_RESET_EMAIL', '')
