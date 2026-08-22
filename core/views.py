@@ -590,15 +590,15 @@ def change_credentials(request):
 
     pin_attempt.reset_attempts()
 
-    otp_code = request.data.get('otp_code')
-    is_valid, error_message = verify_otp(current_user.username, otp_code, purpose='password_change')
-    if not is_valid:
-        return Response({'error': error_message}, status=400)
-
     try:
         current_user = Credential.objects.get(id=user_id)  # type: ignore
     except Credential.DoesNotExist:  # type: ignore
         return Response({'error': f'User not found in Credential model. User ID: {user_id}, Role: {role}.'}, status=401)
+
+    otp_code = request.data.get('otp_code')
+    is_valid, error_message = verify_otp(current_user.username, otp_code, purpose='password_change')
+    if not is_valid:
+        return Response({'error': error_message}, status=400)
 
     target_user_id = request.data.get('target_user_id')
     is_admin_changing_other_user = (
