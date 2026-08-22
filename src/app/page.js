@@ -182,7 +182,7 @@ export default function Page() {
       {/* Simple login button */}
       <div className="relative bottom-[9rem] lg:bottom-[4rem] z-20 flex flex-row items-center justify-center gap-4 pb-0 ">
         <a
-          href="https://ypg-website.vercel.app"
+          href="https://www.ahinsandistrictypg.com"
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-1.5 text-sm font-medium transition-colors" style={{color: '#c9a84c'}}

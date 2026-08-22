@@ -84,6 +84,16 @@ export default function LoginPage() {
 
   return (
     <div className="relative">
+      <a
+        href="https://www.ahinsandistrictypg.com"
+        className="fixed top-4 left-4 z-40 inline-flex items-center gap-2 text-sm font-medium px-3 py-2 rounded-lg transition-colors"
+        style={{color: '#c9a84c', background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.25)'}}
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M19 12H5M12 5l-7 7 7 7" />
+        </svg>
+        Back to Main Website
+      </a>
       <LoginForm onLogin={onLogin} />
       {loginLoading && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center" style={{background: 'linear-gradient(135deg, #0a1628 0%, #0d2144 40%, #0f2d5c 70%, #1a3a6e 100%)'}}>
