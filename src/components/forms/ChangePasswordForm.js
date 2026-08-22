@@ -52,6 +52,9 @@ export default function ChangePasswordForm({
   const [selectedTargetUser, setSelectedTargetUser] = useState(null);
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [verifiedPIN, setVerifiedPIN] = useState("");
+  const [otpCode, setOtpCode] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
 
   useEffect(() => {
     if (propCurrentUser) {
@@ -160,6 +163,32 @@ export default function ChangePasswordForm({
     setShowForm(true);
   };
 
+  const handleRequestOTP = async () => {
+    setOtpLoading(true);
+    try {
+      const token = localStorage.getItem("access_token");
+      const response = await fetch(`${API_URL}/api/password/otp/request`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : undefined,
+        },
+        credentials: "include",
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setOtpSent(true);
+        toast.success(data.message || "Verification code sent via SMS");
+      } else {
+        toast.error(data.error || "Failed to send SMS code");
+      }
+    } catch (err) {
+      toast.error("Network error while sending SMS code");
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -183,6 +212,11 @@ export default function ChangePasswordForm({
         return;
       }
 
+      if (!otpCode || otpCode.length !== 6) {
+        toast.error("Enter the 6-digit SMS verification code");
+        return;
+      }
+
       setLoading(true);
       try {
         const requestBody = {
@@ -191,6 +225,7 @@ export default function ChangePasswordForm({
           new_username: formData.newUsername,
           new_password: formData.newPassword,
           pin: verifiedPIN,
+          otp_code: otpCode,
         };
 
         if (isAdminMode && selectedTargetUser) {
@@ -227,6 +262,8 @@ export default function ChangePasswordForm({
           });
           setSelectedTargetUser(null);
           setIsAdminMode(false);
+          setOtpCode("");
+          setOtpSent(false);
           onClose();
         } else {
           if (response.status === 429) {
@@ -698,6 +735,44 @@ export default function ChangePasswordForm({
                         {showPasswords.confirm ? <FaEye /> : <FaEyeSlash />}
                       </button>
                     </div>
+                  </div>
+
+                  <div>
+                    <label className={`block text-xs font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      SMS Verification Code
+                    </label>
+                    <div className="flex gap-1.5">
+                      <input
+                        type="text"
+                        value={otpCode}
+                        onChange={(e) =>
+                          setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+                        }
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm tracking-widest ${darkMode ? 'border-gray-700 text-white bg-gray-700' : 'border-gray-300 text-gray-900 bg-gray-50'}`}
+                        placeholder="6-digit code"
+                        maxLength={6}
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={handleRequestOTP}
+                        disabled={otpLoading}
+                        className={`px-2 py-2 whitespace-nowrap rounded-lg transition text-xs font-medium ${
+                          otpSent
+                            ? "bg-green-600 text-white hover:bg-green-700"
+                            : "bg-amber-500 text-white hover:bg-amber-600"
+                        } disabled:opacity-50`}
+                      >
+                        {otpLoading
+                          ? "Sending..."
+                          : otpSent
+                            ? "Resend Code"
+                            : "Send Code"}
+                      </button>
+                    </div>
+                    <p className={`text-xs mt-0.5 ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                      A 6-digit code will be sent to the registered district phone.
+                    </p>
                   </div>
 
                   <div className="flex gap-2 pt-2">

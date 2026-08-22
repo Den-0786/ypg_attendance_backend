@@ -16,7 +16,7 @@ export default function ForgotPassword() {
         e.preventDefault();
 
         if (!identifier) {
-            toast.error('Username or email is required');
+            toast.error('Username is required');
             return;
         }
 
@@ -34,11 +34,11 @@ export default function ForgotPassword() {
             const data = await res.json();
 
             if (res.ok) {
-                toast.success('Password reset email sent successfully!');
+                toast.success(data.message || 'Reset code sent via SMS successfully!');
                 setIdentifier('');
                 router.push(`/reset_code?identifier=${encodeURIComponent(identifier)}`);
             } else {
-                toast.error(data.error || 'Failed to send reset email');
+                toast.error(data.error || 'Failed to send reset code');
             }
         } catch (error) {
             console.error('Error requesting password reset:', error);

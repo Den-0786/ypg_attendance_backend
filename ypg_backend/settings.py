@@ -368,3 +368,6 @@ SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
 ARKESEL_API_KEY = os.getenv('ARKESEL_API_KEY')
 SMS_SENDER_ID = os.getenv('SMS_SENDER_ID', 'DistYPG')
+
+# Phone number that receives OTP SMS for password changes/updates
+OTP_RECIPIENT = os.getenv('OTP_RECIPIENT', '0245660786')

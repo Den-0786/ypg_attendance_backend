@@ -3,7 +3,7 @@ from .views import (
     get_attendance_summary, get_apology_summary, submit_attendance, submit_apologies,
     delete_attendance, delete_apology, edit_attendance, edit_apology,
     login_view, logout_view, session_status, change_credentials, request_password_reset,
-    reset_password_confirm, verify_pin, clear_all_data,
+    reset_password_confirm, verify_pin, clear_all_data, request_password_change_otp,
     set_meeting, current_meeting, deactivate_meeting, edit_meeting,
     soft_delete_record, restore_record, bulk_soft_delete, bulk_restore,
     update_notes_tags, export_record_pdf, advanced_records_list, advanced_combined_records_list, audit_log_list,
@@ -42,6 +42,8 @@ urlpatterns = [
     path('clear-all-data', clear_all_data, name='clear_all_data'),
 
     path('change-password', change_password, name='change_password'),
+    path('password/otp/request', request_password_change_otp, name='request_password_change_otp'),
+    path('api/password/otp/request', request_password_change_otp, name='api_request_password_change_otp'),
     path('change-credentials', change_credentials, name='change_credentials'),
     path('get-all-users', get_all_users, name='get_all_users'),
     path('request-password-reset', request_password_reset, name='request_password_reset'),

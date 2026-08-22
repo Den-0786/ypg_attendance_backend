@@ -36,6 +36,7 @@ except ImportError:
     canvas = None  
 from django.utils.deprecation import MiddlewareMixin
 from .validators import validate_password_custom
+from .otp import issue_otp, verify_otp, masked_recipient
 from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
@@ -457,12 +458,17 @@ def change_password(request):
 
     current_password = request.data.get('current_password')
     new_password = request.data.get('new_password')
+    otp_code = request.data.get('otp_code')
 
     if not current_password or not new_password:
         return Response({'error': 'Current password and new password are required'}, status=400)
 
     if not user.check_password(current_password):
         return Response({'error': 'Current password is incorrect'}, status=400)
+
+    is_valid, error_message = verify_otp(user.username, otp_code, purpose='password_change')
+    if not is_valid:
+        return Response({'error': error_message}, status=400)
 
     is_valid, error_message = validate_password_custom(new_password)
     if not is_valid:
@@ -472,6 +478,42 @@ def change_password(request):
     user.save()
 
     return Response({'message': 'Password changed successfully'})
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def request_password_change_otp(request):
+    """Sends an SMS OTP to the configured district phone number.
+
+    Accepts either a JWT (Authorization header) or a session cookie.
+    """
+    token = request.headers.get('Authorization', '').replace('Bearer ', '')
+    user = None
+
+    if token:
+        try:
+            user = request.user
+            if not getattr(user, 'is_authenticated', False) or isinstance(user.id, type(None)):
+                user = None
+        except Exception:
+            user = None
+
+    if user is None:
+        user_id = request.session.get('user_id')
+        if not user_id:
+            return Response({'error': 'Authentication required'}, status=401)
+        try:
+            user = Credential.objects.get(id=user_id)
+        except Credential.DoesNotExist:
+            return Response({'error': 'User not found'}, status=401)
+
+    ok, error_message = issue_otp(user.username, user=user, purpose='password_change')
+    if not ok:
+        return Response({'error': error_message}, status=429 if 'wait' in (error_message or '') else 500)
+
+    return Response({
+        'message': f'A verification code was sent via SMS to {masked_recipient()}.'
+    })
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -523,6 +565,11 @@ def change_credentials(request):
         }, status=403)
 
     pin_attempt.reset_attempts()
+
+    otp_code = request.data.get('otp_code')
+    is_valid, error_message = verify_otp(current_user.username, otp_code, purpose='password_change')
+    if not is_valid:
+        return Response({'error': error_message}, status=400)
 
     try:
         current_user = Credential.objects.get(id=user_id)  # type: ignore
@@ -608,44 +655,30 @@ def request_password_reset(request):
         user = Credential.objects.get(username=identifier)
     except Credential.DoesNotExist:
         # Generic response so attackers can't probe which usernames exist.
-        return Response({'message': 'Reset code sent to email'})
+        return Response({'message': 'Reset code sent'})
 
-    PasswordResetToken.objects.filter(user=user).delete()
+    ok, error_message = issue_otp(identifier, user=user, purpose='password_reset')
+    if not ok:
+        return Response({'error': error_message}, status=429 if 'wait' in (error_message or '') else 500)
 
-    token = get_random_string(length=6, allowed_chars='1234567890')
-    PasswordResetToken.objects.create(user=user, token=token)
+    return Response({'message': f'Reset code sent via SMS to {masked_recipient()}'})
 
-    try:
-        send_mail(
-            'Your YPG Reset Code',
-            f'Your password reset code is: {token}',
-            settings.DEFAULT_FROM_EMAIL,
-            [user.email],
-            fail_silently=False,
-        )
-    except Exception:
-        return Response({'error': 'Could not send reset email. Please try again later.'}, status=500)
-
-    return Response({'message': 'Reset code sent to email'})
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def reset_password_confirm(request):
-    identifier = request.data.get('username')  
+    identifier = request.data.get('username')
     token = request.data.get('code')
     new_password = request.data.get('new_password')
+
+    is_valid, error_message = verify_otp(identifier, token, purpose='password_reset')
+    if not is_valid:
+        return Response({'error': error_message}, status=400)
 
     try:
         user = Credential.objects.get(username=identifier)
     except Credential.DoesNotExist:
         return Response({'error': 'Invalid reset code'}, status=400)
-
-    reset_entry = PasswordResetToken.objects.filter(user=user, token=token).first()
-    if not reset_entry:
-        return Response({'error': 'Invalid reset code'}, status=400)
-    if reset_entry.is_expired():
-        reset_entry.delete()
-        return Response({'error': 'Reset code expired'}, status=400)
 
     is_valid, error_message = validate_password_custom(new_password)
     if not is_valid:
@@ -653,7 +686,6 @@ def reset_password_confirm(request):
 
     user.set_password(new_password)
     user.save()
-    reset_entry.delete()
 
     return Response({'message': 'Password reset successfully'})
 
