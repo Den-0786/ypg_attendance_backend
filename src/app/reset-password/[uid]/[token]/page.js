@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
-import { BASE_URL } from '../../../lib/config';
+import { BASE_URL } from '@lib/config';
 
 export const dynamic = 'force-dynamic';
 
