@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { use, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -8,7 +8,7 @@ import { BASE_URL } from '@lib/config';
 export const dynamic = 'force-dynamic';
 
 export default function ResetPassword({ params }) {
-    const { uid, token } = params;
+    const { uid, token } = use(params);
     const router = useRouter();
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
