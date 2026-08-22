@@ -675,6 +675,7 @@ export default function ApologyForm({ meetingInfo }) {
                   <input
                     id="admin-password"
                     type="password"
+                    autoComplete="current-password"
                     value={adminPassword}
                     onChange={(e) => setAdminPassword(e.target.value)}
                     className="w-full mt-1 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400 text-xs"
@@ -817,6 +818,7 @@ export default function ApologyForm({ meetingInfo }) {
                     <input
                       id="admin-password"
                       type="password"
+                      autoComplete="current-password"
                       value={adminPassword}
                       onChange={(e) => setAdminPassword(e.target.value)}
                       className="w-full mt-1 px-2 py-1 border border-gray-300 dark:border-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400 dark:bg-gray-800 dark:text-white text-xs"

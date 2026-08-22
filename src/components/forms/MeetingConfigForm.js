@@ -241,12 +241,12 @@ export default function MeetingConfigForm({ onMeetingConfigured, darkMode = fals
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
+                    autoComplete="new-password"
                   value={meetingPassword}
                   onChange={(e) => setMeetingPassword(e.target.value)}
                   placeholder="Password for members to log in"
                   className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 pr-10 ${darkMode ? 'border-gray-600 text-white bg-gray-700' : 'border-gray-300 text-gray-900 bg-gray-50'}`}
                   required
-                  autoComplete="off"
                 />
                 <button
                   type="button"

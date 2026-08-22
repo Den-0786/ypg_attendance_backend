@@ -291,12 +291,12 @@ export default function MeetingDateForm({ onClose, onMeetingSet }) {
           <div className="relative">
             <input
               type={showPassword ? 'text' : 'password'}
+                autoComplete="new-password"
               value={meetingPassword}
               onChange={(e) => setMeetingPassword(e.target.value)}
               placeholder="Password for members to log in"
               className="w-full p-1 border border-yellow-300 rounded-xl text-gray-900 pr-10 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition"
               required
-              autoComplete="off"
             />
             <button
               type="button"

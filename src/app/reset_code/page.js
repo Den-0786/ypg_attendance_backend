@@ -134,6 +134,7 @@ function ResetCodeContent() {
                             <div className="relative">
                                 <input
                                     type={showNew ? 'text' : 'password'}
+                                      autoComplete="new-password"
                                     value={newPassword}
                                     onChange={(e) => setNewPassword(e.target.value)}
                                     placeholder="Enter new password"
@@ -183,6 +184,7 @@ function ResetCodeContent() {
                             <div className="relative">
                                 <input
                                     type={showConfirm ? 'text' : 'password'}
+                                      autoComplete="new-password"
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                     placeholder="Confirm new password"

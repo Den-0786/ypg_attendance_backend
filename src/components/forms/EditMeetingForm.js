@@ -265,11 +265,11 @@ export default function EditMeetingForm({ onClose, onMeetingEdited, currentMeeti
                   <div className="relative">
                     <input
                       type={showPassword ? 'text' : 'password'}
+                        autoComplete="new-password"
                       value={meetingPassword}
                       onChange={(e) => setMeetingPassword(e.target.value)}
                       placeholder="Enter new password to change"
                       className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all pr-10"
-                      autoComplete="off"
                     />
                     <button
                       type="button"

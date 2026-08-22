@@ -32,6 +32,7 @@ export default function AdminCredentialsModal({
             />
             <input
               type="password"
+                autoComplete="current-password"
               className="w-full mb-4 p-2 rounded border"
               placeholder="Admin Password"
               value={adminPassword}

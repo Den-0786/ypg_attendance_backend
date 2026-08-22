@@ -65,12 +65,12 @@ export default function LoginForm({ onLogin }) {
                 <input
                   id="password"
                   type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
                   placeholder="Enter your password"
                   className="w-full px-4 py-3 backdrop-blur-sm text-white rounded-xl focus:ring-2 transition-all duration-300 text-sm font-medium pr-12" style={{background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(201,168,76,0.25)', outline: 'none'}}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  autoComplete="current-password"
                 />
                 <button
                   type="button"

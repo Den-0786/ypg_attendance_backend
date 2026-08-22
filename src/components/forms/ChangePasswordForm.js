@@ -588,6 +588,7 @@ export default function ChangePasswordForm({
                     <div className="relative">
                       <input
                         type={showPasswords.current ? "text" : "password"}
+                          autoComplete="current-password"
                         value={formData.currentPassword}
                         onChange={(e) =>
                           setFormData((prev) => ({
@@ -635,6 +636,7 @@ export default function ChangePasswordForm({
                     <div className="relative">
                       <input
                         type={showPasswords.new ? "text" : "password"}
+                          autoComplete="new-password"
                         value={formData.newPassword}
                         onChange={(e) =>
                           setFormData((prev) => ({
@@ -716,6 +718,7 @@ export default function ChangePasswordForm({
                     <div className="relative">
                       <input
                         type={showPasswords.confirm ? "text" : "password"}
+                          autoComplete="new-password"
                         value={formData.confirmPassword}
                         onChange={(e) =>
                           setFormData((prev) => ({
