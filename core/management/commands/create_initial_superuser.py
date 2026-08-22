@@ -8,7 +8,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         User = get_user_model()
         username = os.environ.get('DJANGO_SUPERUSER_USERNAME', 'opoku')
-        email = os.environ.get('DJANGO_SUPERUSER_EMAIL', 'ahinsandistrictypg@gmail.com')
+        email = os.environ.get('DJANGO_SUPERUSER_EMAIL', 'ypgahinsandistrict@gmail.com')
         password = os.environ.get('DJANGO_SUPERUSER_PASSWORD', 'changeme123')
 
         if not User.objects.filter(username=username).exists():
