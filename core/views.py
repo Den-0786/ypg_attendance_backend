@@ -36,7 +36,7 @@ except ImportError:
     canvas = None  
 from django.utils.deprecation import MiddlewareMixin
 from .validators import validate_password_custom
-from .otp import issue_otp, verify_otp, masked_recipient
+from .otp import issue_otp, verify_otp, masked_number
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -507,10 +507,19 @@ def change_password(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def request_password_change_otp(request):
-    """Sends an SMS OTP to the configured district phone number.
+    """Sends an SMS OTP to the admin's phone number.
 
     Accepts either a JWT (Authorization header) or a session cookie.
     """
+    # Rate limit: max 5 OTP requests per IP per 10 minutes
+    from django.core.cache import cache
+    ip = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', '')).split(',')[0].strip()
+    cache_key = f'otp_rate_{ip}'
+    otp_count = cache.get(cache_key, 0)
+    if otp_count >= 5:
+        return Response({'error': 'Too many OTP requests. Please try again later.'}, status=429)
+    cache.set(cache_key, otp_count + 1, 600)  # 10 minutes
+
     token = request.headers.get('Authorization', '').replace('Bearer ', '')
     user = None
 
@@ -531,12 +540,13 @@ def request_password_change_otp(request):
         except Credential.DoesNotExist:
             return Response({'error': 'User not found'}, status=401)
 
-    ok, error_message = issue_otp(user.username, user=user, purpose='password_change')
+    ok, error_message = issue_otp(user.username, user=user, purpose='password_change', phone=getattr(user, 'phone_number', ''))
     if not ok:
         return Response({'error': error_message}, status=429 if 'wait' in (error_message or '') else 500)
 
+    masked = masked_number(getattr(user, 'phone_number', ''))
     return Response({
-        'message': f'A verification code was sent via SMS to {masked_recipient()}.'
+        'message': f'A verification code was sent via SMS to {masked}.'
     })
 
 @api_view(['POST'])
@@ -855,6 +865,36 @@ def current_user_info(request):
         })
     except Credential.DoesNotExist:
         return Response({'error': 'User not found'}, status=404)
+
+@api_view(['GET', 'PUT'])
+@permission_classes([AllowAny])
+def api_update_profile(request):
+    """Get or update the current user's profile (phone_number, email)."""
+    user_id = request.session.get('user_id')
+    if not user_id:
+        return Response({'error': 'Authentication required'}, status=401)
+    try:
+        user = Credential.objects.get(id=user_id)
+    except Credential.DoesNotExist:
+        return Response({'error': 'User not found'}, status=404)
+
+    if request.method == 'GET':
+        return Response({
+            'phone_number': user.phone_number or '',
+            'email': user.email or '',
+        })
+
+    data = request.data
+    if 'phone_number' in data:
+        user.phone_number = data['phone_number']
+    if 'email' in data:
+        user.email = data['email']
+    user.save(update_fields=['phone_number', 'email'])
+    return Response({
+        'message': 'Profile updated successfully',
+        'phone_number': user.phone_number,
+        'email': user.email,
+    })
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])

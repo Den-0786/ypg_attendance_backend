@@ -53,6 +53,8 @@ urlpatterns = [
     path('session-status', session_status, name='session_status'),
     path('api/session-status', session_status, name='api_session_status'),
     path('current-user-info', current_user_info, name='current_user_info'),
+    path('api/profile', core_views.api_update_profile, name='api_update_profile'),
+    path('api/profile/', core_views.api_update_profile, name='api_update_profile_slash'),
     path('login-django', login_view_django, name='login_django'),
 
     path('token', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),

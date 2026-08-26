@@ -12,6 +12,8 @@ class Credential(models.Model):
     username = models.CharField(max_length=150, unique=True)
     password = models.CharField(max_length=128)  # stores hashed password
     role = models.CharField(max_length=20, default='user')
+    phone_number = models.CharField(max_length=20, blank=True, default='')
+    email = models.EmailField(blank=True, default='')
     meeting = models.ForeignKey(
         'Meeting',
         on_delete=models.CASCADE,

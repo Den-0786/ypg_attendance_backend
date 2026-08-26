@@ -55,6 +55,8 @@ export default function ChangePasswordForm({
   const [otpCode, setOtpCode] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [otpLoading, setOtpLoading] = useState(false);
+  const [profileData, setProfileData] = useState({ phone_number: "", email: "" });
+  const [profileLoading, setProfileLoading] = useState(false);
 
   useEffect(() => {
     if (propCurrentUser) {
@@ -66,6 +68,7 @@ export default function ChangePasswordForm({
       fetchCurrentUser();
     }
     checkPINStatus();
+    fetchProfile();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [propCurrentUser]);
 
@@ -154,6 +157,53 @@ export default function ChangePasswordForm({
       toast.error("Network error occurred");
       setPinStatus("not_setup");
       return false;
+    }
+  };
+
+  const fetchProfile = async () => {
+    try {
+      const token = localStorage.getItem("access_token");
+      const response = await fetch(`${API_URL}/api/profile`, {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : undefined,
+          Accept: "application/json",
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setProfileData({ phone_number: data.phone_number || "", email: data.email || "" });
+      }
+    } catch (err) {
+      console.error("Error fetching profile:", err);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    if (!profileData.phone_number) {
+      toast.error("Phone number is required for SMS verification");
+      return;
+    }
+    setProfileLoading(true);
+    try {
+      const token = localStorage.getItem("access_token");
+      const response = await fetch(`${API_URL}/api/profile`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : undefined,
+        },
+        body: JSON.stringify(profileData),
+      });
+      if (response.ok) {
+        toast.success("Profile updated successfully");
+      } else {
+        const data = await response.json();
+        toast.error(data.error || "Failed to update profile");
+      }
+    } catch (err) {
+      toast.error("Network error occurred");
+    } finally {
+      setProfileLoading(false);
     }
   };
 
@@ -557,6 +607,17 @@ export default function ChangePasswordForm({
               >
                 PIN
               </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("profile")}
+                className={`flex-1 px-2 py-1 text-xs rounded-md transition ${
+                  activeTab === "profile"
+                    ? "bg-blue-600 text-white"
+                    : `${darkMode ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-gray-200'}`
+                }`}
+              >
+                Profile
+              </button>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-1.5">
@@ -774,7 +835,7 @@ export default function ChangePasswordForm({
                       </button>
                     </div>
                     <p className={`text-xs mt-0.5 ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                      A 6-digit code will be sent to the registered district phone.
+                      A 6-digit code will be sent to your registered phone number.
                     </p>
                   </div>
 
@@ -915,6 +976,64 @@ export default function ChangePasswordForm({
                         <>
                           <FaSave />
                           Update PIN
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </>
+              ) : activeTab === "profile" ? (
+                <>
+                  <p className={`text-xs mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    Set your phone number so you can receive SMS verification codes.
+                  </p>
+                  <div>
+                    <label className={`block text-xs font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Phone Number *
+                    </label>
+                    <input
+                      type="tel"
+                      value={profileData.phone_number}
+                      onChange={(e) => setProfileData({ ...profileData, phone_number: e.target.value })}
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm ${darkMode ? 'border-gray-700 text-white bg-gray-700' : 'border-gray-300 text-gray-900 bg-gray-50'}`}
+                      placeholder="0241234567 or +233241234567"
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-xs font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={profileData.email}
+                      onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm ${darkMode ? 'border-gray-700 text-white bg-gray-700' : 'border-gray-300 text-gray-900 bg-gray-50'}`}
+                      placeholder="your@email.com"
+                    />
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={handleClose}
+                      className="flex-1 px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition text-sm"
+                      disabled={profileLoading}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSaveProfile}
+                      className="flex-1 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition flex items-center justify-center gap-2 text-sm disabled:opacity-50"
+                      disabled={profileLoading}
+                    >
+                      {profileLoading ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <FaSave />
+                          Save Profile
                         </>
                       )}
                     </button>

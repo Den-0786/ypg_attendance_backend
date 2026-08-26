@@ -5,7 +5,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.utils import timezone
 
-from .models import PasswordChangeOTP
+from .models import PasswordChangeOTP, Credential
 from .sms import send_sms
 
 OTP_LIFETIME_MINUTES = 10
@@ -25,18 +25,45 @@ def normalize_recipient(recipient):
 
 
 def otp_recipient():
-    return getattr(settings, 'OTP_RECIPIENT', '') or '0245660786'
+    return getattr(settings, 'OTP_RECIPIENT', '') or ''
+
+
+def resolve_user_phone(user):
+    """Best-effort phone lookup: credential phone field."""
+    if not user or not getattr(user, 'is_authenticated', False):
+        return ''
+    try:
+        credential = Credential.objects.get(id=user.id)
+        if credential.phone_number:
+            return credential.phone_number
+    except Exception:
+        pass
+    return ''
+
+
+def masked_number(number):
+    n = str(number or '')
+    if len(n) >= 5:
+        return n[:3] + "****" + n[-2:]
+    return n
 
 
 def masked_recipient():
-    number = otp_recipient()
-    if len(number) >= 5:
-        return number[:3] + "****" + number[-2:]
-    return number
+    return masked_number(otp_recipient())
 
 
-def issue_otp(identifier, user=None, purpose='password_change'):
-    """Generate an OTP, store its hash, and SMS it to the configured recipient.
+def recipient_for(user=None, phone=None):
+    """The number an OTP should go to for this user, with district fallback."""
+    explicit = str(phone or '').strip()
+    if explicit:
+        return explicit
+    return resolve_user_phone(user) or otp_recipient()
+
+
+def issue_otp(identifier, user=None, purpose='password_change', phone=None):
+    """Generate an OTP, store its hash, and SMS it to the user's own phone
+    (credential phone field), falling back to the configured district
+    recipient when no personal number is on file.
 
     Returns (ok, error_message).
     """
@@ -59,9 +86,13 @@ def issue_otp(identifier, user=None, purpose='password_change'):
         expires_at=now + timedelta(minutes=OTP_LIFETIME_MINUTES),
     )
 
+    recipient = recipient_for(user, phone)
+    if not recipient:
+        return False, 'No phone number configured. Please set your phone number in your profile.'
+
     app_name = getattr(settings, 'APP_NAME', 'YPG')
     message = f"Your {app_name} password change code is {code}. It expires in {OTP_LIFETIME_MINUTES} minutes. Do not share it."
-    sent = send_sms(normalize_recipient(otp_recipient()), message)
+    sent = send_sms(normalize_recipient(recipient), message)
     if not sent:
         return False, 'Could not send the SMS code. Please try again later.'
     return True, None

@@ -18,8 +18,8 @@ class CredentialAdminForm(forms.ModelForm):
 @admin.register(Credential)
 class CredentialAdmin(admin.ModelAdmin):
     form = CredentialAdminForm
-    list_display = ('username', 'password', 'role', 'meeting')
-    search_fields = ('username', 'role')
+    list_display = ('username', 'password', 'role', 'phone_number', 'email', 'meeting')
+    search_fields = ('username', 'role', 'phone_number', 'email')
     list_filter = ('role', 'meeting')
     
 @admin.register(AttendanceEntry)
