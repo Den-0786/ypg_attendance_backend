@@ -867,7 +867,7 @@ export default function ChangePasswordForm({
                     </button>
                   </div>
                 </>
-              ) : (
+              ) : activeTab === "pin" ? (
                 <>
                   <div>
                     <label className={`block text-xs font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -981,7 +981,7 @@ export default function ChangePasswordForm({
                     </button>
                   </div>
                 </>
-              ) : activeTab === "profile" ? (
+              ) : (
                 <>
                   <p className={`text-xs mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                     Set your phone number so you can receive SMS verification codes.
