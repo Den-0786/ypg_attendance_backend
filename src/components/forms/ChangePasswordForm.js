@@ -514,8 +514,8 @@ export default function ChangePasswordForm({
 
       {/* Credentials Form */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className={`${darkMode ? 'bg-gray-900' : 'bg-white'} rounded-lg p-3 w-full max-w-xs shadow-xl`}>
+        <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className={`${darkMode ? 'bg-gray-900' : 'bg-white'} rounded-lg p-3 w-full max-w-xs shadow-xl max-h-[90vh] overflow-y-auto my-auto`}>
             <div className="flex justify-between items-center mb-2">
               <h3 className={`text-base font-bold ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
                 Change Credentials
